@@ -72,7 +72,7 @@ export const SignUp = () => {
               <h1 
                 className="text-2xl font-display font-semibold mb-2"
                 style={{
-                  textShadow: "0 0 30px hsla(338, 78%, 58%, 0.2)",
+                  textShadow: "0 0 30px rgba(255, 255, 255, 0.1)",
                 }}
               >
                 Create Your Account
@@ -144,7 +144,8 @@ export const SignUp = () => {
                 Already have an account?{" "}
                 <Link 
                   to="/login" 
-                  className="font-semibold text-rose transition-all duration-300 hover:drop-shadow-[0_0_8px_hsla(338,78%,58%,0.5)]"
+                  className="font-semibold transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(46,242,226,0.5)]"
+                  style={{ color: "#2EF2E2" }}
                 >
                   Log in
                 </Link>
@@ -155,11 +156,11 @@ export const SignUp = () => {
           {/* Footer */}
           <p className="text-center text-muted-foreground/40 text-xs mt-6">
             By signing up, you agree to our{" "}
-            <span className="text-muted-foreground/60 hover:text-rose transition-colors cursor-pointer">
+            <span className="text-muted-foreground/60 hover:text-teal transition-colors cursor-pointer">
               Terms of Service
             </span>{" "}
             and{" "}
-            <span className="text-muted-foreground/60 hover:text-rose transition-colors cursor-pointer">
+            <span className="text-muted-foreground/60 hover:text-teal transition-colors cursor-pointer">
               Privacy Policy
             </span>
           </p>

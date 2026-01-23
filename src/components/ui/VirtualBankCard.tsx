@@ -58,11 +58,11 @@ export const VirtualBankCard = ({
     >
       {/* Card Background Pattern */}
       <div 
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-20"
         style={{
           background: `
-            radial-gradient(circle at 20% 20%, hsla(338, 78%, 58%, 0.3) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, hsla(345, 55%, 75%, 0.2) 0%, transparent 50%)
+            radial-gradient(circle at 20% 20%, hsla(262, 76%, 57%, 0.3) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, hsla(289, 100%, 65%, 0.2) 0%, transparent 50%)
           `,
         }}
       />
@@ -84,10 +84,10 @@ export const VirtualBankCard = ({
               ))}
             </div>
           </div>
-          <Wifi className="w-5 h-5 text-metallic-rose rotate-90" />
+          <Wifi className="w-5 h-5 text-gold rotate-90" />
         </div>
         
-        <span className="text-sm font-bold tracking-wider text-rose">
+        <span className="text-sm font-bold tracking-wider gradient-text">
           ZENFI
         </span>
       </div>
@@ -110,7 +110,7 @@ export const VirtualBankCard = ({
               <h2 
                 className="text-3xl font-bold text-foreground animate-count-up"
                 style={{
-                  textShadow: "0 0 30px hsla(338, 78%, 58%, 0.3)",
+                  textShadow: "0 0 30px hsla(262, 76%, 57%, 0.3)",
                 }}
               >
                 {isHidden ? "••••••••" : formatBalance(displayBalance)}
@@ -128,13 +128,13 @@ export const VirtualBankCard = ({
                 {isHidden ? (
                   <EyeOff className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                  <Eye className="w-4 h-4 text-rose" />
+                  <Eye className="w-4 h-4 text-teal" />
                 )}
               </button>
             </div>
           </div>
           
-          <CreditCard className="w-8 h-8 text-metallic-rose/50" />
+          <CreditCard className="w-8 h-8 text-violet/50" />
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export const VirtualBankCard = ({
         <div 
           className="absolute -inset-full animate-shimmer"
           style={{
-            background: "linear-gradient(90deg, transparent, hsla(345, 55%, 75%, 0.08), transparent)",
+            background: "linear-gradient(90deg, transparent, hsla(262, 76%, 57%, 0.08), transparent)",
           }}
         />
       </div>

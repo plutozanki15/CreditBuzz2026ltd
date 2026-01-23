@@ -51,7 +51,7 @@ export const Login = () => {
               <h1 
                 className="text-2xl font-display font-semibold mb-2"
                 style={{
-                  textShadow: "0 0 30px hsla(338, 78%, 58%, 0.2)",
+                  textShadow: "0 0 30px rgba(255, 255, 255, 0.1)",
                 }}
               >
                 Welcome Back
@@ -85,7 +85,8 @@ export const Login = () => {
               <div className="flex justify-end">
                 <Link 
                   to="/forgot-password" 
-                  className="text-sm font-medium text-rose transition-all duration-300 hover:drop-shadow-[0_0_8px_hsla(338,78%,58%,0.5)]"
+                  className="text-sm font-medium transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(46,242,226,0.5)]"
+                  style={{ color: "#2EF2E2" }}
                 >
                   Forgot Password?
                 </Link>
@@ -105,7 +106,8 @@ export const Login = () => {
                 Don't have an account?{" "}
                 <Link 
                   to="/signup" 
-                  className="font-semibold text-rose transition-all duration-300 hover:drop-shadow-[0_0_8px_hsla(338,78%,58%,0.5)]"
+                  className="font-semibold transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(46,242,226,0.5)]"
+                  style={{ color: "#2EF2E2" }}
                 >
                   Sign up
                 </Link>
@@ -116,11 +118,11 @@ export const Login = () => {
           {/* Footer */}
           <p className="text-center text-muted-foreground/40 text-xs mt-8">
             By signing in, you agree to our{" "}
-            <span className="text-muted-foreground/60 hover:text-rose transition-colors cursor-pointer">
+            <span className="text-muted-foreground/60 hover:text-teal transition-colors cursor-pointer">
               Terms of Service
             </span>{" "}
             and{" "}
-            <span className="text-muted-foreground/60 hover:text-rose transition-colors cursor-pointer">
+            <span className="text-muted-foreground/60 hover:text-teal transition-colors cursor-pointer">
               Privacy Policy
             </span>
           </p>

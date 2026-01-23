@@ -29,7 +29,7 @@ export const LuxuryInput = forwardRef<HTMLInputElement, LuxuryInputProps>(
               isFocused ? "opacity-100" : "opacity-0"
             )}
             style={{
-              background: "linear-gradient(135deg, hsla(338, 78%, 58%, 0.25), hsla(345, 55%, 75%, 0.15))",
+              background: "linear-gradient(135deg, rgba(46, 242, 226, 0.3), rgba(46, 242, 226, 0.1))",
               filter: "blur(8px)",
             }}
           />
@@ -39,7 +39,7 @@ export const LuxuryInput = forwardRef<HTMLInputElement, LuxuryInputProps>(
             {icon && (
               <div className={cn(
                 "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-300",
-                isFocused ? "text-rose" : "text-muted-foreground/50"
+                isFocused ? "text-teal" : "text-muted-foreground/50"
               )}>
                 {icon}
               </div>
@@ -58,14 +58,14 @@ export const LuxuryInput = forwardRef<HTMLInputElement, LuxuryInputProps>(
                 isPassword && "pr-12",
                 error 
                   ? "border-destructive focus:border-destructive" 
-                  : "border-border/50 focus:border-rose",
+                  : "border-border/50 focus:border-teal",
                 className
               )}
               style={{
-                background: "hsla(240, 8%, 7%, 0.95)",
-                border: `1px solid ${isFocused ? "hsla(338, 78%, 58%, 0.4)" : "hsla(345, 55%, 75%, 0.12)"}`,
+                background: "rgba(11, 11, 15, 0.9)",
+                border: `1px solid ${isFocused ? "rgba(46, 242, 226, 0.5)" : "rgba(255, 255, 255, 0.1)"}`,
                 boxShadow: isFocused 
-                  ? "0 0 20px hsla(338, 78%, 58%, 0.15), 0 0 0 1px hsla(338, 78%, 58%, 0.1) inset" 
+                  ? "0 0 20px rgba(46, 242, 226, 0.15), 0 0 0 1px rgba(46, 242, 226, 0.1) inset" 
                   : "none",
               }}
               {...props}
@@ -78,10 +78,10 @@ export const LuxuryInput = forwardRef<HTMLInputElement, LuxuryInputProps>(
                 className={cn(
                   "absolute right-4 top-1/2 -translate-y-1/2 transition-all duration-300",
                   "hover:scale-110",
-                  showPassword ? "text-rose" : "text-muted-foreground/50 hover:text-rose"
+                  showPassword ? "text-teal" : "text-muted-foreground/50 hover:text-teal"
                 )}
                 style={{
-                  filter: showPassword ? "drop-shadow(0 0 6px hsla(338, 78%, 58%, 0.5))" : "none",
+                  filter: showPassword ? "drop-shadow(0 0 6px rgba(46, 242, 226, 0.5))" : "none",
                 }}
               >
                 {showPassword ? (

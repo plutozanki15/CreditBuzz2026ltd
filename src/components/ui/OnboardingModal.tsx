@@ -46,11 +46,11 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
       <div 
         className="relative w-full max-w-[380px] animate-modal-enter"
         style={{
-          background: "hsla(240, 8%, 7%, 0.95)",
+          background: "hsla(240, 7%, 6%, 0.95)",
           backdropFilter: "blur(24px)",
-          border: "1px solid hsla(345, 55%, 75%, 0.15)",
+          border: "1px solid hsla(262, 76%, 57%, 0.2)",
           borderRadius: "1.25rem",
-          boxShadow: "0 25px 60px -15px hsla(0, 0%, 0%, 0.6), 0 0 40px hsla(338, 78%, 58%, 0.15)",
+          boxShadow: "0 25px 60px -15px hsla(0, 0%, 0%, 0.6), 0 0 40px hsla(262, 76%, 57%, 0.15)",
         }}
       >
         {/* Gradient border */}
@@ -58,7 +58,7 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
           className="absolute inset-0 rounded-[1.25rem] pointer-events-none"
           style={{
             padding: "1px",
-            background: "linear-gradient(135deg, hsla(338, 78%, 58%, 0.4), hsla(345, 55%, 75%, 0.2))",
+            background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.4), hsla(289, 100%, 65%, 0.3), hsla(37, 89%, 63%, 0.2))",
             WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
             maskComposite: "exclude",
           }}
@@ -79,11 +79,11 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
               <div 
                 className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, hsla(338, 78%, 58%, 0.2), hsla(345, 55%, 75%, 0.1))",
-                  border: "1px solid hsla(338, 78%, 58%, 0.3)",
+                  background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.2), hsla(289, 100%, 65%, 0.1))",
+                  border: "1px solid hsla(262, 76%, 57%, 0.3)",
                 }}
               >
-                <Bell className="w-8 h-8 text-rose" />
+                <Bell className="w-8 h-8 text-violet" />
               </div>
 
               <h2 className="text-xl font-display font-semibold text-center mb-2">
@@ -110,11 +110,11 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
               <div 
                 className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
                 style={{
-                  background: "linear-gradient(135deg, hsla(338, 78%, 58%, 0.2), hsla(345, 55%, 75%, 0.1))",
-                  border: "1px solid hsla(338, 78%, 58%, 0.3)",
+                  background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.2), hsla(289, 100%, 65%, 0.1))",
+                  border: "1px solid hsla(262, 76%, 57%, 0.3)",
                 }}
               >
-                <Users className="w-8 h-8 text-rose" />
+                <Users className="w-8 h-8 text-magenta" />
               </div>
 
               <h2 className="text-xl font-display font-semibold text-center mb-2">
@@ -123,7 +123,7 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
               <p className="text-muted-foreground text-sm text-center mb-2 leading-relaxed">
                 You must join our community before entering the dashboard.
               </p>
-              <p className="text-rose text-sm text-center mb-6 font-medium">
+              <p className="text-teal text-sm text-center mb-6 font-medium">
                 Be part of the 50,000 lucky members 🎉
               </p>
 
@@ -145,12 +145,12 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
           <div className="flex justify-center gap-2 mt-5">
             <div 
               className={`w-2 h-2 rounded-full transition-colors ${
-                step === "notifications" ? "bg-rose" : "bg-muted"
+                step === "notifications" ? "bg-violet" : "bg-muted"
               }`} 
             />
             <div 
               className={`w-2 h-2 rounded-full transition-colors ${
-                step === "community" ? "bg-rose" : "bg-muted"
+                step === "community" ? "bg-violet" : "bg-muted"
               }`} 
             />
           </div>

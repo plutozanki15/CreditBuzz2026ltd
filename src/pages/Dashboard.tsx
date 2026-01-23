@@ -12,7 +12,6 @@ import {
   Send,
   Wallet,
   TrendingUp,
-  TrendingDown,
   CheckCircle,
   Clock,
   XCircle
@@ -26,7 +25,7 @@ const transactions = [
 ];
 
 const quickActions = [
-  { icon: Send, label: "Transfer", color: "bg-rose/20 text-rose" },
+  { icon: Send, label: "Transfer", color: "bg-violet/20 text-violet" },
   { icon: Wallet, label: "Withdraw", color: "bg-teal/20 text-teal" },
 ];
 
@@ -89,7 +88,7 @@ export const Dashboard = () => {
         <div className="flex items-center gap-3">
           <button className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors relative">
             <Bell className="w-5 h-5 text-muted-foreground" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-rose rounded-full" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-magenta rounded-full" />
           </button>
           <button className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors">
             <Settings className="w-5 h-5 text-muted-foreground" />
@@ -113,7 +112,7 @@ export const Dashboard = () => {
               key={action.label}
               className="glass-card p-4 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               style={{
-                boxShadow: "0 0 20px hsla(338, 78%, 58%, 0.1)",
+                boxShadow: "0 0 20px hsla(262, 76%, 57%, 0.1)",
               }}
             >
               <div className={`p-2 rounded-xl ${action.color}`}>
@@ -131,10 +130,10 @@ export const Dashboard = () => {
         >
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-display font-semibold flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-rose" />
+              <TrendingUp className="w-5 h-5 text-violet" />
               Transaction History
             </h2>
-            <button className="text-sm text-rose hover:underline">View all</button>
+            <button className="text-sm text-teal hover:underline">View all</button>
           </div>
           
           <GlassCard className="p-0 overflow-hidden">

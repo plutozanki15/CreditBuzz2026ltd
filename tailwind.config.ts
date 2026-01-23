@@ -51,13 +51,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        rose: {
-          DEFAULT: "hsl(var(--rose))",
-          light: "hsl(var(--rose-light))",
-          dark: "hsl(var(--rose-dark))",
-          glow: "hsl(var(--rose-glow))",
-        },
-        "metallic-rose": "hsl(var(--metallic-rose))",
         violet: "hsl(var(--violet))",
         magenta: "hsl(var(--magenta))",
         gold: "hsl(var(--gold))",
