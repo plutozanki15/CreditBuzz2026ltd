@@ -6,6 +6,7 @@ import { VirtualBankCard } from "@/components/ui/VirtualBankCard";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { OnboardingModal } from "@/components/ui/OnboardingModal";
 import { useClaimTimer } from "@/hooks/useClaimTimer";
+import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { 
   Carousel,
   CarouselContent,
@@ -20,18 +21,19 @@ import {
   Clock,
   Headphones,
   Coins,
-  CheckCircle,
   ChevronRight,
   MessageCircle,
   Timer
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
+const TRANSACTIONS_KEY = "zenfi_transactions";
+
 const actionButtons = [
   { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta" },
   { icon: Gift, label: "Refer & Earn", color: "from-magenta to-gold" },
   { icon: Users, label: "Community", color: "from-teal to-violet" },
-  { icon: Clock, label: "History", color: "from-gold to-magenta" },
+  { icon: Clock, label: "History", color: "from-gold to-magenta", route: "/history" },
   { icon: Headphones, label: "Support", color: "from-violet to-teal", route: "/support" },
 ];
 
@@ -41,6 +43,9 @@ export const Dashboard = () => {
   const [balance, setBalance] = useState(180000);
   const [isClaiming, setIsClaiming] = useState(false);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
+
+  // Track route for persistence
+  useRouteHistory();
 
   useEffect(() => {
     const onboardingComplete = localStorage.getItem("zenfi_onboarding_complete");
@@ -54,6 +59,21 @@ export const Dashboard = () => {
       setBalance(parseInt(savedBalance, 10));
     }
   }, []);
+
+  const addTransaction = (type: "claim" | "withdraw", amount: number) => {
+    const transaction = {
+      id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      amount,
+      date: new Date().toISOString(),
+      status: "success",
+    };
+    
+    const existing = localStorage.getItem(TRANSACTIONS_KEY);
+    const transactions = existing ? JSON.parse(existing) : [];
+    transactions.unshift(transaction);
+    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+  };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem("zenfi_onboarding_complete", "true");
@@ -69,6 +89,7 @@ export const Dashboard = () => {
       const newBalance = balance + 10000;
       setBalance(newBalance);
       localStorage.setItem("zenfi_balance", newBalance.toString());
+      addTransaction("claim", 10000);
       startCooldown();
       setIsClaiming(false);
       

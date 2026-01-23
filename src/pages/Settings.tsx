@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { 
   ArrowLeft,
   Bell,
@@ -33,6 +34,8 @@ export const Settings = () => {
     new: "",
     confirm: ""
   });
+
+  useRouteHistory();
 
   useEffect(() => {
     // Load saved preferences
