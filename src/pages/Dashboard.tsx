@@ -32,7 +32,7 @@ const TRANSACTIONS_KEY = "zenfi_transactions";
 const actionButtons = [
   { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta" },
   { icon: Gift, label: "Refer & Earn", color: "from-magenta to-gold" },
-  { icon: Users, label: "Community", color: "from-teal to-violet" },
+  { icon: Users, label: "Community", color: "from-teal to-violet", route: "/community" },
   { icon: Clock, label: "History", color: "from-gold to-magenta", route: "/history" },
   { icon: Headphones, label: "Support", color: "from-violet to-teal", route: "/support" },
 ];
@@ -134,7 +134,7 @@ export const Dashboard = () => {
       <main className="relative z-10 px-4 space-y-4">
         {/* Compact Virtual Bank Card */}
         <div className="animate-fade-in-up">
-          <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[180px]" />
+          <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[160px]" />
         </div>
 
         {/* Primary Action Buttons - More Compact */}
@@ -232,23 +232,23 @@ export const Dashboard = () => {
             <span className="text-[10px] text-muted-foreground">Fast & reliable</span>
           </div>
           
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-2.5">
             {actionButtons.map((action, index) => (
               <button
                 key={action.label}
                 onClick={() => handleActionClick(action.route)}
-                className="glass-card aspect-square flex flex-col items-center justify-center gap-1 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
+                className="glass-card aspect-square flex flex-col items-center justify-center gap-1.5 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <div 
-                  className={`p-1.5 rounded-lg bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
+                  className={`p-2 rounded-xl bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
                   style={{
-                    boxShadow: "0 2px 10px hsla(262, 76%, 57%, 0.15)",
+                    boxShadow: "0 4px 12px hsla(262, 76%, 57%, 0.2)",
                   }}
                 >
-                  <action.icon className="w-3.5 h-3.5 text-white" />
+                  <action.icon className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[9px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight px-0.5">
+                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight px-0.5">
                   {action.label}
                 </span>
               </button>

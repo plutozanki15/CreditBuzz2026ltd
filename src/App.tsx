@@ -10,6 +10,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { History } from "./pages/History";
 import { Support } from "./pages/Support";
 import { Settings } from "./pages/Settings";
+import { Community } from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/history" element={<History />} />
           <Route path="/support" element={<Support />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/community" element={<Community />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
