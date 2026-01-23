@@ -234,24 +234,28 @@ export const Dashboard = () => {
           
           <div className="grid grid-cols-5 gap-3">
             {actionButtons.map((action, index) => (
-              <button
+              <div
                 key={action.label}
-                onClick={() => handleActionClick(action.route)}
-                className="glass-card aspect-square p-2 flex flex-col items-center justify-center gap-1.5 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
+                className="flex flex-col items-center gap-1.5 animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
-                <div 
-                  className={`p-2 rounded-xl bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}
-                  style={{
-                    boxShadow: "0 4px 14px hsla(262, 76%, 57%, 0.25)",
-                  }}
+                <button
+                  onClick={() => handleActionClick(action.route)}
+                  className="glass-card aspect-square w-full p-3 flex items-center justify-center hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group"
                 >
-                  <action.icon className="w-5 h-5 text-white transition-transform duration-300 group-hover:scale-110" />
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight">
+                  <div 
+                    className={`p-2.5 rounded-xl bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                    style={{
+                      boxShadow: "0 4px 14px hsla(262, 76%, 57%, 0.25)",
+                    }}
+                  >
+                    <action.icon className="w-5 h-5 text-white transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                </button>
+                <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight">
                   {action.label}
                 </span>
-              </button>
+              </div>
             ))}
           </div>
         </div>
