@@ -52,7 +52,7 @@ export const VirtualBankCard = ({
   return (
     <div 
       className={cn(
-        "bank-card p-6 min-h-[200px] animate-card-float",
+        "bank-card p-5 animate-card-float",
         className
       )}
     >
