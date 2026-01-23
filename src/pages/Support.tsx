@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { 
   ArrowLeft,
   MessageCircle,
@@ -45,6 +46,7 @@ export const Support = () => {
   const navigate = useNavigate();
   const [activeCard, setActiveCard] = useState<number | null>(null);
 
+  useRouteHistory();
   return (
     <div className="min-h-screen bg-background pb-8">
       <FloatingParticles />
