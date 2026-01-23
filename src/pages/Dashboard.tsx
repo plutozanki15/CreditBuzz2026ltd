@@ -216,18 +216,18 @@ export const Dashboard = () => {
               <button
                 key={action.label}
                 onClick={() => handleActionClick(action.route)}
-                className="glass-card p-3 flex flex-col items-center gap-1.5 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
+                className="glass-card aspect-square flex flex-col items-center justify-center gap-1 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <div 
-                  className={`p-2 rounded-lg bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
+                  className={`p-1.5 rounded-lg bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
                   style={{
                     boxShadow: "0 2px 10px hsla(262, 76%, 57%, 0.15)",
                   }}
                 >
-                  <action.icon className="w-4 h-4 text-white" />
+                  <action.icon className="w-3.5 h-3.5 text-white" />
                 </div>
-                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight">
+                <span className="text-[9px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight px-0.5">
                   {action.label}
                 </span>
               </button>
