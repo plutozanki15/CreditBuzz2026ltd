@@ -134,7 +134,7 @@ export const Dashboard = () => {
       <main className="relative z-10 px-4 space-y-4">
         {/* Compact Virtual Bank Card */}
         <div className="animate-fade-in-up">
-          <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[130px]" />
+          <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[110px]" />
         </div>
 
         {/* Primary Action Buttons - More Compact */}
