@@ -116,16 +116,16 @@ export const Dashboard = () => {
           <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[180px]" />
         </div>
 
-        {/* Primary Action Buttons - More Compact */}
+        {/* Primary Action Buttons */}
         <div 
-          className="grid grid-cols-2 gap-3 animate-fade-in-up"
+          className="grid grid-cols-2 gap-4 animate-fade-in-up"
           style={{ animationDelay: "0.1s" }}
         >
           {/* Claim Button with Timer */}
           <button
             onClick={handleClaim}
             disabled={!canClaim || isClaiming}
-            className={`relative overflow-hidden glass-card p-3 flex items-center gap-3 transition-all duration-300 ${
+            className={`relative overflow-hidden glass-card p-4 flex items-center gap-4 transition-all duration-300 ${
               !canClaim 
                 ? "opacity-70 cursor-not-allowed" 
                 : "hover:scale-[1.02] active:scale-[0.98]"
@@ -146,33 +146,33 @@ export const Dashboard = () => {
               />
             )}
             
-            <div className={`p-2 rounded-xl ${!canClaim ? "bg-muted" : "bg-violet/20"}`}>
+            <div className={`p-3 rounded-xl ${!canClaim ? "bg-muted" : "bg-violet/20"}`}>
               {isClaiming ? (
-                <div className="w-4 h-4 border-2 border-violet border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-violet border-t-transparent rounded-full animate-spin" />
               ) : !canClaim ? (
-                <Timer className="w-4 h-4 text-muted-foreground" />
+                <Timer className="w-6 h-6 text-muted-foreground" />
               ) : (
-                <Gift className="w-4 h-4 text-violet" />
+                <Gift className="w-6 h-6 text-violet" />
               )}
             </div>
             <div className="text-left flex-1 min-w-0">
               {!canClaim ? (
                 <>
-                  <span className="font-semibold text-foreground block text-sm">
+                  <span className="font-semibold text-foreground block text-base">
                     Next Claim
                   </span>
-                  <span className="text-xs text-teal font-mono">{remainingTime}</span>
+                  <span className="text-sm text-teal font-mono">{remainingTime}</span>
                 </>
               ) : isClaiming ? (
-                <span className="font-semibold text-foreground block text-sm">
+                <span className="font-semibold text-foreground block text-base">
                   Claiming...
                 </span>
               ) : (
                 <>
-                  <span className="font-semibold text-foreground block text-sm">
+                  <span className="font-semibold text-foreground block text-base">
                     Claim ₦10,000
                   </span>
-                  <span className="text-xs text-muted-foreground">Tap to claim</span>
+                  <span className="text-sm text-muted-foreground">Tap to claim</span>
                 </>
               )}
             </div>
@@ -180,7 +180,7 @@ export const Dashboard = () => {
 
           {/* Withdraw Button */}
           <button
-            className="relative overflow-hidden glass-card p-3 flex items-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
+            className="relative overflow-hidden glass-card p-4 flex items-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
             style={{
               background: "linear-gradient(135deg, hsla(174, 88%, 56%, 0.15), hsla(262, 76%, 57%, 0.1))",
             }}
@@ -191,43 +191,43 @@ export const Dashboard = () => {
                 background: "radial-gradient(circle at center, hsla(174, 88%, 56%, 0.2) 0%, transparent 70%)",
               }}
             />
-            <div className="p-2 rounded-xl bg-teal/20">
-              <Wallet className="w-4 h-4 text-teal" />
+            <div className="p-3 rounded-xl bg-teal/20">
+              <Wallet className="w-6 h-6 text-teal" />
             </div>
             <div className="text-left">
-              <span className="font-semibold text-foreground block text-sm">Withdraw</span>
-              <span className="text-xs text-muted-foreground">To bank</span>
+              <span className="font-semibold text-foreground block text-base">Withdraw</span>
+              <span className="text-sm text-muted-foreground">To bank</span>
             </div>
           </button>
         </div>
 
-        {/* Action Grid - Compact */}
+        {/* Action Grid */}
         <div 
-          className="space-y-2 animate-fade-in-up"
+          className="space-y-3 animate-fade-in-up"
           style={{ animationDelay: "0.2s" }}
         >
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-sm font-display font-semibold">Quick Actions</h2>
-            <span className="text-[10px] text-muted-foreground">Fast & reliable</span>
+            <h2 className="text-base font-display font-semibold">Quick Actions</h2>
+            <span className="text-xs text-muted-foreground">Fast & reliable</span>
           </div>
           
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-3">
             {actionButtons.map((action, index) => (
               <button
                 key={action.label}
                 onClick={() => handleActionClick(action.route)}
-                className="glass-card p-3 flex flex-col items-center gap-1.5 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
+                className="glass-card p-4 flex flex-col items-center gap-2 hover:scale-[1.05] active:scale-[0.95] transition-all duration-200 group animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <div 
-                  className={`p-2 rounded-lg bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
+                  className={`p-3 rounded-xl bg-gradient-to-br ${action.color} opacity-80 group-hover:opacity-100 transition-all duration-200 group-hover:scale-110`}
                   style={{
-                    boxShadow: "0 2px 10px hsla(262, 76%, 57%, 0.15)",
+                    boxShadow: "0 4px 15px hsla(262, 76%, 57%, 0.2)",
                   }}
                 >
-                  <action.icon className="w-4 h-4 text-white" />
+                  <action.icon className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight">
+                <span className="text-xs font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center leading-tight">
                   {action.label}
                 </span>
               </button>
