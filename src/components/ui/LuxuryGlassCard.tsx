@@ -1,14 +1,15 @@
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, CSSProperties } from "react";
 
 interface LuxuryGlassCardProps {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
 }
 
-export const LuxuryGlassCard = ({ children, className }: LuxuryGlassCardProps) => {
+export const LuxuryGlassCard = ({ children, className, style }: LuxuryGlassCardProps) => {
   return (
-    <div className={cn("relative group", className)}>
+    <div className={cn("relative group", className)} style={style}>
       {/* Glow effect behind card */}
       <div 
         className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-xl"
