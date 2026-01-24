@@ -127,134 +127,112 @@ export const Withdrawal = () => {
         </div>
       </header>
 
-      <main className="relative z-10 px-4 pb-8 space-y-5">
-        {/* Available Balance Card */}
-        <LuxuryGlassCard className="p-5 animate-scale-in">
+      <main className="relative z-10 px-4 pb-6 space-y-3">
+        {/* Available Balance Card - Compact */}
+        <LuxuryGlassCard className="p-3 animate-scale-in">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
-                Available for Withdrawal
-              </p>
-              <p 
-                className="text-2xl font-bold gradient-text"
-                style={{ textShadow: "0 0 30px hsla(174, 88%, 56%, 0.3)" }}
-              >
-                {formatBalance(availableBalance)}
-              </p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Available Balance</p>
+              <p className="text-xl font-bold gradient-text">{formatBalance(availableBalance)}</p>
             </div>
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-teal/20 to-violet/20">
-              <Wallet className="w-6 h-6 text-teal" />
+            <div className="p-2 rounded-xl bg-gradient-to-br from-teal/20 to-violet/20">
+              <Wallet className="w-5 h-5 text-teal" />
             </div>
           </div>
         </LuxuryGlassCard>
 
-        {/* Withdrawal Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <LuxuryGlassCard className="p-5 space-y-4 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="w-4 h-4 text-violet" />
-              <span className="text-sm font-medium text-foreground">Bank Details</span>
+        {/* Withdrawal Form - Compact */}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <LuxuryGlassCard className="p-4 space-y-3 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <div className="flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-violet" />
+              <span className="text-xs font-medium text-foreground">Bank Details</span>
             </div>
 
             {/* Bank Selection */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Select Bank
-              </label>
+            <div className="space-y-1">
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Bank</label>
               <Select
                 value={formData.bank}
                 onValueChange={(value) => setFormData({ ...formData, bank: value })}
               >
-                <SelectTrigger className="w-full h-12 bg-secondary/50 border-border/50 rounded-xl focus:ring-2 focus:ring-teal/50 transition-all">
+                <SelectTrigger className="w-full h-10 bg-secondary/50 border-border/50 rounded-lg text-sm">
                   <div className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                    <SelectValue placeholder="Choose your bank" />
+                    <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="Select bank" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border/50 backdrop-blur-xl max-h-[300px]">
+                <SelectContent className="bg-card border-border/50 backdrop-blur-xl max-h-[280px] z-50">
                   {nigerianBanks.map((bank) => (
-                    <SelectItem 
-                      key={bank} 
-                      value={bank}
-                      className="hover:bg-secondary/50 focus:bg-secondary/50 cursor-pointer"
-                    >
-                      {bank}
-                    </SelectItem>
+                    <SelectItem key={bank} value={bank} className="text-sm">{bank}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Account Number */}
-            <LuxuryInput
-              label="Account Number"
-              placeholder="Enter 10-digit account number"
-              icon={<Hash className="w-4 h-4" />}
-              maxLength={10}
-              value={formData.accountNumber}
-              onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value.replace(/\D/g, '') })}
-            />
-
-            {/* Account Name */}
-            <LuxuryInput
-              label="Account Name"
-              placeholder="Enter account holder name"
-              icon={<User className="w-4 h-4" />}
-              value={formData.accountName}
-              onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-            />
+            {/* Account Number & Name - Inline */}
+            <div className="grid grid-cols-2 gap-2">
+              <LuxuryInput
+                label="Account No."
+                placeholder="10-digit"
+                icon={<Hash className="w-3 h-3" />}
+                maxLength={10}
+                value={formData.accountNumber}
+                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value.replace(/\D/g, '') })}
+              />
+              <LuxuryInput
+                label="Account Name"
+                placeholder="Name"
+                icon={<User className="w-3 h-3" />}
+                value={formData.accountName}
+                onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+              />
+            </div>
           </LuxuryGlassCard>
 
-          <LuxuryGlassCard className="p-5 space-y-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Wallet className="w-4 h-4 text-teal" />
-              <span className="text-sm font-medium text-foreground">Amount & Verification</span>
+          <LuxuryGlassCard className="p-4 space-y-3 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <div className="flex items-center gap-2">
+              <Wallet className="w-3.5 h-3.5 text-teal" />
+              <span className="text-xs font-medium text-foreground">Amount & Code</span>
             </div>
 
-            {/* Amount */}
-            <LuxuryInput
-              label="Amount (₦)"
-              placeholder="Enter withdrawal amount"
-              icon={<span className="text-sm font-bold">₦</span>}
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value.replace(/\D/g, '') })}
-            />
-
-            {/* ZFC Code */}
-            <LuxuryInput
-              label="ZFC Verification Code"
-              placeholder="Enter your ZFC code"
-              type="password"
-              icon={<Lock className="w-4 h-4" />}
-              value={formData.zfcCode}
-              onChange={(e) => setFormData({ ...formData, zfcCode: e.target.value })}
-            />
-
-            <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
-              <Shield className="w-3 h-3" />
-              Your transaction is secured with 256-bit encryption
-            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <LuxuryInput
+                label="Amount (₦)"
+                placeholder="Amount"
+                icon={<span className="text-xs font-bold">₦</span>}
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value.replace(/\D/g, '') })}
+              />
+              <LuxuryInput
+                label="ZFC Code"
+                placeholder="Code"
+                type="password"
+                icon={<Lock className="w-3 h-3" />}
+                value={formData.zfcCode}
+                onChange={(e) => setFormData({ ...formData, zfcCode: e.target.value })}
+              />
+            </div>
           </LuxuryGlassCard>
 
           {/* Submit Button */}
-          <div className="pt-2 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <LuxuryButton
-              type="submit"
-              loading={isSubmitting}
-              className="w-full h-14 text-base font-bold rounded-2xl"
-            >
-              <CheckCircle2 className="w-5 h-5 mr-2" />
-              Confirm Withdrawal
-            </LuxuryButton>
-          </div>
+          <LuxuryButton
+            type="submit"
+            loading={isSubmitting}
+            className="w-full h-12 text-sm font-bold rounded-xl animate-fade-in-up"
+            style={{ animationDelay: "0.2s" }}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Confirm Withdrawal
+          </LuxuryButton>
         </form>
 
         {/* Security Footer */}
-        <div className="text-center pt-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-          <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground/50">
-            <Shield className="w-3 h-3" />
-            <span>Bank-grade security • Instant processing • 24/7 support</span>
-          </div>
+        <div className="text-center pt-2">
+          <p className="text-[9px] text-muted-foreground/50 flex items-center justify-center gap-1">
+            <Shield className="w-2.5 h-2.5" />
+            Secured with 256-bit encryption
+          </p>
         </div>
       </main>
     </div>

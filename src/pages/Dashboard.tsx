@@ -243,27 +243,27 @@ export const Dashboard = () => {
             <span className="text-[10px] text-muted-foreground">Fast & reliable</span>
           </div>
           
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-1.5">
             {actionButtons.map((action, index) => (
               <div
                 key={action.label}
-                className="flex flex-col items-center gap-1.5 animate-fade-in-up"
+                className="flex flex-col items-center gap-1 animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <button
                   onClick={() => handleActionClick(action.route)}
-                  className={`aspect-square w-full rounded-2xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color} p-3`}
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
                   style={{
-                    boxShadow: "0 4px 20px hsla(262, 76%, 57%, 0.35), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
+                    boxShadow: "0 3px 12px hsla(262, 76%, 57%, 0.3), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
                   }}
                 >
                   <AnimatedIcon 
                     icon={action.icon} 
-                    className="w-full h-full text-white" 
+                    className="w-5 h-5 text-white" 
                     animationType={action.animation}
                   />
                 </button>
-                <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight">
+                <span className="text-[9px] font-medium text-muted-foreground text-center leading-tight">
                   {action.label}
                 </span>
               </div>
