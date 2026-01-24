@@ -11,6 +11,8 @@ import { History } from "./pages/History";
 import { Support } from "./pages/Support";
 import { Settings } from "./pages/Settings";
 import { Community } from "./pages/Community";
+import { Withdrawal } from "./pages/Withdrawal";
+import { Referral } from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/support" element={<Support />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/withdrawal" element={<Withdrawal />} />
+          <Route path="/referral" element={<Referral />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

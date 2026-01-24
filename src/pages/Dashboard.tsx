@@ -6,6 +6,8 @@ import { VirtualBankCard } from "@/components/ui/VirtualBankCard";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { OnboardingModal } from "@/components/ui/OnboardingModal";
 import { WarningBanner } from "@/components/ui/WarningBanner";
+import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
 import { useClaimTimer } from "@/hooks/useClaimTimer";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { 
@@ -31,11 +33,11 @@ import { toast } from "@/hooks/use-toast";
 const TRANSACTIONS_KEY = "zenfi_transactions";
 
 const actionButtons = [
-  { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta" },
-  { icon: Gift, label: "Refer & Earn", color: "from-magenta to-gold" },
-  { icon: Users, label: "Community", color: "from-teal to-violet", route: "/community" },
-  { icon: Clock, label: "History", color: "from-gold to-magenta", route: "/history" },
-  { icon: Headphones, label: "Support", color: "from-violet to-teal", route: "/support" },
+  { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta", animation: "pulse" as const },
+  { icon: Gift, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
+  { icon: Users, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
+  { icon: Clock, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
+  { icon: Headphones, label: "Support", color: "from-violet to-teal", route: "/support", animation: "pulse" as const },
 ];
 
 export const Dashboard = () => {
@@ -127,8 +129,9 @@ export const Dashboard = () => {
         <div className="flex items-center gap-2">
           <button className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors relative group">
             <Bell className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-magenta rounded-full" />
+            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-magenta rounded-full animate-pulse" />
           </button>
+          <ProfileAvatar onClick={() => navigate("/settings")} size="sm" />
           <button 
             onClick={() => navigate("/settings")}
             className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors group"
@@ -208,6 +211,7 @@ export const Dashboard = () => {
 
           {/* Withdraw Button */}
           <button
+            onClick={() => navigate("/withdrawal")}
             className="relative overflow-hidden glass-card p-3 flex items-center gap-3 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 group"
             style={{
               background: "linear-gradient(135deg, hsla(174, 88%, 56%, 0.15), hsla(262, 76%, 57%, 0.1))",
@@ -243,17 +247,21 @@ export const Dashboard = () => {
             {actionButtons.map((action, index) => (
               <div
                 key={action.label}
-                className="flex flex-col items-center gap-1 animate-fade-in-up"
+                className="flex flex-col items-center gap-1.5 animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <button
                   onClick={() => handleActionClick(action.route)}
-                  className={`aspect-square w-full rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
+                  className={`aspect-square w-full rounded-2xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color} p-3`}
                   style={{
-                    boxShadow: "0 4px 14px hsla(262, 76%, 57%, 0.3)",
+                    boxShadow: "0 4px 20px hsla(262, 76%, 57%, 0.35), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
                   }}
                 >
-                  <action.icon className="w-6 h-6 text-white transition-transform duration-300 group-hover:scale-110" />
+                  <AnimatedIcon 
+                    icon={action.icon} 
+                    className="w-full h-full text-white" 
+                    animationType={action.animation}
+                  />
                 </button>
                 <span className="text-[10px] font-medium text-muted-foreground text-center leading-tight">
                   {action.label}
