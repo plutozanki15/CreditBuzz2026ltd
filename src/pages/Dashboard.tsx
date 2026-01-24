@@ -252,7 +252,7 @@ export const Dashboard = () => {
               >
                 <button
                   onClick={() => handleActionClick(action.route)}
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
+                  className={`w-14 h-14 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
                   style={{
                     boxShadow: "0 3px 12px hsla(262, 76%, 57%, 0.3), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
                   }}
