@@ -168,6 +168,16 @@ export const useAdminData = () => {
     const payment = payments.find(p => p.id === paymentId);
     if (!payment) return { error: new Error("Payment not found") };
 
+    // Optimistic update - immediately remove from pending list
+    setPayments(prev => prev.map(p => 
+      p.id === paymentId ? { ...p, status: "approved" as const } : p
+    ));
+    setStats(prev => ({
+      ...prev,
+      pendingPayments: prev.pendingPayments - 1,
+      approvedPayments: prev.approvedPayments + 1,
+    }));
+
     const { data: { user } } = await supabase.auth.getUser();
     
     // Update payment status
@@ -180,7 +190,11 @@ export const useAdminData = () => {
       })
       .eq("id", paymentId);
 
-    if (paymentError) return { error: paymentError };
+    if (paymentError) {
+      // Revert optimistic update on error
+      fetchData();
+      return { error: paymentError };
+    }
 
     // Credit the user's balance directly
     const { error: balanceError } = await supabase
@@ -201,6 +215,16 @@ export const useAdminData = () => {
   };
 
   const rejectPayment = async (paymentId: string, reason: string) => {
+    // Optimistic update - immediately remove from pending list
+    setPayments(prev => prev.map(p => 
+      p.id === paymentId ? { ...p, status: "rejected" as const, rejection_reason: reason } : p
+    ));
+    setStats(prev => ({
+      ...prev,
+      pendingPayments: prev.pendingPayments - 1,
+      rejectedPayments: prev.rejectedPayments + 1,
+    }));
+
     const { data: { user } } = await supabase.auth.getUser();
     
     const { error } = await supabase
@@ -213,10 +237,14 @@ export const useAdminData = () => {
       })
       .eq("id", paymentId);
 
-    if (!error) {
-      await logActivity("reject_payment", "payment", paymentId, { reason });
+    if (error) {
+      // Revert optimistic update on error
+      fetchData();
+      return { error };
     }
-    return { error };
+
+    await logActivity("reject_payment", "payment", paymentId, { reason });
+    return { error: null };
   };
 
   const logActivity = async (action: string, targetType: string, targetId: string, details?: Record<string, unknown>) => {
