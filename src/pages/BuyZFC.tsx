@@ -182,23 +182,22 @@ export const BuyZFC = () => {
         {step === "form" && (
           <div className={`space-y-6 transition-all duration-500 ${showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             
-            {/* Hero Amount Card */}
-            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet/15 via-magenta/10 to-transparent border border-violet/25 p-6">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-violet/20 to-transparent rounded-full blur-2xl" />
-              <div className="relative">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="w-5 h-5 text-gold animate-pulse" />
-                  <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Premium ZenFi Credits</span>
+            {/* Compact Amount Card */}
+            <section className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet/12 to-magenta/8 border border-violet/20 p-4">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-violet/15 rounded-full blur-2xl" />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-gold" />
+                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">ZFC Purchase</span>
+                  </div>
+                  <div className="text-2xl font-bold text-foreground tracking-tight">
+                    {formatCurrency(displayAmount)}
+                  </div>
                 </div>
-                <div className="text-4xl font-bold text-foreground tracking-tight mb-2">
-                  {formatCurrency(displayAmount)}
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Purchase ZFC to unlock premium rewards, faster withdrawals, and exclusive member benefits.
-                </p>
-                <div className="flex items-center gap-3">
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal/15 text-teal border border-teal/25">Best Value</span>
-                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet/15 text-violet border border-violet/25">Instant Credit</span>
+                <div className="flex flex-col gap-1.5">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal/15 text-teal border border-teal/20">Best Value</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-violet/15 text-violet border border-violet/20">Instant</span>
                 </div>
               </div>
             </section>
@@ -350,55 +349,42 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 3: NOTICE ============ */}
+        {/* ============ STEP 3: NOTICE (COMPACT) ============ */}
         {step === "notice" && (
-          <div className="animate-fade-in space-y-5">
-            <div className="rounded-2xl bg-gradient-to-br from-gold/10 to-transparent border border-gold/25 overflow-hidden">
-              {/* Header */}
-              <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gold/15 flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-gold" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-foreground">Before You Proceed</h3>
-                  <p className="text-xs text-muted-foreground">Please read these important guidelines</p>
-                </div>
+          <div className="animate-fade-in space-y-4">
+            {/* Compact Header */}
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gold/10 border border-gold/20">
+              <div className="w-10 h-10 rounded-lg bg-gold/15 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-gold" />
               </div>
-
-              {/* Content */}
-              <div className="p-5 space-y-4">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  To ensure your payment is processed quickly and credited to your account, please follow these guidelines carefully.
-                </p>
-                
-                {[
-                  { icon: Banknote, title: "Exact Amount", text: "Transfer the exact amount shown. Any variation may delay processing." },
-                  { icon: Upload, title: "Upload Receipt", text: "Immediately upload your payment receipt after transfer for faster verification." },
-                  { icon: Building2, title: "Bank Selection", text: "Payments from major Nigerian banks (GTB, Zenith, Access) confirm within minutes." },
-                  { icon: FileCheck, title: "No Disputes", text: "Please avoid raising bank disputes during the confirmation period." },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/20 border border-border/20">
-                    <div className="w-9 h-9 rounded-lg bg-violet/15 flex items-center justify-center shrink-0 mt-0.5">
-                      <item.icon className="w-4 h-4 text-violet" />
-                    </div>
-                    <div>
-                      <span className="text-sm font-semibold text-foreground block">{item.title}</span>
-                      <span className="text-xs text-muted-foreground">{item.text}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Action */}
-              <div className="p-5 pt-2">
-                <button
-                  onClick={() => setStep("transfer")}
-                  className="w-full h-13 py-3.5 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
-                >
-                  I Understand, Continue
-                </button>
+              <div>
+                <h3 className="font-bold text-sm text-foreground">Quick Guidelines</h3>
+                <p className="text-[11px] text-muted-foreground">Follow these for instant confirmation</p>
               </div>
             </div>
+
+            {/* Compact List */}
+            <div className="space-y-2">
+              {[
+                { icon: Banknote, text: "Transfer exact amount — no more, no less" },
+                { icon: Upload, text: "Upload receipt immediately after transfer" },
+                { icon: Building2, text: "Major banks confirm faster (GTB, Zenith, Access)" },
+                { icon: FileCheck, text: "Don't dispute — we verify within minutes" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20 border border-border/20">
+                  <item.icon className="w-4 h-4 text-violet shrink-0" />
+                  <span className="text-sm text-muted-foreground">{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action */}
+            <button
+              onClick={() => setStep("transfer")}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
+            >
+              I Understand, Continue
+            </button>
           </div>
         )}
 
@@ -535,60 +521,112 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 6: PENDING ============ */}
+        {/* ============ STEP 6: PENDING (LUXURY ANIMATED) ============ */}
         {step === "pending" && (
-          <div className="min-h-[60vh] flex flex-col items-center justify-center animate-fade-in">
+          <div className="min-h-[65vh] flex flex-col items-center justify-center animate-fade-in">
             
-            {/* Status Icon */}
-            <div className="relative mb-6">
-              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-gold/25 to-gold/10 border border-gold/35 flex items-center justify-center">
-                <Clock className="w-10 h-10 text-gold" />
+            {/* Animated Status Ring */}
+            <div className="relative mb-8">
+              {/* Outer rotating ring */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full border-2 border-dashed border-gold/30" style={{ animation: "spinSlow 8s linear infinite" }} />
+              
+              {/* Middle pulsing ring */}
+              <div className="absolute inset-2 w-24 h-24 rounded-full bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/25" style={{ animation: "pendingPulse 2s ease-in-out infinite" }} />
+              
+              {/* Inner icon container */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold/30 to-gold/10 border border-gold/40 flex items-center justify-center shadow-lg shadow-gold/20">
+                  <Clock className="w-7 h-7 text-gold" style={{ animation: "tickTock 1s ease-in-out infinite" }} />
+                </div>
               </div>
-              <div className="absolute -inset-4 bg-gold/10 rounded-full blur-2xl animate-pulse" />
-              {/* Floating elements */}
-              <div className="absolute -top-2 -right-2 w-4 h-4 bg-gold/40 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-              <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-violet/40 rounded-full animate-bounce" style={{ animationDelay: "0.5s" }} />
+              
+              {/* Floating particles */}
+              <div className="absolute -top-1 right-2 w-2 h-2 bg-gold/50 rounded-full" style={{ animation: "floatUp 2s ease-in-out infinite" }} />
+              <div className="absolute bottom-0 -left-1 w-1.5 h-1.5 bg-violet/50 rounded-full" style={{ animation: "floatUp 2.5s ease-in-out infinite", animationDelay: "0.5s" }} />
+              <div className="absolute top-1/2 -right-2 w-1.5 h-1.5 bg-magenta/50 rounded-full" style={{ animation: "floatUp 3s ease-in-out infinite", animationDelay: "1s" }} />
             </div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">Payment Pending</h2>
-            <p className="text-base text-muted-foreground text-center max-w-xs leading-relaxed">
-              Your transaction is currently under review. We'll notify you via email once it's confirmed.
+            {/* Status Text */}
+            <h2 className="text-xl font-bold text-foreground mb-1">Payment Submitted</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-[280px] leading-relaxed mb-4">
+              Your transaction has been received and is currently being verified by our payment team.
             </p>
 
-            {/* Status Badge */}
-            <div className="mt-5 px-4 py-2 rounded-full bg-gold/15 border border-gold/30 flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
-              <span className="text-sm font-semibold text-gold">Under Review</span>
+            {/* Live Status Badge */}
+            <div className="px-4 py-2 rounded-full bg-gradient-to-r from-gold/15 to-gold/5 border border-gold/25 flex items-center gap-2 mb-6">
+              <div className="relative">
+                <div className="w-2 h-2 rounded-full bg-gold" />
+                <div className="absolute inset-0 w-2 h-2 rounded-full bg-gold animate-ping" />
+              </div>
+              <span className="text-xs font-bold text-gold uppercase tracking-wider">Processing</span>
             </div>
 
-            {/* Info Card */}
-            <div className="mt-6 w-full p-4 rounded-xl bg-secondary/30 border border-border/40">
-              <p className="text-xs text-muted-foreground text-center">
-                Most payments are confirmed within 5-15 minutes during banking hours. 
-                You can safely close this page — we'll send you a notification.
-              </p>
+            {/* Transaction Details Card */}
+            <div className="w-full rounded-xl bg-secondary/30 border border-border/40 overflow-hidden mb-6">
+              <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/20">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Transaction Details</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Amount</span>
+                  <span className="text-sm font-bold text-foreground">{formatCurrency(AMOUNT)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Reference</span>
+                  <span className="text-xs font-mono text-foreground">ZF-{Date.now().toString().slice(-8)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Est. Confirmation</span>
+                  <span className="text-xs text-teal font-medium">5-15 minutes</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="w-full p-3 rounded-xl bg-teal/5 border border-teal/15 mb-6">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-teal shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs text-foreground font-medium">What happens next?</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Our automated system will verify your payment within minutes. Once confirmed, your ZFC credits will be instantly added to your account and you'll receive a notification.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Actions */}
-            <div className="mt-8 space-y-3 w-full">
+            <div className="w-full space-y-2.5">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="w-full h-13 py-3.5 rounded-2xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
               >
-                Back to Dashboard
+                Return to Dashboard
               </button>
               <button
                 onClick={() => navigate("/history")}
-                className="w-full h-12 text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                View Transaction History
+                View All Transactions
               </button>
             </div>
 
             {/* Trust Footer */}
-            <div className="mt-8 flex items-center gap-2 text-muted-foreground/60">
-              <Shield className="w-4 h-4" />
-              <span className="text-xs">Secured by ZenFi • All transactions encrypted</span>
+            <div className="mt-6 flex items-center justify-center gap-4 text-muted-foreground/50">
+              <div className="flex items-center gap-1">
+                <Shield className="w-3 h-3" />
+                <span className="text-[10px]">Encrypted</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-1">
+                <BadgeCheck className="w-3 h-3" />
+                <span className="text-[10px]">Verified</span>
+              </div>
+              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+              <div className="flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                <span className="text-[10px]">Secure</span>
+              </div>
             </div>
           </div>
         )}
@@ -600,6 +638,22 @@ export const BuyZFC = () => {
           0% { width: 20%; transform: translateX(-100%); }
           50% { width: 60%; }
           100% { width: 20%; transform: translateX(400%); }
+        }
+        @keyframes spinSlow {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pendingPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        @keyframes tickTock {
+          0%, 100% { transform: rotate(-3deg); }
+          50% { transform: rotate(3deg); }
+        }
+        @keyframes floatUp {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+          50% { transform: translateY(-8px) scale(1.2); opacity: 1; }
         }
       `}</style>
     </div>
