@@ -129,12 +129,13 @@ export const Settings = () => {
 
   const handleLogout = async () => {
     localStorage.removeItem("zenfi_onboarding_complete");
-    await signOut();
+    // Navigate first for instant feedback, sign-out runs in background
+    navigate("/login");
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully",
     });
-    navigate("/login");
+    await signOut();
   };
 
   return (

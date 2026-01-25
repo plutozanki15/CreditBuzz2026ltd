@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const ROUTE_STORAGE_KEY = "zenfi_last_route";
-const ALLOWED_ROUTES = ["/dashboard", "/history", "/support", "/settings"];
+const ALLOWED_ROUTES = ["/dashboard", "/history", "/support", "/settings", "/admin"];
 
 export const useRouteHistory = () => {
   const location = useLocation();

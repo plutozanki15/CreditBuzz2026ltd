@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
@@ -34,57 +34,76 @@ export const useAuth = () => {
     isBanned: false,
   });
 
+  // Guard against racing auth events
+  const initializedRef = useRef(false);
+
   useEffect(() => {
-    // Set up auth state listener BEFORE checking session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          // Fetch profile and admin status
-          const [profileResult, roleResult] = await Promise.all([
-            supabase
-              .from("profiles")
-              .select("*")
-              .eq("user_id", session.user.id)
-              .single(),
-            supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" }),
-          ]);
+    // Helper to load profile + admin status for a given user id
+    const loadUserData = async (user: User, session: Session) => {
+      const [profileResult, roleResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+      ]);
 
-          const profile = profileResult.data as Profile | null;
-          const isAdmin = roleResult.data === true;
-          const isBanned = profile?.status === "banned";
+      const profile = profileResult.data as Profile | null;
+      const isAdmin = roleResult.data === true;
+      const isBanned = profile?.status === "banned";
 
-          setAuthState({
-            user: session.user,
-            session,
-            profile,
-            isAdmin,
-            isLoading: false,
-            isBanned,
-          });
-        } else {
-          setAuthState({
-            user: null,
-            session: null,
-            profile: null,
-            isAdmin: false,
-            isLoading: false,
-            isBanned: false,
-          });
-        }
-      }
-    );
+      setAuthState({
+        user,
+        session,
+        profile,
+        isAdmin,
+        isLoading: false,
+        isBanned,
+      });
+    };
 
-    // Check initial session
+    // 1. Check existing session on first mount (skip waiting for onAuthStateChange)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+      if (session?.user) {
+        loadUserData(session.user, session);
+        initializedRef.current = true;
+      } else {
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        initializedRef.current = true;
+      }
+    });
+
+    // 2. Subscribe to future auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Skip initial event if already handled above
+      if (!initializedRef.current) return;
+
+      if (session?.user) {
+        await loadUserData(session.user, session);
+      } else {
+        setAuthState({
+          user: null,
+          session: null,
+          profile: null,
+          isAdmin: false,
+          isLoading: false,
+          isBanned: false,
+        });
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName: string, referralCode?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    referralCode?: string
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -108,21 +127,23 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
+    // Set loading false immediately for responsive UI, signOut async in background
+    setAuthState((prev) => ({ ...prev, isLoading: false }));
     const { error } = await supabase.auth.signOut();
     return { error };
   };
 
   const refreshProfile = async () => {
     if (!authState.user) return;
-    
+
     const { data } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", authState.user.id)
-      .single();
-    
+      .maybeSingle();
+
     if (data) {
-      setAuthState(prev => ({
+      setAuthState((prev) => ({
         ...prev,
         profile: data as Profile,
         isBanned: data.status === "banned",
