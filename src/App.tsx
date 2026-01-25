@@ -13,6 +13,7 @@ import { Settings } from "./pages/Settings";
 import { Community } from "./pages/Community";
 import { Withdrawal } from "./pages/Withdrawal";
 import { Referral } from "./pages/Referral";
+import { BuyZFC } from "./pages/BuyZFC";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/withdrawal" element={<Withdrawal />} />
           <Route path="/referral" element={<Referral />} />
+          <Route path="/buy-zfc" element={<BuyZFC />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

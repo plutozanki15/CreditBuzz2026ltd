@@ -31,7 +31,7 @@ import { toast } from "@/hooks/use-toast";
 const TRANSACTIONS_KEY = "zenfi_transactions";
 
 const actionButtons = [
-  { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta", animation: "pulse" as const },
+  { icon: Coins, label: "Buy ZFC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
   { icon: Gift, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
   { icon: Users, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
   { icon: Clock, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
