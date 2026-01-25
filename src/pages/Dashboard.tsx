@@ -23,10 +23,13 @@ import {
   Headphones,
   Coins,
   ChevronRight,
-  MessageCircle,
   Timer
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import carouselImage1 from "@/assets/carousel-1.jpeg";
+import carouselImage2 from "@/assets/carousel-2.jpeg";
+
+const carouselImages = [carouselImage1, carouselImage2];
 
 const TRANSACTIONS_KEY = "zenfi_transactions";
 
@@ -307,48 +310,45 @@ export const Dashboard = () => {
           </div>
           
           <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
-            <div className="flex gap-2">
-              {[1, 2, 3].map((_, index) => (
+            <div className="flex gap-3">
+              {carouselImages.map((image, index) => (
                 <div 
                   key={index}
-                  className="flex-[0_0_85%] min-w-0 glass-card h-28 flex items-center justify-center relative overflow-hidden"
+                  className="flex-[0_0_92%] min-w-0 rounded-2xl overflow-hidden relative"
                   style={{
-                    background: `linear-gradient(135deg, 
-                      hsla(${262 + index * 30}, 76%, 57%, 0.15), 
-                      hsla(${289 + index * 20}, 100%, 65%, 0.1)
-                    )`,
+                    aspectRatio: "16/10",
                   }}
                 >
-                  <div className="absolute inset-0 opacity-10">
-                    <div 
-                      className="absolute inset-0"
-                      style={{
-                        backgroundImage: `radial-gradient(circle at 50% 50%, hsla(262, 76%, 57%, 0.3) 1px, transparent 1px)`,
-                        backgroundSize: "16px 16px",
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="text-center z-10">
-                    <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-secondary/50 flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <p className="text-xs text-muted-foreground">Banner {index + 1}</p>
-                    <p className="text-[10px] text-muted-foreground/60">Image placeholder</p>
-                  </div>
+                  <img 
+                    src={image} 
+                    alt={`Featured banner ${index + 1}`}
+                    className="w-full h-full object-cover object-center"
+                    style={{
+                      imageRendering: "auto",
+                      WebkitBackfaceVisibility: "hidden",
+                      backfaceVisibility: "hidden",
+                    }}
+                  />
+                  {/* Subtle gradient overlay for polish */}
+                  <div 
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: "linear-gradient(180deg, transparent 60%, hsla(0, 0%, 0%, 0.3) 100%)",
+                    }}
+                  />
                 </div>
               ))}
             </div>
           </div>
           
           <div className="flex justify-center gap-1.5 mt-2">
-            {[0, 1, 2].map((index) => (
+            {carouselImages.map((_, index) => (
               <button 
                 key={index}
                 onClick={() => emblaApi?.scrollTo(index)}
                 className={`h-1.5 rounded-full transition-all ${
                   currentSlide === index 
-                    ? "bg-violet w-3" 
+                    ? "bg-violet w-4" 
                     : "bg-muted-foreground/30 w-1.5"
                 }`}
               />
