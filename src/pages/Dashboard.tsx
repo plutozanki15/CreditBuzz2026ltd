@@ -48,7 +48,17 @@ export const Dashboard = () => {
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
   
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })]);
+  
+  // Track route for persistence
   useRouteHistory();
+
+  // Update carousel slide indicator
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => setCurrentSlide(emblaApi.selectedScrollSnap());
+    emblaApi.on("select", onSelect);
+    return () => { emblaApi.off("select", onSelect); };
+  }, [emblaApi]);
 
   useEffect(() => {
     const onboardingComplete = localStorage.getItem("zenfi_onboarding_complete");
