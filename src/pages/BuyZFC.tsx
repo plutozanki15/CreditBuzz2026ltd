@@ -25,7 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-type Step = "form" | "processing" | "notice" | "transfer" | "confirming" | "pending";
+type Step = "form" | "processing" | "notice" | "transfer" | "confirming" | "pending" | "approved" | "rejected";
 
 const AMOUNT = 5700;
 const ZFC_AMOUNT = 180000; // ZFC amount user will receive
@@ -52,6 +52,9 @@ export const BuyZFC = () => {
   const [displayAmount, setDisplayAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [creditedAmount, setCreditedAmount] = useState(ZFC_AMOUNT);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
@@ -113,6 +116,38 @@ export const BuyZFC = () => {
     }
   }, [step]);
 
+  // Real-time subscription for payment status updates
+  useEffect(() => {
+    if (!currentPaymentId || !user) return;
+
+    const channel = supabase
+      .channel(`payment-${currentPaymentId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'payments',
+          filter: `id=eq.${currentPaymentId}`,
+        },
+        (payload) => {
+          const newStatus = payload.new.status;
+          if (newStatus === 'approved') {
+            setCreditedAmount(payload.new.zfc_amount);
+            setStep('approved');
+          } else if (newStatus === 'rejected') {
+            setRejectionReason(payload.new.rejection_reason || 'Payment could not be verified');
+            setStep('rejected');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [currentPaymentId, user]);
+
   const handleCopy = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -168,7 +203,7 @@ export const BuyZFC = () => {
       const receiptUrl = urlData.publicUrl;
       
       // 3. Create payment record
-      const { error: paymentError } = await supabase
+      const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
           user_id: user.id,
@@ -177,12 +212,17 @@ export const BuyZFC = () => {
           account_name: formData.fullName || profile?.full_name || "Unknown",
           receipt_url: receiptUrl,
           status: 'pending'
-        });
+        })
+        .select('id')
+        .single();
       
       if (paymentError) {
         console.error("Payment error:", paymentError);
         throw new Error("Failed to create payment record");
       }
+      
+      // Store payment ID for real-time subscription
+      setCurrentPaymentId(paymentData.id);
       
       setStep("confirming");
     } catch (error) {
@@ -766,6 +806,174 @@ export const BuyZFC = () => {
             </div>
           </div>
         )}
+
+        {/* ============ STEP 7: APPROVED ============ */}
+        {step === "approved" && (
+          <div className="min-h-[65vh] flex flex-col items-center justify-center animate-fade-in">
+            
+            {/* Success Ring Animation */}
+            <div className="relative mb-8">
+              {/* Outer glow */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full bg-teal/20 blur-xl" style={{ animation: "approvedGlow 2s ease-in-out infinite" }} />
+              
+              {/* Rotating celebration ring */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full border-2 border-dashed border-teal/40" style={{ animation: "spinSlow 6s linear infinite" }} />
+              
+              {/* Inner success container */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal/40 to-teal/20 border border-teal/50 flex items-center justify-center shadow-lg shadow-teal/30">
+                  <CheckCircle2 className="w-8 h-8 text-teal" style={{ animation: "successBounce 0.6s ease-out" }} />
+                </div>
+              </div>
+              
+              {/* Celebration particles */}
+              <div className="absolute -top-2 right-0 w-2 h-2 bg-teal/60 rounded-full" style={{ animation: "floatUp 1.5s ease-in-out infinite" }} />
+              <div className="absolute bottom-0 -left-2 w-2 h-2 bg-gold/60 rounded-full" style={{ animation: "floatUp 2s ease-in-out infinite", animationDelay: "0.3s" }} />
+              <div className="absolute top-1/3 -right-3 w-1.5 h-1.5 bg-violet/60 rounded-full" style={{ animation: "floatUp 2.5s ease-in-out infinite", animationDelay: "0.6s" }} />
+            </div>
+
+            {/* Success Text */}
+            <h2 className="text-2xl font-bold text-foreground mb-2">Payment Approved!</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-[280px] leading-relaxed mb-4">
+              Your ZFC credits have been successfully added to your account.
+            </p>
+
+            {/* Credited Amount Card */}
+            <div className="w-full rounded-xl bg-gradient-to-r from-teal/15 to-teal/5 border border-teal/30 p-5 mb-6 text-center">
+              <span className="text-xs text-teal uppercase tracking-widest font-semibold block mb-2">Amount Credited</span>
+              <span className="text-3xl font-bold text-foreground">{creditedAmount.toLocaleString()} ZFC</span>
+            </div>
+
+            {/* Success Details */}
+            <div className="w-full rounded-xl bg-secondary/30 border border-border/40 overflow-hidden mb-6">
+              <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/20">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Transaction Complete</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-teal/20 text-teal">Approved</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Amount Paid</span>
+                  <span className="text-sm font-bold text-foreground">{formatCurrency(AMOUNT)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">ZFC Received</span>
+                  <span className="text-sm font-bold text-teal">{creditedAmount.toLocaleString()} ZFC</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full space-y-2.5">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-teal to-teal/80 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-teal/20"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                onClick={() => {
+                  setStep("form");
+                  setReceiptUploaded(false);
+                  setReceiptFile(null);
+                  setReceiptName("");
+                  setCurrentPaymentId(null);
+                }}
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Buy More ZFC
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ============ STEP 8: REJECTED ============ */}
+        {step === "rejected" && (
+          <div className="min-h-[65vh] flex flex-col items-center justify-center animate-fade-in">
+            
+            {/* Rejection Ring */}
+            <div className="relative mb-8">
+              {/* Outer glow */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full bg-destructive/15 blur-xl" />
+              
+              {/* Inner container */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-destructive/30 to-destructive/10 border border-destructive/40 flex items-center justify-center shadow-lg shadow-destructive/20">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
+                </div>
+              </div>
+            </div>
+
+            {/* Rejection Text */}
+            <h2 className="text-xl font-bold text-foreground mb-2">Payment Rejected</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-[280px] leading-relaxed mb-4">
+              Unfortunately, your payment could not be verified.
+            </p>
+
+            {/* Rejection Reason Card */}
+            <div className="w-full rounded-xl bg-destructive/10 border border-destructive/25 p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-sm font-semibold text-foreground block mb-1">Reason</span>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {rejectionReason || "The payment details could not be verified. Please ensure the transfer was completed correctly."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* What To Do Next */}
+            <div className="w-full rounded-xl bg-secondary/30 border border-border/40 p-4 mb-6">
+              <h4 className="text-sm font-semibold text-foreground mb-2">What you can do:</h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Double-check that the payment was sent to the correct account</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Ensure the receipt image is clear and shows all details</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Contact support if you believe this is an error</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="w-full space-y-2.5">
+              <button
+                onClick={() => {
+                  setStep("form");
+                  setReceiptUploaded(false);
+                  setReceiptFile(null);
+                  setReceiptName("");
+                  setCurrentPaymentId(null);
+                  setRejectionReason(null);
+                }}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => navigate("/support")}
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contact Support
+              </button>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Animations */}
@@ -790,6 +998,15 @@ export const BuyZFC = () => {
         @keyframes floatUp {
           0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
           50% { transform: translateY(-8px) scale(1.2); opacity: 1; }
+        }
+        @keyframes approvedGlow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes successBounce {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>
