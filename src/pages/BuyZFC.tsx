@@ -351,22 +351,18 @@ export const BuyZFC = () => {
 
         {/* ============ STEP 3: NOTICE (ADVANCED) ============ */}
         {step === "notice" && (
-          <div className="animate-fade-in space-y-5">
-            {/* Premium Header Card */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet/15 via-magenta/8 to-teal/10 border border-violet/25 p-5">
-              {/* Animated background glow */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-violet/20 rounded-full blur-3xl animate-pulse" />
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal/15 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="animate-fade-in space-y-4">
+            {/* Compact Header Card */}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet/12 via-magenta/8 to-teal/8 border border-violet/20 p-3.5">
+              <div className="absolute top-0 right-0 w-20 h-20 bg-violet/15 rounded-full blur-2xl animate-pulse" />
               
-              <div className="relative flex items-start gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold/25 to-gold/10 border border-gold/30 flex items-center justify-center shrink-0 shadow-lg shadow-gold/10">
-                  <AlertTriangle className="w-7 h-7 text-gold" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gold/20 to-gold/10 border border-gold/25 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-gold" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg text-foreground mb-1">Transfer Guidelines</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Complete these steps for <span className="text-teal font-semibold">instant verification</span> and seamless ZFC activation.
-                  </p>
+                  <h3 className="font-bold text-base text-foreground">Transfer Guidelines</h3>
+                  <p className="text-xs text-muted-foreground">Follow for <span className="text-teal font-medium">instant verification</span></p>
                 </div>
               </div>
             </div>
