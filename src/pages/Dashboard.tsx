@@ -314,10 +314,7 @@ export const Dashboard = () => {
               {carouselImages.map((image, index) => (
                 <div 
                   key={index}
-                  className="flex-[0_0_92%] min-w-0 rounded-2xl overflow-hidden relative"
-                  style={{
-                    aspectRatio: "16/10",
-                  }}
+                  className="flex-[0_0_88%] min-w-0 rounded-xl overflow-hidden relative h-32"
                 >
                   <img 
                     src={image} 
