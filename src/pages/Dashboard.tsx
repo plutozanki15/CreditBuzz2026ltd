@@ -14,9 +14,10 @@ import { NotificationBanner } from "@/components/ui/NotificationBanner";
 import { useClaimTimer } from "@/hooks/useClaimTimer";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { useAuth } from "@/hooks/useAuth";
+import { useNotifications } from "@/hooks/useNotifications";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
-import { 
+import {
   Bell,
   Settings,
   Wallet,
@@ -26,7 +27,7 @@ import {
   Headphones,
   Coins,
   ChevronRight,
-  Timer
+  Timer,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import carouselImage1 from "@/assets/carousel-1.jpeg";
@@ -47,13 +48,14 @@ const actionButtons = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, isBanned, isLoading: authLoading } = useAuth();
+  const { unreadCount } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [balance, setBalance] = useState(0);
   const [isClaiming, setIsClaiming] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
-  
+
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })]);
   
   // Track route for persistence
@@ -163,7 +165,11 @@ export const Dashboard = () => {
         <div className="flex items-center gap-2">
           <button className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors relative group">
             <Bell className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-magenta rounded-full animate-pulse" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold bg-magenta text-white rounded-full px-1">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
           <ProfileAvatar onClick={() => setShowProfilePanel(true)} size="sm" />
           <button 

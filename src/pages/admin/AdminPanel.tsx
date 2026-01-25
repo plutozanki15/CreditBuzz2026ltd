@@ -34,21 +34,27 @@ const tabs = [
 
 export const AdminPanel = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading, signOut } = useAuth();
+  const { isAdmin, isLoading, signOut, user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    // Only redirect once loading is done AND user is confirmed NOT admin
+    // Important: don't redirect while loading or if we have no user yet but still loading
+    if (!isLoading && !isAdmin && user === null) {
+      navigate("/login");
+    } else if (!isLoading && !isAdmin && user !== null) {
       navigate("/dashboard");
     }
-  }, [isAdmin, isLoading, navigate]);
+  }, [isAdmin, isLoading, user, navigate]);
 
   const handleLogout = async () => {
-    await signOut();
+    localStorage.removeItem("zenfi_onboarding_complete");
     navigate("/login");
+    await signOut();
   };
 
+  // Keep showing spinner while loading OR while waiting for admin status
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -58,6 +64,7 @@ export const AdminPanel = () => {
   }
 
   if (!isAdmin) {
+    // Still render nothing while redirect useEffect runs
     return null;
   }
 

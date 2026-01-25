@@ -10,12 +10,12 @@ interface VirtualBankCardProps {
   referralCount?: number;
 }
 
-export const VirtualBankCard = ({ 
-  balance = 180000, 
+export const VirtualBankCard = ({
+  balance = 130000,
   cardNumber = "4829",
   className,
   userId = "ZF-7829401",
-  referralCount = 3
+  referralCount = 3,
 }: VirtualBankCardProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [displayBalance, setDisplayBalance] = useState(balance);
