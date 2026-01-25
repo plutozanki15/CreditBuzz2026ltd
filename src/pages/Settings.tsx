@@ -46,9 +46,25 @@ export const Settings = () => {
       setNotifications(savedNotifications === "true");
     }
     if (savedTheme !== null) {
-      setDarkMode(savedTheme === "dark");
+      const isDark = savedTheme === "dark";
+      setDarkMode(isDark);
+      // Apply theme immediately on load
+      applyTheme(isDark);
     }
   }, []);
+
+  const applyTheme = (isDark: boolean) => {
+    const root = document.documentElement;
+    root.style.transition = "background-color 0.4s ease, color 0.4s ease";
+    
+    if (isDark) {
+      root.classList.remove("light");
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+      root.classList.add("light");
+    }
+  };
 
   const handleNotificationToggle = (checked: boolean) => {
     setNotifications(checked);
@@ -64,10 +80,10 @@ export const Settings = () => {
   const handleThemeToggle = (checked: boolean) => {
     setDarkMode(checked);
     localStorage.setItem("zenfi_theme", checked ? "dark" : "light");
-    // For now, we only support dark mode in this fintech design
+    applyTheme(checked);
     toast({
       title: checked ? "Dark Mode" : "Light Mode",
-      description: "Theme preference saved",
+      description: "Theme applied successfully",
     });
   };
 

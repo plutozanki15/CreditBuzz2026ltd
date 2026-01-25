@@ -8,7 +8,7 @@
 
 @layer base {
   :root {
-    /* Obsidian Black Base */
+    /* Dark Theme (Default) - Obsidian Black Base */
     --background: 240 7% 4%;
     --foreground: 0 0% 100%;
 
@@ -61,6 +61,47 @@
     --glow-violet: 0 0 40px hsla(262, 76%, 57%, 0.3);
     --glow-teal: 0 0 20px hsla(174, 88%, 56%, 0.4);
     --shadow-luxury: 0 25px 50px -12px hsla(0, 0%, 0%, 0.5);
+  }
+
+  /* Light Theme */
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 240 7% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 7% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 7% 10%;
+
+    --primary: 262 76% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --violet: 262 76% 50%;
+    --magenta: 289 90% 55%;
+    --gold: 37 89% 50%;
+    --teal: 174 80% 40%;
+    --teal-foreground: 0 0% 100%;
+
+    --secondary: 240 5% 92%;
+    --secondary-foreground: 240 7% 10%;
+
+    --muted: 240 5% 88%;
+    --muted-foreground: 240 5% 40%;
+
+    --accent: 262 76% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 5% 85%;
+    --input: 240 5% 92%;
+    --ring: 262 76% 50%;
+
+    --glass-bg: hsla(0, 0%, 100%, 0.85);
+    --glass-border: hsla(240, 7%, 10%, 0.08);
+    --shadow-luxury: 0 25px 50px -12px hsla(0, 0%, 0%, 0.15);
   }
 }
 

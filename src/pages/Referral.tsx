@@ -1,55 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, 
   Copy, 
-  CheckCircle2, 
+  CheckCircle, 
   Users, 
   Gift, 
   Share2,
   Link2,
   Sparkles,
   TrendingUp,
-  UserPlus,
-  Coins,
   ChevronRight
 } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
-import { LuxuryGlassCard } from "@/components/ui/LuxuryGlassCard";
-import { LuxuryButton } from "@/components/ui/LuxuryButton";
+import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { toast } from "@/hooks/use-toast";
 
 const howItWorksSteps = [
-  {
-    icon: Share2,
-    title: "Share Your Link",
-    description: "Send your unique referral link to friends and family",
-    color: "from-violet to-magenta",
-  },
-  {
-    icon: UserPlus,
-    title: "Friends Sign Up",
-    description: "They create an account using your referral code",
-    color: "from-magenta to-gold",
-  },
-  {
-    icon: Coins,
-    title: "Earn Rewards",
-    description: "Get ₦5,000 for each successful referral",
-    color: "from-teal to-violet",
-  },
+  { icon: Share2, title: "Share Link", desc: "Send to friends", color: "violet" },
+  { icon: Users, title: "They Join", desc: "Sign up & verify", color: "magenta" },
+  { icon: Gift, title: "You Earn", desc: "Get rewards", color: "teal" },
 ];
 
 export const Referral = () => {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-  const [referralCode] = useState("ZF7829401");
-  const [referralLink] = useState("https://zenfi.com/ref/ZF7829401");
-  const [stats, setStats] = useState({
-    totalReferrals: 3,
-    totalEarnings: 15000,
-    pendingRewards: 5000,
-  });
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  
+  const referralCode = "ZF7829401";
+  const referralLink = `https://zenfi.com/ref/${referralCode}`;
+  
+  const stats = {
+    totalReferrals: 12,
+    pendingRewards: 3,
+    totalEarnings: 45000,
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -63,141 +48,252 @@ export const Referral = () => {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
-      setCopied(true);
-      toast({
-        title: "Link Copied!",
-        description: "Your referral link has been copied to clipboard.",
-      });
-      setTimeout(() => setCopied(false), 3000);
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        description: "Please copy the link manually.",
-        variant: "destructive",
-      });
+      setCopiedLink(true);
+      toast({ title: "Link Copied!", description: "Share it with friends to earn rewards" });
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      toast({ title: "Failed to copy", variant: "destructive" });
     }
   };
 
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(referralCode);
-      toast({
-        title: "Code Copied!",
-        description: "Your referral code has been copied.",
-      });
-    } catch (err) {
-      toast({
-        title: "Copy Failed",
-        description: "Please copy the code manually.",
-        variant: "destructive",
-      });
+      setCopiedCode(true);
+      toast({ title: "Code Copied!", description: referralCode });
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      toast({ title: "Failed to copy", variant: "destructive" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background pb-8">
       <FloatingParticles />
       
       {/* Header */}
-      <header className="relative z-10 px-4 py-4 flex items-center gap-3">
+      <header className="relative z-10 px-4 py-4 flex items-center gap-4">
         <button 
           onClick={() => navigate("/dashboard")}
-          className="p-2.5 rounded-xl bg-secondary/80 hover:bg-secondary active:scale-95 transition-all duration-200 group"
+          className="p-2.5 rounded-xl bg-secondary/80 hover:bg-muted transition-all duration-200 hover:scale-105 active:scale-95"
         >
-          <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
-        <div className="animate-slide-in">
-          <h1 className="text-lg font-display font-bold text-foreground">Refer & Earn</h1>
-          <p className="text-xs text-muted-foreground">Invite friends, earn rewards</p>
+        <div className="flex-1">
+          <h1 className="text-lg font-display font-semibold tracking-tight">Refer & Earn</h1>
+          <p className="text-[11px] text-muted-foreground tracking-wide">Invite friends, earn rewards</p>
         </div>
+        <ZenfiLogo size="sm" />
       </header>
 
-      <main className="relative z-10 px-4 pb-6 space-y-3">
-        {/* Compact Stats */}
-        <LuxuryGlassCard className="p-3 animate-scale-in">
-          <div className="grid grid-cols-3 gap-2">
-            <div className="text-center p-2 rounded-lg bg-secondary/30">
-              <Users className="w-4 h-4 mx-auto mb-0.5 text-violet" />
-              <p className="text-base font-bold text-foreground">{stats.totalReferrals}</p>
-              <p className="text-[8px] text-muted-foreground">Referrals</p>
+      <main className="relative z-10 px-4 space-y-4">
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-2 animate-fade-in-up">
+          <div 
+            className="p-3 rounded-2xl text-center"
+            style={{
+              background: "hsla(262, 76%, 57%, 0.12)",
+              border: "1px solid hsla(262, 76%, 57%, 0.2)",
+            }}
+          >
+            <Users className="w-5 h-5 text-violet mx-auto mb-1" />
+            <p className="text-xl font-display font-bold">{stats.totalReferrals}</p>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Referrals</p>
+          </div>
+          
+          <div 
+            className="p-3 rounded-2xl text-center"
+            style={{
+              background: "hsla(289, 100%, 65%, 0.12)",
+              border: "1px solid hsla(289, 100%, 65%, 0.2)",
+            }}
+          >
+            <Sparkles className="w-5 h-5 text-magenta mx-auto mb-1" />
+            <p className="text-xl font-display font-bold">{stats.pendingRewards}</p>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Pending</p>
+          </div>
+          
+          <div 
+            className="p-3 rounded-2xl text-center"
+            style={{
+              background: "hsla(174, 88%, 56%, 0.12)",
+              border: "1px solid hsla(174, 88%, 56%, 0.2)",
+            }}
+          >
+            <TrendingUp className="w-5 h-5 text-teal mx-auto mb-1" />
+            <p className="text-lg font-display font-bold">{formatCurrency(stats.totalEarnings).replace('₦', '')}</p>
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Earned (₦)</p>
+          </div>
+        </div>
+
+        {/* Referral Code & Link Card */}
+        <div 
+          className="p-4 rounded-2xl animate-fade-in-up space-y-4"
+          style={{ 
+            animationDelay: "0.05s",
+            background: "hsla(240, 7%, 8%, 0.7)",
+            border: "1px solid hsla(0, 0%, 100%, 0.06)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          {/* Referral Code */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Link2 className="w-4 h-4 text-violet" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Your Referral Code</span>
             </div>
-            <div className="text-center p-2 rounded-lg bg-secondary/30">
-              <Coins className="w-4 h-4 mx-auto mb-0.5 text-gold" />
-              <p className="text-base font-bold gradient-text">{formatCurrency(stats.totalEarnings)}</p>
-              <p className="text-[8px] text-muted-foreground">Earned</p>
-            </div>
-            <div className="text-center p-2 rounded-lg bg-secondary/30">
-              <Sparkles className="w-4 h-4 mx-auto mb-0.5 text-teal" />
-              <p className="text-base font-bold text-teal">{formatCurrency(stats.pendingRewards)}</p>
-              <p className="text-[8px] text-muted-foreground">Pending</p>
+            <div className="flex items-center gap-2">
+              <div 
+                className="flex-1 px-4 py-3 rounded-xl font-mono text-lg font-bold tracking-widest text-center"
+                style={{
+                  background: "hsla(262, 76%, 57%, 0.15)",
+                  border: "1px solid hsla(262, 76%, 57%, 0.3)",
+                }}
+              >
+                {referralCode}
+              </div>
+              <button
+                onClick={handleCopyCode}
+                className="p-3 rounded-xl bg-violet/20 hover:bg-violet/30 transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                {copiedCode ? (
+                  <CheckCircle className="w-5 h-5 text-teal" />
+                ) : (
+                  <Copy className="w-5 h-5 text-violet" />
+                )}
+              </button>
             </div>
           </div>
-        </LuxuryGlassCard>
 
-        {/* Referral Link & Code - Compact */}
-        <LuxuryGlassCard className="p-4 space-y-3 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-          {/* Link */}
-          <div className="flex items-center gap-2 p-2.5 rounded-lg bg-secondary/50 border border-border/50">
-            <Link2 className="w-3.5 h-3.5 text-violet flex-shrink-0" />
-            <p className="flex-1 text-[11px] text-muted-foreground truncate font-mono">{referralLink}</p>
-            <button
-              onClick={handleCopyLink}
-              className={`p-1.5 rounded-md transition-all active:scale-90 ${copied ? "bg-teal/20 text-teal" : "bg-violet/20 text-violet"}`}
-            >
-              {copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-
-          {/* Code */}
-          <div className="flex items-center justify-between p-2.5 rounded-lg bg-gradient-to-r from-violet/10 to-magenta/10 border border-violet/20">
-            <div>
-              <p className="text-[9px] text-muted-foreground uppercase">Code</p>
-              <p className="text-sm font-bold font-mono gradient-text">{referralCode}</p>
+          {/* Referral Link */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Share2 className="w-4 h-4 text-teal" />
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">Referral Link</span>
             </div>
-            <button onClick={handleCopyCode} className="p-2 rounded-lg bg-violet/20 active:scale-95">
-              <Copy className="w-3.5 h-3.5 text-violet" />
-            </button>
+            <div className="flex items-center gap-2">
+              <div 
+                className="flex-1 px-3 py-3 rounded-xl text-xs text-muted-foreground truncate"
+                style={{
+                  background: "hsla(174, 88%, 56%, 0.08)",
+                  border: "1px solid hsla(174, 88%, 56%, 0.2)",
+                }}
+              >
+                {referralLink}
+              </div>
+              <button
+                onClick={handleCopyLink}
+                className="p-3 rounded-xl bg-teal/20 hover:bg-teal/30 transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                {copiedLink ? (
+                  <CheckCircle className="w-5 h-5 text-teal" />
+                ) : (
+                  <Copy className="w-5 h-5 text-teal" />
+                )}
+              </button>
+            </div>
           </div>
 
-          <LuxuryButton onClick={handleCopyLink} className="w-full h-10 rounded-lg text-sm">
-            <Share2 className="w-3.5 h-3.5 mr-2" />
-            Share Link
-          </LuxuryButton>
-        </LuxuryGlassCard>
+          {/* Share Button */}
+          <button
+            onClick={handleCopyLink}
+            className="w-full py-3.5 rounded-xl font-display font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
+              boxShadow: "0 6px 24px hsla(262, 76%, 57%, 0.35)",
+            }}
+          >
+            <Share2 className="w-4 h-4" />
+            Share & Earn
+          </button>
+        </div>
 
-        {/* How It Works - Compact Row */}
-        <LuxuryGlassCard className="p-3 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
-          <p className="text-[10px] font-semibold text-foreground mb-2">How It Works</p>
-          <div className="flex items-center justify-between gap-1">
+        {/* How It Works */}
+        <div 
+          className="p-4 rounded-2xl animate-fade-in-up"
+          style={{ 
+            animationDelay: "0.1s",
+            background: "hsla(240, 7%, 8%, 0.7)",
+            border: "1px solid hsla(0, 0%, 100%, 0.06)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <h3 className="text-sm font-display font-semibold mb-3 flex items-center gap-2">
+            <Gift className="w-4 h-4 text-gold" />
+            How It Works
+          </h3>
+          
+          <div className="flex items-center justify-between">
             {howItWorksSteps.map((step, index) => (
-              <div key={step.title} className="flex-1 text-center">
-                <div className={`w-8 h-8 mx-auto rounded-lg bg-gradient-to-br ${step.color} flex items-center justify-center mb-1`}>
-                  <step.icon className="w-4 h-4 text-white" />
+              <div key={step.title} className="flex items-center">
+                <div className="text-center">
+                  <div 
+                    className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-1.5"
+                    style={{
+                      background: step.color === "violet" 
+                        ? "hsla(262, 76%, 57%, 0.2)" 
+                        : step.color === "magenta"
+                        ? "hsla(289, 100%, 65%, 0.2)"
+                        : "hsla(174, 88%, 56%, 0.2)",
+                    }}
+                  >
+                    <step.icon 
+                      className="w-5 h-5"
+                      style={{
+                        color: step.color === "violet" 
+                          ? "hsl(262, 76%, 57%)" 
+                          : step.color === "magenta"
+                          ? "hsl(289, 100%, 65%)"
+                          : "hsl(174, 88%, 56%)",
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] font-semibold">{step.title}</p>
+                  <p className="text-[9px] text-muted-foreground">{step.desc}</p>
                 </div>
-                <p className="text-[9px] font-medium text-foreground leading-tight">{step.title}</p>
+                {index < howItWorksSteps.length - 1 && (
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/30 mx-1" />
+                )}
               </div>
             ))}
           </div>
-        </LuxuryGlassCard>
+        </div>
 
-        {/* Benefits - Compact */}
-        <LuxuryGlassCard className="p-3 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Gift className="w-3 h-3 text-gold" />
-            <span className="text-[10px] font-semibold text-foreground">Benefits</span>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            {["₦5,000 per referral", "Unlimited referrals", "Instant credit", "Mutual rewards"].map((b, i) => (
-              <div key={i} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <CheckCircle2 className="w-2.5 h-2.5 text-teal flex-shrink-0" />
-                <span>{b}</span>
-              </div>
-            ))}
-          </div>
-        </LuxuryGlassCard>
+        {/* Benefits */}
+        <div 
+          className="p-4 rounded-2xl animate-fade-in-up"
+          style={{ 
+            animationDelay: "0.15s",
+            background: "linear-gradient(135deg, hsla(37, 89%, 63%, 0.08), hsla(262, 76%, 57%, 0.08))",
+            border: "1px solid hsla(37, 89%, 63%, 0.2)",
+          }}
+        >
+          <h3 className="text-sm font-display font-semibold mb-2 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-gold" />
+            Why Refer?
+          </h3>
+          <ul className="space-y-1.5 text-[11px] text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-teal" />
+              Earn ₦2,500 for every successful referral
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-teal" />
+              No limit on referrals — unlimited earnings
+            </li>
+            <li className="flex items-center gap-2">
+              <div className="w-1 h-1 rounded-full bg-teal" />
+              Instant credit when referral qualifies
+            </li>
+          </ul>
+        </div>
 
         {/* Footer */}
-        <p className="text-[9px] text-center text-muted-foreground/50 pt-1">🎁 Share • Earn • Grow together</p>
+        <div className="text-center pt-2 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+          <p className="text-[10px] text-muted-foreground/50">
+            🔒 Secure referral tracking • Real-time rewards
+          </p>
+        </div>
       </main>
     </div>
   );

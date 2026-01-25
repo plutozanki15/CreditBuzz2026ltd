@@ -7,14 +7,12 @@ import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { OnboardingModal } from "@/components/ui/OnboardingModal";
 import { WarningBanner } from "@/components/ui/WarningBanner";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { ProfilePanel } from "@/components/ui/ProfilePanel";
 import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
 import { useClaimTimer } from "@/hooks/useClaimTimer";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
-import { 
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 import { 
   Bell,
   Settings,
@@ -43,11 +41,13 @@ const actionButtons = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [balance, setBalance] = useState(180000);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
-
-  // Track route for persistence
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })]);
   useRouteHistory();
 
   useEffect(() => {
@@ -120,6 +120,8 @@ export const Dashboard = () => {
         <OnboardingModal onComplete={handleOnboardingComplete} />
       )}
       
+      <ProfilePanel isOpen={showProfilePanel} onClose={() => setShowProfilePanel(false)} />
+      
       {/* Official ZenFi Warning Banner */}
       <WarningBanner />
       
@@ -131,7 +133,7 @@ export const Dashboard = () => {
             <Bell className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
             <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-magenta rounded-full animate-pulse" />
           </button>
-          <ProfileAvatar onClick={() => navigate("/settings")} size="sm" />
+          <ProfileAvatar onClick={() => setShowProfilePanel(true)} size="sm" />
           <button 
             onClick={() => navigate("/settings")}
             className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors group"
@@ -282,7 +284,7 @@ export const Dashboard = () => {
           </p>
         </GlassCard>
 
-        {/* Bottom Carousel - Compact */}
+        {/* Bottom Carousel - Auto-sliding */}
         <div 
           className="animate-fade-in-up"
           style={{ animationDelay: "0.4s" }}
@@ -294,54 +296,48 @@ export const Dashboard = () => {
             </button>
           </div>
           
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-2">
+          <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
+            <div className="flex gap-2">
               {[1, 2, 3].map((_, index) => (
-                <CarouselItem key={index} className="pl-2 basis-[85%]">
-                  <div 
-                    className="glass-card h-28 flex items-center justify-center relative overflow-hidden"
-                    style={{
-                      background: `linear-gradient(135deg, 
-                        hsla(${262 + index * 30}, 76%, 57%, 0.15), 
-                        hsla(${289 + index * 20}, 100%, 65%, 0.1)
-                      )`,
-                    }}
-                  >
-                    <div className="absolute inset-0 opacity-10">
-                      <div 
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `radial-gradient(circle at 50% 50%, hsla(262, 76%, 57%, 0.3) 1px, transparent 1px)`,
-                          backgroundSize: "16px 16px",
-                        }}
-                      />
-                    </div>
-                    
-                    <div className="text-center z-10">
-                      <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-secondary/50 flex items-center justify-center">
-                        <MessageCircle className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Banner {index + 1}</p>
-                      <p className="text-[10px] text-muted-foreground/60">Image placeholder</p>
-                    </div>
+                <div 
+                  key={index}
+                  className="flex-[0_0_85%] min-w-0 glass-card h-28 flex items-center justify-center relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(135deg, 
+                      hsla(${262 + index * 30}, 76%, 57%, 0.15), 
+                      hsla(${289 + index * 20}, 100%, 65%, 0.1)
+                    )`,
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-10">
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `radial-gradient(circle at 50% 50%, hsla(262, 76%, 57%, 0.3) 1px, transparent 1px)`,
+                        backgroundSize: "16px 16px",
+                      }}
+                    />
                   </div>
-                </CarouselItem>
+                  
+                  <div className="text-center z-10">
+                    <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-secondary/50 flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Banner {index + 1}</p>
+                    <p className="text-[10px] text-muted-foreground/60">Image placeholder</p>
+                  </div>
+                </div>
               ))}
-            </CarouselContent>
-          </Carousel>
+            </div>
+          </div>
           
           <div className="flex justify-center gap-1.5 mt-2">
-            {[1, 2, 3].map((_, index) => (
-              <div 
+            {[0, 1, 2].map((index) => (
+              <button 
                 key={index}
+                onClick={() => emblaApi?.scrollTo(index)}
                 className={`h-1.5 rounded-full transition-all ${
-                  index === 0 
+                  currentSlide === index 
                     ? "bg-violet w-3" 
                     : "bg-muted-foreground/30 w-1.5"
                 }`}
