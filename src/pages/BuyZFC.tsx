@@ -22,10 +22,13 @@ import {
   Banknote
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 type Step = "form" | "processing" | "notice" | "transfer" | "confirming" | "pending";
 
 const AMOUNT = 5700;
+const ZFC_AMOUNT = 180000; // ZFC amount user will receive
 const BANK_NAME = "Moniepoint MFB";
 const ACCOUNT_NUMBER = "8102562883";
 const ACCOUNT_NAME = "CHARIS BENJAMIN SOMTOCHUKWU";
@@ -39,11 +42,13 @@ const processingSteps = [
 
 export const BuyZFC = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [step, setStep] = useState<Step>("form");
   const [activeProcessingStep, setActiveProcessingStep] = useState(0);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptName, setReceiptName] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [displayAmount, setDisplayAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showContent, setShowContent] = useState(false);
@@ -55,7 +60,7 @@ export const BuyZFC = () => {
     phone: "",
   });
 
-  const userId = localStorage.getItem("zenfi_user_id") || "ZF-7829401";
+  const userId = profile?.referral_code || localStorage.getItem("zenfi_user_id") || "ZF-7829401";
   const referralCode = userId.replace("ZF-", "ZF");
 
   // Entrance animation
@@ -126,19 +131,70 @@ export const BuyZFC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setReceiptFile(file);
       setReceiptUploaded(true);
       setReceiptName(file.name);
       toast({ title: "Receipt attached", description: file.name });
     }
   };
 
-  const handlePaymentComplete = () => {
-    if (!receiptUploaded) return;
+  const handlePaymentComplete = async () => {
+    if (!receiptUploaded || !receiptFile || !user) {
+      toast({ title: "Error", description: "Please upload a receipt and ensure you're logged in", variant: "destructive" });
+      return;
+    }
+    
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    try {
+      // 1. Upload receipt to storage
+      const fileExt = receiptFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(fileName, receiptFile);
+      
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error("Failed to upload receipt");
+      }
+      
+      // 2. Get public URL for the receipt
+      const { data: urlData } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(fileName);
+      
+      const receiptUrl = urlData.publicUrl;
+      
+      // 3. Create payment record
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          amount: AMOUNT,
+          zfc_amount: ZFC_AMOUNT,
+          account_name: formData.fullName || profile?.full_name || "Unknown",
+          receipt_url: receiptUrl,
+          status: 'pending'
+        });
+      
+      if (paymentError) {
+        console.error("Payment error:", paymentError);
+        throw new Error("Failed to create payment record");
+      }
+      
       setStep("confirming");
-    }, 500);
+    } catch (error) {
+      console.error("Payment submission error:", error);
+      toast({ 
+        title: "Submission Failed", 
+        description: error instanceof Error ? error.message : "Please try again", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatCurrency = (value: number) => {
