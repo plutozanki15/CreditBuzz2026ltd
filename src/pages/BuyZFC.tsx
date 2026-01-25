@@ -349,42 +349,126 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 3: NOTICE (COMPACT) ============ */}
+        {/* ============ STEP 3: NOTICE (ADVANCED) ============ */}
         {step === "notice" && (
-          <div className="animate-fade-in space-y-4">
-            {/* Compact Header */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-gold/10 border border-gold/20">
-              <div className="w-10 h-10 rounded-lg bg-gold/15 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-5 h-5 text-gold" />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-foreground">Quick Guidelines</h3>
-                <p className="text-[11px] text-muted-foreground">Follow these for instant confirmation</p>
+          <div className="animate-fade-in space-y-5">
+            {/* Premium Header Card */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet/15 via-magenta/8 to-teal/10 border border-violet/25 p-5">
+              {/* Animated background glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-violet/20 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-teal/15 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+              
+              <div className="relative flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-gold/25 to-gold/10 border border-gold/30 flex items-center justify-center shrink-0 shadow-lg shadow-gold/10">
+                  <AlertTriangle className="w-7 h-7 text-gold" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-lg text-foreground mb-1">Transfer Guidelines</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Complete these steps for <span className="text-teal font-semibold">instant verification</span> and seamless ZFC activation.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Compact List */}
-            <div className="space-y-2">
+            {/* Guidelines Grid */}
+            <div className="grid gap-3">
               {[
-                { icon: Banknote, text: "Transfer exact amount — no more, no less" },
-                { icon: Upload, text: "Upload receipt immediately after transfer" },
-                { icon: Building2, text: "Major banks confirm faster (GTB, Zenith, Access)" },
-                { icon: FileCheck, text: "Don't dispute — we verify within minutes" },
+                { 
+                  icon: Banknote, 
+                  title: "Exact Amount Only",
+                  desc: "Transfer ₦5,700 precisely — any deviation delays processing",
+                  color: "violet",
+                  delay: "0ms"
+                },
+                { 
+                  icon: Upload, 
+                  title: "Upload Proof Instantly",
+                  desc: "Submit your receipt immediately after bank confirmation",
+                  color: "magenta",
+                  delay: "50ms"
+                },
+                { 
+                  icon: Building2, 
+                  title: "Recommended Banks",
+                  desc: "GTBank, Zenith, Access, UBA process within 2-5 minutes",
+                  color: "teal",
+                  delay: "100ms"
+                },
+                { 
+                  icon: FileCheck, 
+                  title: "No Disputes Needed",
+                  desc: "Our system auto-verifies — manual disputes cause delays",
+                  color: "gold",
+                  delay: "150ms"
+                },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/20 border border-border/20">
-                  <item.icon className="w-4 h-4 text-violet shrink-0" />
-                  <span className="text-sm text-muted-foreground">{item.text}</span>
+                <div 
+                  key={i} 
+                  className="group relative flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border/30 hover:bg-secondary/50 hover:border-violet/30 transition-all duration-300"
+                  style={{ 
+                    animation: `slideIn 0.4s ease-out ${item.delay} both`,
+                  }}
+                >
+                  {/* Icon container with gradient border */}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+                    item.color === 'violet' ? 'bg-violet/15 border border-violet/25 group-hover:bg-violet/25' :
+                    item.color === 'magenta' ? 'bg-magenta/15 border border-magenta/25 group-hover:bg-magenta/25' :
+                    item.color === 'teal' ? 'bg-teal/15 border border-teal/25 group-hover:bg-teal/25' :
+                    'bg-gold/15 border border-gold/25 group-hover:bg-gold/25'
+                  }`}>
+                    <item.icon className={`w-5 h-5 ${
+                      item.color === 'violet' ? 'text-violet' :
+                      item.color === 'magenta' ? 'text-magenta' :
+                      item.color === 'teal' ? 'text-teal' :
+                      'text-gold'
+                    }`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-semibold text-foreground mb-0.5">{item.title}</h4>
+                    <p className="text-[13px] text-muted-foreground leading-snug">{item.desc}</p>
+                  </div>
+                  {/* Check indicator */}
+                  <div className="w-6 h-6 rounded-full bg-teal/10 border border-teal/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <Check className="w-3.5 h-3.5 text-teal" />
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Action */}
+            {/* Trust Footer */}
+            <div className="flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-secondary/20 border border-border/20">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-teal" />
+                <span className="text-xs text-muted-foreground">256-bit SSL</span>
+              </div>
+              <div className="w-px h-4 bg-border/50" />
+              <div className="flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-violet" />
+                <span className="text-xs text-muted-foreground">Bank-Grade</span>
+              </div>
+              <div className="w-px h-4 bg-border/50" />
+              <div className="flex items-center gap-1.5">
+                <BadgeCheck className="w-4 h-4 text-gold" />
+                <span className="text-xs text-muted-foreground">Verified</span>
+              </div>
+            </div>
+
+            {/* CTA Button */}
             <button
               onClick={() => setStep("transfer")}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
+              className="group relative w-full h-14 rounded-2xl bg-gradient-to-r from-violet via-magenta to-violet text-white font-bold text-base overflow-hidden shadow-xl shadow-violet/25 hover:shadow-violet/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+              style={{ backgroundSize: '200% 100%', animation: 'shimmer 3s ease-in-out infinite' }}
             >
-              I Understand, Continue
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                I Understand, Proceed
+                <ArrowLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
+              </span>
             </button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              By continuing, you agree to our <span className="text-violet">Terms of Service</span>
+            </p>
           </div>
         )}
 
