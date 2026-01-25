@@ -16,9 +16,10 @@ import {
   Loader2,
   Sparkles,
   Zap,
-  TrendingUp,
   Lock,
-  CreditCard
+  CreditCard,
+  BadgeCheck,
+  Banknote
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -32,8 +33,8 @@ const ACCOUNT_NAME = "CHARIS BENJAMIN SOMTOCHUKWU";
 const processingSteps = [
   { label: "Initializing secure session", icon: Lock },
   { label: "Encrypting transaction", icon: Shield },
-  { label: "Verifying account", icon: CheckCircle2 },
-  { label: "Preparing transfer", icon: Zap },
+  { label: "Verifying your account", icon: CheckCircle2 },
+  { label: "Preparing bank transfer", icon: Zap },
 ];
 
 export const BuyZFC = () => {
@@ -83,7 +84,7 @@ export const BuyZFC = () => {
     }
   }, [step, showContent]);
 
-  // Timeline processing (4 seconds total)
+  // Timeline processing
   useEffect(() => {
     if (step === "processing") {
       let currentStep = 0;
@@ -100,7 +101,7 @@ export const BuyZFC = () => {
     }
   }, [step]);
 
-  // Confirming step (2 seconds)
+  // Confirming step
   useEffect(() => {
     if (step === "confirming") {
       setTimeout(() => setStep("pending"), 2000);
@@ -149,180 +150,199 @@ export const BuyZFC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden">
+    <div className="min-h-screen bg-background">
       <FloatingParticles />
 
-      {/* Ambient glow effects */}
+      {/* Ambient glow */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-violet/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-magenta/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-violet/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-magenta/8 rounded-full blur-3xl" />
       </div>
 
-      {/* Compact Header */}
-      <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-xl border-b border-border/30">
-        <div className="flex items-center justify-between px-4 py-2.5">
+      {/* Header */}
+      <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/40">
+        <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => step === "form" ? navigate("/dashboard") : setStep("form")}
-            className="p-1.5 -ml-1 rounded-lg hover:bg-secondary/50 transition-all active:scale-95"
+            className="p-2 -ml-2 rounded-xl hover:bg-secondary/50 transition-all active:scale-95"
           >
-            <ArrowLeft className="w-4 h-4 text-muted-foreground" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
-          <div className="flex items-center gap-1.5">
-            <CreditCard className="w-3.5 h-3.5 text-violet" />
-            <span className="text-xs font-semibold text-foreground tracking-wide">Buy ZFC</span>
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-violet" />
+            <span className="text-base font-semibold text-foreground">Buy ZFC</span>
           </div>
-          <div className="w-7" />
+          <div className="w-9" />
         </div>
       </header>
 
-      <main className="relative z-10 px-4 py-4 max-w-md mx-auto">
+      <main className="relative z-10 px-5 py-5 pb-8 w-full max-w-md mx-auto">
         
-        {/* ============ STEP 1: FORM (COMPACT) ============ */}
+        {/* ============ STEP 1: FORM ============ */}
         {step === "form" && (
-          <div className={`space-y-5 transition-all duration-500 ${showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+          <div className={`space-y-6 transition-all duration-500 ${showContent ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
             
             {/* Hero Amount Card */}
-            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet/10 via-magenta/5 to-transparent border border-violet/20 p-5">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-violet/20 to-transparent rounded-full blur-2xl" />
+            <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet/15 via-magenta/10 to-transparent border border-violet/25 p-6">
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-violet/20 to-transparent rounded-full blur-2xl" />
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-gold animate-pulse" />
-                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Premium Credits</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="w-5 h-5 text-gold animate-pulse" />
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Premium ZenFi Credits</span>
                 </div>
-                <div className="text-3xl font-bold text-foreground tracking-tight">
+                <div className="text-4xl font-bold text-foreground tracking-tight mb-2">
                   {formatCurrency(displayAmount)}
                 </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-xs text-muted-foreground">ZenFi Credit (ZFC)</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-teal/10 text-teal border border-teal/20">Best Value</span>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Purchase ZFC to unlock premium rewards, faster withdrawals, and exclusive member benefits.
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-teal/15 text-teal border border-teal/25">Best Value</span>
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet/15 text-violet border border-violet/25">Instant Credit</span>
                 </div>
               </div>
             </section>
 
             {/* Trust Badges */}
-            <div className="flex items-center justify-center gap-4 py-1">
+            <div className="flex items-center justify-between px-2">
               {[
-                { icon: Shield, label: "Secure" },
-                { icon: Zap, label: "Instant" },
-                { icon: TrendingUp, label: "Verified" },
+                { icon: Shield, label: "Bank-Grade Security" },
+                { icon: Zap, label: "Instant Processing" },
+                { icon: BadgeCheck, label: "100% Verified" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-1 text-muted-foreground/70">
-                  <item.icon className="w-3 h-3" />
-                  <span className="text-[10px] font-medium">{item.label}</span>
+                <div key={i} className="flex flex-col items-center gap-1.5 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/50 border border-border/40 flex items-center justify-center">
+                    <item.icon className="w-5 h-5 text-violet" />
+                  </div>
+                  <span className="text-[11px] font-medium text-muted-foreground leading-tight">{item.label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Compact Form */}
-            <section className="space-y-3">
+            {/* Form Section */}
+            <section className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Your Details</h3>
-                <span className="text-[10px] text-muted-foreground/60">ID: {userId}</span>
+                <h3 className="text-sm font-semibold text-foreground">Your Information</h3>
+                <span className="text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-lg">ID: {userId}</span>
               </div>
               
-              <div className="space-y-2.5">
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-violet/50 focus:bg-secondary/50 focus:shadow-[0_0_0_3px_rgba(123,63,228,0.1)] transition-all duration-200"
-                />
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    className="w-full h-12 px-4 rounded-xl bg-secondary/40 border border-border/50 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-violet/60 focus:bg-secondary/60 focus:shadow-[0_0_0_4px_rgba(123,63,228,0.1)] transition-all duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email Address</label>
                   <input
                     type="email"
-                    placeholder="Email"
+                    placeholder="Enter your email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-violet/50 focus:bg-secondary/50 focus:shadow-[0_0_0_3px_rgba(123,63,228,0.1)] transition-all duration-200"
+                    className="w-full h-12 px-4 rounded-xl bg-secondary/40 border border-border/50 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-violet/60 focus:bg-secondary/60 focus:shadow-[0_0_0_4px_rgba(123,63,228,0.1)] transition-all duration-200"
                   />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Phone Number</label>
                   <input
                     type="tel"
-                    placeholder="Phone"
+                    placeholder="Enter your phone number"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-violet/50 focus:bg-secondary/50 focus:shadow-[0_0_0_3px_rgba(123,63,228,0.1)] transition-all duration-200"
+                    className="w-full h-12 px-4 rounded-xl bg-secondary/40 border border-border/50 text-base text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-violet/60 focus:bg-secondary/60 focus:shadow-[0_0_0_4px_rgba(123,63,228,0.1)] transition-all duration-200"
                   />
                 </div>
               </div>
             </section>
 
-            {/* Referral Badge */}
-            <section className="flex items-center justify-between py-2.5 px-3 rounded-xl bg-secondary/20 border border-border/30">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-violet/10 flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-violet" />
+            {/* Referral Section */}
+            <section className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-violet/15 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-violet" />
                 </div>
                 <div>
-                  <span className="text-[10px] text-muted-foreground block">Referral</span>
-                  <span className="font-mono text-xs font-semibold text-foreground">{referralCode}</span>
+                  <span className="text-xs text-muted-foreground block">Your Referral Code</span>
+                  <span className="font-mono text-base font-bold text-foreground">{referralCode}</span>
                 </div>
               </div>
               <button
                 onClick={() => handleCopy(referralCode, "Referral Code")}
-                className="p-1.5 rounded-lg hover:bg-secondary/50 transition-all active:scale-90"
+                className="p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-all active:scale-95"
               >
                 {copiedField === "Referral Code" ? (
-                  <Check className="w-3.5 h-3.5 text-teal" />
+                  <Check className="w-5 h-5 text-teal" />
                 ) : (
-                  <Copy className="w-3.5 h-3.5 text-muted-foreground" />
+                  <Copy className="w-5 h-5 text-muted-foreground" />
                 )}
               </button>
             </section>
 
             {/* CTA */}
-            <section className="pt-2">
+            <section className="space-y-3 pt-2">
               <button
                 onClick={handleProceed}
-                className="group relative w-full h-11 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-semibold text-sm overflow-hidden shadow-lg shadow-violet/20 hover:shadow-violet/40 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+                className="group relative w-full h-14 rounded-2xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-base overflow-hidden shadow-xl shadow-violet/25 hover:shadow-violet/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Continue to Payment
-                  <ArrowLeft className="w-4 h-4 rotate-180 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowLeft className="w-5 h-5 rotate-180 group-hover:translate-x-1 transition-transform" />
                 </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-magenta to-violet opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
-              <p className="text-center text-[10px] text-muted-foreground/60 mt-2.5 flex items-center justify-center gap-1">
-                <Lock className="w-2.5 h-2.5" /> 256-bit SSL Encrypted
+              <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                <Lock className="w-3.5 h-3.5" />
+                Protected by 256-bit SSL encryption
               </p>
             </section>
           </div>
         )}
 
-        {/* ============ STEP 2: PROCESSING (COMPACT TIMELINE) ============ */}
+        {/* ============ STEP 2: PROCESSING ============ */}
         {step === "processing" && (
-          <div className="min-h-[45vh] flex flex-col justify-center animate-fade-in">
-            <div className="text-center mb-6">
-              <div className="inline-flex p-3 rounded-2xl bg-gradient-to-br from-violet/10 to-magenta/10 border border-violet/20 mb-3">
+          <div className="min-h-[60vh] flex flex-col justify-center animate-fade-in">
+            <div className="text-center mb-8">
+              <div className="inline-flex p-4 rounded-2xl bg-gradient-to-br from-violet/15 to-magenta/15 border border-violet/25 mb-4">
                 <ZenfiLogo size="sm" />
               </div>
-              <p className="text-xs text-muted-foreground">Processing your request</p>
+              <h2 className="text-lg font-semibold text-foreground mb-1">Setting up your transaction</h2>
+              <p className="text-sm text-muted-foreground">Please wait while we securely process your request</p>
             </div>
             
-            {/* Compact Timeline */}
-            <div className="bg-secondary/20 rounded-2xl border border-border/30 p-4">
+            {/* Timeline */}
+            <div className="bg-secondary/30 rounded-2xl border border-border/40 p-5">
               {processingSteps.map((item, index) => (
-                <div key={index} className={`flex items-center gap-3 py-2.5 ${index !== processingSteps.length - 1 ? "border-b border-border/20" : ""}`}>
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                <div key={index} className={`flex items-center gap-4 py-4 ${index !== processingSteps.length - 1 ? "border-b border-border/30" : ""}`}>
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
                     index < activeProcessingStep 
-                      ? "bg-teal/20" 
+                      ? "bg-teal/20 border border-teal/30" 
                       : index === activeProcessingStep 
-                        ? "bg-violet/20 animate-pulse" 
-                        : "bg-secondary/50"
+                        ? "bg-violet/20 border border-violet/30 animate-pulse" 
+                        : "bg-secondary/50 border border-border/30"
                   }`}>
                     {index < activeProcessingStep ? (
-                      <Check className="w-4 h-4 text-teal" />
+                      <Check className="w-5 h-5 text-teal" />
                     ) : (
-                      <item.icon className={`w-4 h-4 ${index === activeProcessingStep ? "text-violet" : "text-muted-foreground/40"}`} />
+                      <item.icon className={`w-5 h-5 ${index === activeProcessingStep ? "text-violet" : "text-muted-foreground/40"}`} />
                     )}
                   </div>
-                  <span className={`text-sm font-medium transition-colors ${
-                    index <= activeProcessingStep ? "text-foreground" : "text-muted-foreground/40"
-                  }`}>
-                    {item.label}
-                  </span>
+                  <div className="flex-1">
+                    <span className={`text-sm font-medium transition-colors ${
+                      index <= activeProcessingStep ? "text-foreground" : "text-muted-foreground/50"
+                    }`}>
+                      {item.label}
+                    </span>
+                    {index === activeProcessingStep && (
+                      <span className="text-xs text-violet block mt-0.5">In progress...</span>
+                    )}
+                  </div>
                   {index === activeProcessingStep && (
-                    <Loader2 className="w-3 h-3 text-violet animate-spin ml-auto" />
+                    <Loader2 className="w-4 h-4 text-violet animate-spin" />
                   )}
                 </div>
               ))}
@@ -330,43 +350,50 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 3: NOTICE (COMPACT CARD) ============ */}
+        {/* ============ STEP 3: NOTICE ============ */}
         {step === "notice" && (
-          <div className="animate-fade-in space-y-4">
-            <div className="rounded-2xl bg-gradient-to-br from-gold/5 to-transparent border border-gold/20 overflow-hidden">
-              {/* Compact Header */}
-              <div className="px-4 py-3 border-b border-border/20 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                  <AlertTriangle className="w-4 h-4 text-gold" />
+          <div className="animate-fade-in space-y-5">
+            <div className="rounded-2xl bg-gradient-to-br from-gold/10 to-transparent border border-gold/25 overflow-hidden">
+              {/* Header */}
+              <div className="px-5 py-4 border-b border-border/30 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gold/15 flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-gold" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-sm text-foreground">Important</h3>
-                  <p className="text-[10px] text-muted-foreground">Read before proceeding</p>
+                  <h3 className="font-bold text-base text-foreground">Before You Proceed</h3>
+                  <p className="text-xs text-muted-foreground">Please read these important guidelines</p>
                 </div>
               </div>
 
-              {/* Compact Content */}
-              <div className="p-4 space-y-2.5">
+              {/* Content */}
+              <div className="p-5 space-y-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  To ensure your payment is processed quickly and credited to your account, please follow these guidelines carefully.
+                </p>
+                
                 {[
-                  { icon: Shield, text: "Transfer exact amount shown" },
-                  { icon: Upload, text: "Upload receipt after payment" },
-                  { icon: Building2, text: "Major banks confirm faster" },
-                  { icon: FileCheck, text: "Avoid disputes during review" },
+                  { icon: Banknote, title: "Exact Amount", text: "Transfer the exact amount shown. Any variation may delay processing." },
+                  { icon: Upload, title: "Upload Receipt", text: "Immediately upload your payment receipt after transfer for faster verification." },
+                  { icon: Building2, title: "Bank Selection", text: "Payments from major Nigerian banks (GTB, Zenith, Access) confirm within minutes." },
+                  { icon: FileCheck, title: "No Disputes", text: "Please avoid raising bank disputes during the confirmation period." },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-2.5 py-1">
-                    <div className="w-5 h-5 rounded bg-violet/10 flex items-center justify-center shrink-0">
-                      <item.icon className="w-2.5 h-2.5 text-violet" />
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-secondary/20 border border-border/20">
+                    <div className="w-9 h-9 rounded-lg bg-violet/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <item.icon className="w-4 h-4 text-violet" />
                     </div>
-                    <span className="text-xs text-muted-foreground">{item.text}</span>
+                    <div>
+                      <span className="text-sm font-semibold text-foreground block">{item.title}</span>
+                      <span className="text-xs text-muted-foreground">{item.text}</span>
+                    </div>
                   </div>
                 ))}
               </div>
 
               {/* Action */}
-              <div className="px-4 pb-4">
+              <div className="p-5 pt-2">
                 <button
                   onClick={() => setStep("transfer")}
-                  className="w-full h-10 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all"
+                  className="w-full h-13 py-3.5 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
                 >
                   I Understand, Continue
                 </button>
@@ -375,53 +402,57 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 4: TRANSFER (COMPACT) ============ */}
+        {/* ============ STEP 4: TRANSFER ============ */}
         {step === "transfer" && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-5 animate-fade-in">
             
-            {/* Amount Highlight */}
-            <div className="text-center py-3 px-4 rounded-xl bg-gradient-to-r from-violet/10 to-magenta/10 border border-violet/20">
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Transfer Exactly</span>
-              <div className="text-2xl font-bold text-foreground">{formatCurrency(AMOUNT)}</div>
+            {/* Amount Header */}
+            <div className="text-center py-5 px-5 rounded-2xl bg-gradient-to-r from-violet/15 via-magenta/10 to-violet/15 border border-violet/25">
+              <span className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Transfer Exactly</span>
+              <div className="text-3xl font-bold text-foreground mt-1">{formatCurrency(AMOUNT)}</div>
+              <p className="text-sm text-muted-foreground mt-2">Any different amount will delay your credit</p>
             </div>
 
-            {/* Bank Details Card */}
-            <section className="rounded-xl border border-border/40 overflow-hidden bg-secondary/10">
-              <div className="px-3 py-2 border-b border-border/30 flex items-center gap-2">
-                <Building2 className="w-3.5 h-3.5 text-violet" />
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Bank Details</span>
+            {/* Bank Details */}
+            <section className="rounded-2xl border border-border/50 overflow-hidden bg-secondary/20">
+              <div className="px-4 py-3 border-b border-border/40 flex items-center gap-2 bg-secondary/30">
+                <Building2 className="w-5 h-5 text-violet" />
+                <span className="text-sm font-semibold text-foreground">Bank Transfer Details</span>
               </div>
               
-              <div className="divide-y divide-border/20">
+              <div className="divide-y divide-border/30">
                 {[
-                  { label: "Bank", value: BANK_NAME, copyValue: BANK_NAME, field: "Bank" },
-                  { label: "Account", value: ACCOUNT_NUMBER, copyValue: ACCOUNT_NUMBER, field: "Account", mono: true },
-                  { label: "Name", value: ACCOUNT_NAME, copyValue: ACCOUNT_NAME, field: "Name" },
+                  { label: "Bank Name", value: BANK_NAME, copyValue: BANK_NAME, field: "Bank" },
+                  { label: "Account Number", value: ACCOUNT_NUMBER, copyValue: ACCOUNT_NUMBER, field: "Account", mono: true, highlight: true },
+                  { label: "Account Name", value: ACCOUNT_NAME, copyValue: ACCOUNT_NAME, field: "Name" },
                 ].map((item) => (
-                  <div key={item.field} className="flex items-center justify-between px-3 py-2.5 hover:bg-secondary/20 transition-colors">
-                    <span className="text-xs text-muted-foreground">{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs text-foreground ${item.mono ? "font-mono font-semibold" : ""} max-w-[160px] truncate`}>
+                  <div key={item.field} className={`flex items-center justify-between px-4 py-4 ${item.highlight ? "bg-violet/5" : ""}`}>
+                    <div>
+                      <span className="text-xs text-muted-foreground block mb-0.5">{item.label}</span>
+                      <span className={`text-base text-foreground ${item.mono ? "font-mono font-bold" : "font-medium"}`}>
                         {item.value}
                       </span>
-                      <button
-                        onClick={() => handleCopy(item.copyValue, item.field)}
-                        className="p-1 rounded hover:bg-secondary/50 transition-all active:scale-90"
-                      >
-                        {copiedField === item.field ? (
-                          <Check className="w-3 h-3 text-teal" />
-                        ) : (
-                          <Copy className="w-3 h-3 text-muted-foreground" />
-                        )}
-                      </button>
                     </div>
+                    <button
+                      onClick={() => handleCopy(item.copyValue, item.field)}
+                      className="p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary transition-all active:scale-95"
+                    >
+                      {copiedField === item.field ? (
+                        <Check className="w-5 h-5 text-teal" />
+                      ) : (
+                        <Copy className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
             </section>
 
             {/* Receipt Upload */}
-            <section>
+            <section className="space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Payment Proof</h3>
+              <p className="text-xs text-muted-foreground">Upload your bank transfer receipt or screenshot</p>
+              
               <input
                 ref={fileInputRef}
                 type="file"
@@ -431,27 +462,29 @@ export const BuyZFC = () => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className={`w-full p-4 rounded-xl border-2 border-dashed transition-all ${
+                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all ${
                   receiptUploaded 
-                    ? "border-teal/40 bg-teal/5" 
-                    : "border-border/40 hover:border-violet/40 hover:bg-violet/5"
+                    ? "border-teal/50 bg-teal/10" 
+                    : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
                 }`}
               >
                 {receiptUploaded ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-teal/20 flex items-center justify-center">
-                      <CheckCircle2 className="w-4 h-4 text-teal" />
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center">
+                      <CheckCircle2 className="w-6 h-6 text-teal" />
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <span className="text-xs font-medium text-teal block">Receipt attached</span>
-                      <span className="text-[10px] text-muted-foreground truncate block">{receiptName}</span>
+                      <span className="text-base font-semibold text-teal block">Receipt Uploaded</span>
+                      <span className="text-sm text-muted-foreground truncate block">{receiptName}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-1.5">
-                    <Upload className="w-5 h-5 text-muted-foreground/60" />
-                    <span className="text-xs text-muted-foreground">Upload payment receipt</span>
-                    <span className="text-[10px] text-muted-foreground/50">PNG, JPG, or PDF</span>
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center">
+                      <Upload className="w-7 h-7 text-muted-foreground" />
+                    </div>
+                    <span className="text-base font-medium text-muted-foreground">Tap to upload receipt</span>
+                    <span className="text-xs text-muted-foreground/60">Supports PNG, JPG, or PDF</span>
                   </div>
                 )}
               </button>
@@ -461,15 +494,15 @@ export const BuyZFC = () => {
             <button
               onClick={handlePaymentComplete}
               disabled={!receiptUploaded || isSubmitting}
-              className={`w-full h-11 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
                 receiptUploaded && !isSubmitting
-                  ? "bg-gradient-to-r from-violet to-magenta text-white shadow-lg shadow-violet/20 hover:scale-[1.01] active:scale-[0.99]"
-                  : "bg-secondary/50 text-muted-foreground cursor-not-allowed"
+                  ? "bg-gradient-to-r from-violet to-magenta text-white shadow-xl shadow-violet/25 hover:scale-[1.02] active:scale-[0.98]"
+                  : "bg-secondary/60 text-muted-foreground cursor-not-allowed"
               }`}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Processing...</span>
                 </>
               ) : (
@@ -479,83 +512,94 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {/* ============ STEP 5: CONFIRMING (MINIMAL) ============ */}
+        {/* ============ STEP 5: CONFIRMING ============ */}
         {step === "confirming" && (
-          <div className="min-h-[45vh] flex flex-col items-center justify-center animate-fade-in">
-            <div className="relative mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet/20 to-magenta/20 flex items-center justify-center">
-                <Loader2 className="w-7 h-7 text-violet animate-spin" />
+          <div className="min-h-[60vh] flex flex-col items-center justify-center animate-fade-in">
+            <div className="relative mb-8">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet/25 to-magenta/25 flex items-center justify-center border border-violet/30">
+                <Loader2 className="w-9 h-9 text-violet animate-spin" />
               </div>
-              <div className="absolute -inset-2 bg-violet/10 rounded-3xl blur-xl animate-pulse" />
+              <div className="absolute -inset-3 bg-violet/15 rounded-3xl blur-2xl animate-pulse" />
             </div>
             
-            <p className="text-sm font-medium text-foreground">Verifying payment</p>
-            <p className="text-xs text-muted-foreground mt-0.5">This won't take long...</p>
+            <h2 className="text-xl font-bold text-foreground mb-2">Verifying Your Payment</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-xs">
+              We're confirming your transaction with the bank. This usually takes just a moment.
+            </p>
             
             {/* Progress bar */}
-            <div className="w-32 h-1 bg-secondary/50 rounded-full overflow-hidden mt-4">
-              <div className="h-full bg-gradient-to-r from-violet to-magenta rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" 
-                   style={{ width: "60%" }} />
+            <div className="w-40 h-1.5 bg-secondary/60 rounded-full overflow-hidden mt-6">
+              <div className="h-full bg-gradient-to-r from-violet to-magenta rounded-full" 
+                   style={{ animation: "progressSlide 1.5s ease-in-out infinite" }} />
             </div>
           </div>
         )}
 
-        {/* ============ STEP 6: PENDING (PREMIUM) ============ */}
+        {/* ============ STEP 6: PENDING ============ */}
         {step === "pending" && (
-          <div className="min-h-[45vh] flex flex-col items-center justify-center animate-fade-in">
+          <div className="min-h-[60vh] flex flex-col items-center justify-center animate-fade-in">
             
             {/* Status Icon */}
-            <div className="relative mb-5">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 border border-gold/30 flex items-center justify-center">
-                <Clock className="w-8 h-8 text-gold" />
+            <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-gold/25 to-gold/10 border border-gold/35 flex items-center justify-center">
+                <Clock className="w-10 h-10 text-gold" />
               </div>
-              <div className="absolute -inset-3 bg-gold/5 rounded-3xl blur-2xl animate-pulse" />
-              {/* Floating particles */}
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gold/30 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-violet/30 rounded-full animate-bounce" style={{ animationDelay: "0.5s" }} />
+              <div className="absolute -inset-4 bg-gold/10 rounded-full blur-2xl animate-pulse" />
+              {/* Floating elements */}
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-gold/40 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+              <div className="absolute -bottom-2 -left-2 w-3 h-3 bg-violet/40 rounded-full animate-bounce" style={{ animationDelay: "0.5s" }} />
             </div>
 
-            <h2 className="text-lg font-semibold text-foreground mb-1">Payment Pending</h2>
-            <p className="text-xs text-muted-foreground text-center max-w-[240px]">
-              Your transaction is being verified. We'll notify you once confirmed.
+            <h2 className="text-2xl font-bold text-foreground mb-2">Payment Pending</h2>
+            <p className="text-base text-muted-foreground text-center max-w-xs leading-relaxed">
+              Your transaction is currently under review. We'll notify you via email once it's confirmed.
             </p>
 
             {/* Status Badge */}
-            <div className="mt-4 px-3 py-1.5 rounded-full bg-gold/10 border border-gold/20 flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-              <span className="text-[10px] font-medium text-gold uppercase tracking-wide">Under Review</span>
+            <div className="mt-5 px-4 py-2 rounded-full bg-gold/15 border border-gold/30 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+              <span className="text-sm font-semibold text-gold">Under Review</span>
+            </div>
+
+            {/* Info Card */}
+            <div className="mt-6 w-full p-4 rounded-xl bg-secondary/30 border border-border/40">
+              <p className="text-xs text-muted-foreground text-center">
+                Most payments are confirmed within 5-15 minutes during banking hours. 
+                You can safely close this page — we'll send you a notification.
+              </p>
             </div>
 
             {/* Actions */}
-            <div className="mt-6 space-y-2 w-full max-w-[240px]">
+            <div className="mt-8 space-y-3 w-full">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="w-full h-10 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-semibold text-sm hover:scale-[1.01] active:scale-[0.99] transition-all"
+                className="w-full h-13 py-3.5 rounded-2xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-base hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
               >
                 Back to Dashboard
               </button>
               <button
                 onClick={() => navigate("/history")}
-                className="w-full h-9 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                className="w-full h-12 text-base font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 View Transaction History
               </button>
             </div>
 
             {/* Trust Footer */}
-            <div className="mt-6 flex items-center gap-1 text-muted-foreground/50">
-              <Shield className="w-3 h-3" />
-              <span className="text-[10px]">Secured by ZenFi</span>
+            <div className="mt-8 flex items-center gap-2 text-muted-foreground/60">
+              <Shield className="w-4 h-4" />
+              <span className="text-xs">Secured by ZenFi • All transactions encrypted</span>
             </div>
           </div>
         )}
       </main>
 
-      {/* Custom Animations */}
+      {/* Animations */}
       <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
+        @keyframes progressSlide {
+          0% { width: 20%; transform: translateX(-100%); }
+          50% { width: 60%; }
+          100% { width: 20%; transform: translateX(400%); }
         }
       `}</style>
     </div>
