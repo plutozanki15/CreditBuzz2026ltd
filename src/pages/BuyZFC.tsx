@@ -164,44 +164,88 @@ export const BuyZFC = () => {
     setStep("processing");
   };
 
+  // Compress image for faster uploads
+  const compressImage = (file: File, maxWidth = 1200): Promise<Blob> => {
+    return new Promise((resolve) => {
+      // If not an image or already small, return as-is
+      if (!file.type.startsWith('image/') || file.size < 500 * 1024) {
+        resolve(file);
+        return;
+      }
+      
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        let { width, height } = img;
+        
+        // Scale down if too large
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => resolve(blob || file),
+          'image/jpeg',
+          0.8 // 80% quality
+        );
+      };
+      
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleReceiptSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Reset input immediately for re-uploads
+    // Reset input immediately
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
     
-    // Validate file size (max 10MB)
+    // Quick validation
     if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Maximum 10MB allowed", variant: "destructive" });
+      toast({ title: "File too large", description: "Maximum 10MB", variant: "destructive" });
       return;
     }
     
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     if (!validTypes.includes(file.type)) {
-      toast({ title: "Invalid file", description: "Please upload an image or PDF", variant: "destructive" });
+      toast({ title: "Invalid file", description: "Use image or PDF", variant: "destructive" });
       return;
     }
     
+    // Show uploading state immediately
     setIsUploading(true);
     setReceiptName(file.name);
     
     try {
-      // Get current user directly from Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) {
-        throw new Error("Session expired. Please refresh the page.");
-      }
+      // Get user and compress image in parallel for speed
+      const [userResult, compressedBlob] = await Promise.all([
+        supabase.auth.getUser(),
+        compressImage(file)
+      ]);
       
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const currentUser = userResult.data.user;
+      if (!currentUser) throw new Error("Please refresh and try again");
+      
+      const fileExt = file.type === 'application/pdf' ? 'pdf' : 'jpg';
       const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
       
+      // Upload compressed file
       const { error: uploadError } = await supabase.storage
         .from('receipts')
-        .upload(fileName, file);
+        .upload(fileName, compressedBlob, {
+          contentType: file.type === 'application/pdf' ? 'application/pdf' : 'image/jpeg'
+        });
       
       if (uploadError) throw uploadError;
       
@@ -211,15 +255,15 @@ export const BuyZFC = () => {
       
       setUploadedReceiptUrl(urlData.publicUrl);
       setReceiptUploaded(true);
-      toast({ title: "Receipt uploaded", description: "Ready for submission" });
+      setIsUploading(false);
+      toast({ title: "✓ Receipt ready", description: "Tap Confirm to submit" });
       
     } catch (error) {
-      console.error("Upload failed:", error);
-      toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Please try again", variant: "destructive" });
+      console.error("Upload error:", error);
+      toast({ title: "Upload failed", description: "Please try again", variant: "destructive" });
       setReceiptName("");
       setUploadedReceiptUrl(null);
       setReceiptUploaded(false);
-    } finally {
       setIsUploading(false);
     }
   };
