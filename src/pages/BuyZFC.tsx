@@ -203,6 +203,11 @@ export const BuyZFC = () => {
       setReceiptUploaded(true);
       toast({ title: "Receipt uploaded", description: "Your payment proof is ready" });
       
+      // Reset file input to allow re-selection
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
     } catch (error) {
       console.error("Upload error:", error);
       toast({ 
@@ -212,6 +217,11 @@ export const BuyZFC = () => {
       });
       setReceiptName("");
       setUploadedReceiptUrl(null);
+      
+      // Reset file input on error
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
       setIsUploading(false);
     }
@@ -644,7 +654,6 @@ export const BuyZFC = () => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf"
-                capture="environment"
                 onChange={handleFileUpload}
                 className="sr-only"
                 disabled={isUploading}
