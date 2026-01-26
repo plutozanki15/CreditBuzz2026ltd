@@ -230,8 +230,8 @@ export const BuyZFC = () => {
         
         const receiptUrl = urlData.publicUrl;
         
-        // 3. Create payment record - fire and forget
-        const { error: paymentError } = await supabase
+        // 3. Create payment record and get ID for realtime tracking
+        const { data: paymentData, error: paymentError } = await supabase
           .from('payments')
           .insert({
             user_id: currentUser.id,
@@ -240,7 +240,9 @@ export const BuyZFC = () => {
             account_name: formData.fullName || profile?.full_name || "Unknown",
             receipt_url: receiptUrl,
             status: 'pending'
-          });
+          })
+          .select('id')
+          .single();
         
         if (paymentError) {
           console.error("Payment error:", paymentError);
@@ -250,6 +252,11 @@ export const BuyZFC = () => {
             variant: "destructive" 
           });
           return;
+        }
+        
+        // Set the payment ID for realtime tracking
+        if (paymentData?.id) {
+          setCurrentPaymentId(paymentData.id);
         }
         
         // Success toast (user is already on pending screen)
