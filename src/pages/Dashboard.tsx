@@ -11,11 +11,9 @@ import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { ProfilePanel } from "@/components/ui/ProfilePanel";
 import { AnimatedIcon } from "@/components/ui/AnimatedIcon";
 import { BannedOverlay } from "@/components/ui/BannedOverlay";
-import { NotificationBanner } from "@/components/ui/NotificationBanner";
 import { useClaimTimer } from "@/hooks/useClaimTimer";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { useAuth } from "@/hooks/useAuth";
-import { useNotifications } from "@/hooks/useNotifications";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import {
@@ -49,7 +47,6 @@ const actionButtons = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { profile, isBanned, isLoading: authLoading } = useAuth();
-  const { unreadCount } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [balance, setBalance] = useState(0);
@@ -110,11 +107,11 @@ export const Dashboard = () => {
     setIsClaiming(true);
     
     try {
-      // BACKEND FIRST - Update Supabase balance
-      const { error } = await supabase.rpc('credit_user_balance', {
-        p_user_id: profile.user_id,
-        p_amount: 10000
-      });
+      // Update balance directly in profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({ balance: balance + 10000 })
+        .eq('user_id', profile.user_id);
       
       if (error) {
         console.error("Claim error:", error);
@@ -173,20 +170,12 @@ export const Dashboard = () => {
       {/* Official ZenFi Warning Banner */}
       <WarningBanner />
       
-      {/* Notification Banner */}
-      <NotificationBanner />
-      
       {/* Compact Header */}
       <header className="relative z-10 px-4 py-3 flex items-center justify-between">
         <ZenfiLogo size="sm" />
         <div className="flex items-center gap-2">
           <button className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors relative group">
             <Bell className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-bold bg-magenta text-white rounded-full px-1">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
           </button>
           <ProfileAvatar onClick={() => setShowProfilePanel(true)} size="sm" />
           <button 

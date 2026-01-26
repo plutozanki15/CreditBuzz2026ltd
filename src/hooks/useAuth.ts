@@ -19,7 +19,6 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  isAdmin: boolean;
   isLoading: boolean;
   isBanned: boolean;
 }
@@ -29,7 +28,6 @@ export const useAuth = () => {
     user: null,
     session: null,
     profile: null,
-    isAdmin: false,
     isLoading: true,
     isBanned: false,
   });
@@ -39,26 +37,21 @@ export const useAuth = () => {
   const profileChannelRef = useRef<any>(null);
 
   useEffect(() => {
-    // Helper to load profile + admin status for a given user id
+    // Helper to load profile for a given user id
     const loadUserData = async (user: User, session: Session) => {
-      const [profileResult, roleResult] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-        supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
-      ]);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      const profile = profileResult.data as Profile | null;
-      const isAdmin = roleResult.data === true;
-      const isBanned = profile?.status === "banned";
+      const typedProfile = profile as Profile | null;
+      const isBanned = typedProfile?.status === "banned";
 
       setAuthState({
         user,
         session,
-        profile,
-        isAdmin,
+        profile: typedProfile,
         isLoading: false,
         isBanned,
       });
@@ -87,7 +80,6 @@ export const useAuth = () => {
           user: null,
           session: null,
           profile: null,
-          isAdmin: false,
           isLoading: false,
           isBanned: false,
         });
