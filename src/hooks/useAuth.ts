@@ -129,7 +129,6 @@ export const useAuth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
     return () => {
       subscription.unsubscribe();
       if (profileChannelRef.current) {
