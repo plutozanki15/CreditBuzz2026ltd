@@ -48,7 +48,7 @@ export const BuyZFC = () => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptName, setReceiptName] = useState("");
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploadedReceiptUrl, setUploadedReceiptUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [displayAmount, setDisplayAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -198,12 +198,10 @@ export const BuyZFC = () => {
         .from('receipts')
         .getPublicUrl(fileName);
       
-      setReceiptFile(file);
+      // Store URL in state
+      setUploadedReceiptUrl(urlData.publicUrl);
       setReceiptUploaded(true);
       toast({ title: "Receipt uploaded", description: "Your payment proof is ready" });
-      
-      // Store URL for later use
-      (file as any).uploadedUrl = urlData.publicUrl;
       
     } catch (error) {
       console.error("Upload error:", error);
@@ -213,13 +211,14 @@ export const BuyZFC = () => {
         variant: "destructive" 
       });
       setReceiptName("");
+      setUploadedReceiptUrl(null);
     } finally {
       setIsUploading(false);
     }
   };
 
   const handlePaymentComplete = async () => {
-    if (!receiptUploaded || !receiptFile || !user) {
+    if (!receiptUploaded || !uploadedReceiptUrl || !user) {
       toast({ title: "Error", description: "Please upload a receipt and ensure you're logged in", variant: "destructive" });
       return;
     }
@@ -227,14 +226,7 @@ export const BuyZFC = () => {
     setIsSubmitting(true);
     
     try {
-      // Get the already-uploaded URL from the file
-      const receiptUrl = (receiptFile as any).uploadedUrl;
-      
-      if (!receiptUrl) {
-        throw new Error("Receipt URL not found. Please re-upload.");
-      }
-      
-      // Create payment record
+      // Create payment record with the stored URL
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -242,7 +234,7 @@ export const BuyZFC = () => {
           amount: AMOUNT,
           zfc_amount: ZFC_AMOUNT,
           account_name: formData.fullName || profile?.full_name || "Unknown",
-          receipt_url: receiptUrl,
+          receipt_url: uploadedReceiptUrl,
           status: 'pending'
         })
         .select('id')
@@ -1023,7 +1015,7 @@ export const BuyZFC = () => {
                 onClick={() => {
                   setStep("form");
                   setReceiptUploaded(false);
-                  setReceiptFile(null);
+                  setUploadedReceiptUrl(null);
                   setReceiptName("");
                   setCurrentPaymentId(null);
                 }}
@@ -1163,7 +1155,7 @@ export const BuyZFC = () => {
                 onClick={() => {
                   setStep("form");
                   setReceiptUploaded(false);
-                  setReceiptFile(null);
+                  setUploadedReceiptUrl(null);
                   setReceiptName("");
                   setCurrentPaymentId(null);
                   setRejectionReason(null);
