@@ -164,13 +164,30 @@ export const BuyZFC = () => {
     setStep("processing");
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReceiptSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    
+    // Reset input immediately for re-uploads
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    if (!user) {
+      toast({ title: "Not logged in", description: "Please log in to upload", variant: "destructive" });
+      return;
+    }
     
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Please upload a file smaller than 10MB", variant: "destructive" });
+      toast({ title: "File too large", description: "Maximum 10MB allowed", variant: "destructive" });
+      return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      toast({ title: "Invalid file", description: "Please upload an image or PDF", variant: "destructive" });
       return;
     }
     
@@ -178,50 +195,29 @@ export const BuyZFC = () => {
     setReceiptName(file.name);
     
     try {
-      // Upload directly to storage
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('receipts')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
+        .upload(fileName, file);
       
-      if (uploadError) {
-        throw new Error(uploadError.message);
-      }
+      if (uploadError) throw uploadError;
       
-      // Get public URL
       const { data: urlData } = supabase.storage
         .from('receipts')
         .getPublicUrl(fileName);
       
-      // Store URL in state
       setUploadedReceiptUrl(urlData.publicUrl);
       setReceiptUploaded(true);
-      toast({ title: "Receipt uploaded", description: "Your payment proof is ready" });
-      
-      // Reset file input to allow re-selection
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      toast({ title: "Receipt uploaded", description: "Ready for submission" });
       
     } catch (error) {
-      console.error("Upload error:", error);
-      toast({ 
-        title: "Upload failed", 
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive" 
-      });
+      console.error("Upload failed:", error);
+      toast({ title: "Upload failed", description: "Please try again", variant: "destructive" });
       setReceiptName("");
       setUploadedReceiptUrl(null);
-      
-      // Reset file input on error
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setReceiptUploaded(false);
     } finally {
       setIsUploading(false);
     }
@@ -644,66 +640,87 @@ export const BuyZFC = () => {
               </div>
             </section>
 
-            {/* Receipt Upload */}
-            <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-foreground">Payment Proof</h3>
-              <p className="text-xs text-muted-foreground">Upload your bank transfer receipt or screenshot</p>
+            {/* Receipt Upload - New Clean Implementation */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Upload Receipt</h3>
+                  <p className="text-xs text-muted-foreground">Proof of your bank transfer</p>
+                </div>
+                {receiptUploaded && (
+                  <span className="px-2.5 py-1 rounded-full bg-teal/15 text-teal text-xs font-semibold border border-teal/25">
+                    ✓ Ready
+                  </span>
+                )}
+              </div>
               
+              {/* Hidden file input */}
               <input
-                id="receipt-upload"
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.pdf"
-                onChange={handleFileUpload}
-                className="sr-only"
-                disabled={isUploading}
+                accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                onChange={handleReceiptSelect}
+                className="hidden"
+                id="transfer-receipt-input"
               />
-              <label
-                htmlFor="receipt-upload"
-                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all block cursor-pointer ${
-                  isUploading ? "pointer-events-none" : ""
-                } ${
-                  receiptUploaded 
-                    ? "border-teal/50 bg-teal/10" 
-                    : isUploading
-                      ? "border-violet/50 bg-violet/5"
-                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5 active:scale-[0.98]"
+              
+              {/* Upload trigger button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all duration-200 ${
+                  isUploading 
+                    ? "border-violet/40 bg-violet/5 cursor-wait" 
+                    : receiptUploaded 
+                      ? "border-teal/40 bg-teal/5 hover:bg-teal/10" 
+                      : "border-border/50 bg-secondary/20 hover:border-violet/40 hover:bg-violet/5 active:scale-[0.98]"
                 }`}
               >
                 {isUploading ? (
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-violet/20 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-violet animate-spin" />
-                    </div>
-                    <div className="text-left flex-1 min-w-0">
-                      <span className="text-base font-semibold text-violet block">Uploading...</span>
-                      <span className="text-sm text-muted-foreground truncate block">{receiptName}</span>
+                  <div className="flex items-center justify-center gap-3">
+                    <Loader2 className="w-6 h-6 text-violet animate-spin" />
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-violet">Uploading...</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[200px]">{receiptName}</p>
                     </div>
                   </div>
                 ) : receiptUploaded ? (
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center">
-                      <CheckCircle2 className="w-6 h-6 text-teal" />
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-teal/20 flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-teal" />
                     </div>
-                    <div className="text-left flex-1 min-w-0">
-                      <span className="text-base font-semibold text-teal block">Receipt Uploaded</span>
-                      <span className="text-sm text-muted-foreground truncate block">{receiptName}</span>
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-teal">Receipt Uploaded</p>
+                      <p className="text-xs text-muted-foreground truncate max-w-[200px]">{receiptName}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 py-2">
-                    <div className="w-14 h-14 rounded-2xl bg-secondary/50 flex items-center justify-center">
-                      <Upload className="w-7 h-7 text-muted-foreground" />
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-secondary/60 flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <span className="text-base font-medium text-muted-foreground">Tap to upload receipt</span>
-                    <span className="text-xs text-muted-foreground/60">Supports PNG, JPG, or PDF (max 10MB)</span>
+                    <p className="text-sm font-medium text-muted-foreground">Tap to select receipt</p>
+                    <p className="text-xs text-muted-foreground/60">JPG, PNG, or PDF • Max 10MB</p>
                   </div>
                 )}
-              </label>
+              </button>
+              
+              {/* Re-upload option */}
+              {receiptUploaded && !isUploading && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full text-center text-xs text-violet hover:text-violet/80 font-medium py-1"
+                >
+                  Upload different receipt
+                </button>
+              )}
             </section>
 
-            {/* CTA */}
+            {/* Submit Button */}
             <button
+              type="button"
               onClick={handlePaymentComplete}
               disabled={!receiptUploaded || isSubmitting || isUploading}
               className={`w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
