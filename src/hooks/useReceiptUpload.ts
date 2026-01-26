@@ -1,9 +1,12 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { xhrPutUpload } from "@/lib/xhrPutUpload";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const UPLOAD_TIMEOUT = 30000; // 30 seconds for XHR upload
+const UPLOAD_TIMEOUT = 30000; // 30 seconds hard timeout
+const STALL_TIMEOUT = 10000; // abort if no progress for 10s (mobile safety)
+const SIGNED_URL_TIMEOUT = 10000; // signed-url request timeout
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg", "application/pdf"];
 
 interface UseReceiptUploadReturn {
@@ -17,96 +20,24 @@ interface UseReceiptUploadReturn {
   retryUpload: () => void;
 }
 
-// Compress image for mobile optimization
-const compressImage = (file: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    if (file.type === "application/pdf") {
-      resolve(file);
-      return;
-    }
+const nextFrame = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
 
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    img.onload = () => {
-      URL.revokeObjectURL(img.src);
-      
-      const maxWidth = 1200;
-      const maxHeight = 1200;
-      let { width, height } = img;
-
-      if (width > maxWidth) {
-        height = (height * maxWidth) / width;
-        width = maxWidth;
-      }
-      if (height > maxHeight) {
-        width = (width * maxHeight) / height;
-        height = maxHeight;
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx?.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            resolve(new File([blob], file.name, { type: "image/jpeg" }));
-          } else {
-            reject(new Error("Compression failed"));
-          }
-        },
-        "image/jpeg",
-        0.8
-      );
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(img.src);
-      reject(new Error("Image load failed"));
-    };
-    img.src = URL.createObjectURL(file);
-  });
-};
-
-// XHR upload with real progress tracking
-const uploadWithXHR = (
-  signedUrl: string,
-  file: File,
-  onProgress: (percent: number) => void
-): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    
-    xhr.upload.addEventListener("progress", (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        onProgress(percent);
-      }
-    });
-
-    xhr.addEventListener("load", () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-      } else {
-        reject(new Error(`Upload failed with status ${xhr.status}`));
-      }
-    });
-
-    xhr.addEventListener("error", () => {
-      reject(new Error("Network error during upload"));
-    });
-
-    xhr.addEventListener("timeout", () => {
-      reject(new Error("Upload timeout"));
-    });
-
-    xhr.timeout = UPLOAD_TIMEOUT;
-    xhr.open("PUT", signedUrl);
-    xhr.setRequestHeader("Content-Type", file.type);
-    xhr.send(file);
-  });
+const withTimeout = async <T,>(
+  promise: Promise<T>,
+  ms: number,
+  message: string
+): Promise<T> => {
+  let timer: number | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = window.setTimeout(() => reject(new Error(message)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) window.clearTimeout(timer);
+  }
 };
 
 export const useReceiptUpload = (): UseReceiptUploadReturn => {
@@ -122,14 +53,25 @@ export const useReceiptUpload = (): UseReceiptUploadReturn => {
     if (xhrRef.current) {
       xhrRef.current.abort();
     }
+    xhrRef.current = null;
     setUploadedUrl(null);
     setFileName(null);
     setUploadProgress(0);
     setUploadError(null);
+    setIsUploading(false);
     lastFileRef.current = null;
   }, []);
 
   const uploadReceipt = useCallback(async (file: File): Promise<string | null> => {
+    // Prevent double uploads (cancel previous if any)
+    if (isUploading) {
+      try {
+        xhrRef.current?.abort();
+      } catch {
+        // ignore
+      }
+    }
+
     lastFileRef.current = file;
     
     // Validate file type
@@ -149,66 +91,58 @@ export const useReceiptUpload = (): UseReceiptUploadReturn => {
     }
 
     setIsUploading(true);
-    setUploadProgress(5);
+    setUploadedUrl(null);
+    setFileName(null);
+    setUploadProgress(8); // immediately past “5%” on mobile
     setUploadError(null);
 
+    // Let the UI paint before doing any network work (prevents perceived “freeze”)
+    await nextFrame();
+
     try {
-      // Get current session for auth header
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error("Please log in to upload receipts");
-      }
-
-      setUploadProgress(10);
-
-      // Compress image if needed (skip for PDFs)
-      let fileToUpload = file;
-      if (file.type.startsWith("image/") && file.size > 300000) {
-        try {
-          fileToUpload = await compressImage(file);
-          setUploadProgress(15);
-        } catch {
-          fileToUpload = file;
-        }
-      }
-
-      setUploadProgress(20);
-
       // Get signed upload URL from edge function
-      const { data: signedData, error: signedError } = await supabase.functions.invoke(
-        "create-signed-upload-url",
-        {
+      const { data: signedData, error: signedError } = await withTimeout(
+        supabase.functions.invoke("create-signed-upload-url", {
           body: {
             fileName: file.name,
-            contentType: fileToUpload.type,
+            contentType: file.type,
           },
-        }
+        }),
+        SIGNED_URL_TIMEOUT,
+        "Upload URL request timed out. Please retry."
       );
 
       if (signedError || !signedData?.signedUrl) {
         throw new Error(signedError?.message || "Failed to get upload URL");
       }
 
-      setUploadProgress(25);
+      setUploadProgress(15);
 
-      // Upload using XHR with real progress tracking
-      await uploadWithXHR(
-        signedData.signedUrl,
-        fileToUpload,
-        (percent) => {
-          // Map 0-100 to 25-95 range for overall progress
-          const mappedProgress = 25 + Math.round(percent * 0.7);
-          setUploadProgress(mappedProgress);
-        }
-      );
+      // Upload using XHR PUT with real progress tracking
+      await xhrPutUpload({
+        url: signedData.signedUrl,
+        file,
+        contentType: file.type,
+        timeoutMs: UPLOAD_TIMEOUT,
+        stallTimeoutMs: STALL_TIMEOUT,
+        onXhr: (xhr) => {
+          xhrRef.current = xhr;
+        },
+        onProgress: (percent) => {
+          // Map 0-100 to 15-99 during transfer (finish sets 100)
+          const mapped = 15 + Math.round(percent * 0.84);
+          setUploadProgress(Math.min(mapped, 99));
+        },
+      });
 
       setUploadProgress(100);
-      setUploadedUrl(signedData.publicUrl);
+      // Store path (not a public URL) so bucket can be private
+      setUploadedUrl(signedData.path);
       setFileName(file.name);
+      xhrRef.current = null;
 
       toast({ title: "Receipt uploaded successfully", description: file.name });
-      return signedData.publicUrl;
+      return signedData.path;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Upload failed. Please try again.";
       setUploadError(errorMsg);
@@ -218,7 +152,7 @@ export const useReceiptUpload = (): UseReceiptUploadReturn => {
     } finally {
       setIsUploading(false);
     }
-  }, []);
+  }, [isUploading]);
 
   const retryUpload = useCallback(() => {
     if (lastFileRef.current) {

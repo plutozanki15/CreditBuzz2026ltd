@@ -38,6 +38,7 @@ export const AdminPayments = () => {
   const [rejectReason, setRejectReason] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptIsPdf, setReceiptIsPdf] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
 
@@ -107,6 +108,8 @@ export const AdminPayments = () => {
       if (receiptUrl.includes("/storage/v1/object/public/receipts/")) {
         path = receiptUrl.split("/storage/v1/object/public/receipts/")[1];
       }
+
+      setReceiptIsPdf(path.toLowerCase().endsWith(".pdf"));
 
       // Try to get signed URL for better security
       const { data, error } = await supabase.functions.invoke("get-signed-receipt-url", {
@@ -314,11 +317,19 @@ export const AdminPayments = () => {
             <DialogTitle>Payment Receipt</DialogTitle>
           </DialogHeader>
           {receiptPreview && (
-            <img 
-              src={receiptPreview} 
-              alt="Payment receipt" 
-              className="w-full rounded-lg"
-            />
+            receiptIsPdf ? (
+              <iframe
+                src={receiptPreview}
+                title="Payment receipt"
+                className="w-full h-[70vh] rounded-lg"
+              />
+            ) : (
+              <img 
+                src={receiptPreview} 
+                alt="Payment receipt" 
+                className="w-full rounded-lg"
+              />
+            )
           )}
         </DialogContent>
       </Dialog>

@@ -39,6 +39,8 @@ export const PaymentsPending = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptIsPdf, setReceiptIsPdf] = useState(false);
+  const [isLoadingReceipt, setIsLoadingReceipt] = useState(false);
 
   const fetchPayments = async () => {
     if (!user) return;
@@ -128,6 +130,33 @@ export const PaymentsPending = () => {
       currency: "NGN",
       minimumFractionDigits: 0,
     }).format(value);
+  };
+
+  const handleViewReceipt = async (receiptValue: string) => {
+    setIsLoadingReceipt(true);
+    try {
+      let path = receiptValue;
+      if (receiptValue.includes("/storage/v1/object/public/receipts/")) {
+        path = receiptValue.split("/storage/v1/object/public/receipts/")[1];
+      }
+
+      setReceiptIsPdf(path.toLowerCase().endsWith(".pdf"));
+
+      const { data, error } = await supabase.functions.invoke("get-signed-receipt-url", {
+        body: { path },
+      });
+
+      if (error || !data?.signedUrl) {
+        // Fallback: if it's already a URL (old records), try to display it
+        setReceiptPreview(receiptValue);
+      } else {
+        setReceiptPreview(data.signedUrl);
+      }
+    } catch {
+      setReceiptPreview(receiptValue);
+    } finally {
+      setIsLoadingReceipt(false);
+    }
   };
 
   if (authLoading) {
@@ -222,8 +251,9 @@ export const PaymentsPending = () => {
                   {/* Receipt link */}
                   {payment.receipt_url && (
                     <button
-                      onClick={() => setReceiptPreview(payment.receipt_url)}
-                      className="flex items-center gap-2 text-sm text-violet hover:text-violet/80 transition-colors"
+                      onClick={() => handleViewReceipt(payment.receipt_url!)}
+                      disabled={isLoadingReceipt}
+                      className="flex items-center gap-2 text-sm text-violet hover:text-violet/80 transition-colors disabled:opacity-50"
                     >
                       <Receipt className="w-4 h-4" />
                       <span>View Receipt</span>
@@ -244,11 +274,19 @@ export const PaymentsPending = () => {
             <DialogTitle>Payment Receipt</DialogTitle>
           </DialogHeader>
           {receiptPreview && (
-            <img
-              src={receiptPreview}
-              alt="Payment receipt"
-              className="w-full rounded-lg"
-            />
+            receiptIsPdf ? (
+              <iframe
+                src={receiptPreview}
+                title="Payment receipt"
+                className="w-full h-[70vh] rounded-lg"
+              />
+            ) : (
+              <img
+                src={receiptPreview}
+                alt="Payment receipt"
+                className="w-full rounded-lg"
+              />
+            )
           )}
         </DialogContent>
       </Dialog>
