@@ -11,7 +11,10 @@ import {
   User,
   Mail,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Download,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
@@ -27,13 +30,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export const AdminPayments = () => {
-  const { payments, isLoading, approvePayment, rejectPayment } = useAdminData();
+  const { payments, isLoading, approvePayment, rejectPayment, refreshData } = useAdminData();
   const [searchQuery, setSearchQuery] = useState("");
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const pendingPayments = payments.filter(p => p.status === "pending");
 
@@ -85,6 +89,13 @@ export const AdminPayments = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshData();
+    setIsRefreshing(false);
+    toast({ title: "Refreshed", description: "Payment list updated" });
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -104,14 +115,23 @@ export const AdminPayments = () => {
           <h2 className="text-2xl font-display font-bold">Payments</h2>
           <p className="text-muted-foreground text-sm">{pendingPayments.length} pending reviews</p>
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search payments..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-full md:w-64 bg-secondary/50"
-          />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-xl hover:bg-secondary/50 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-5 h-5 text-muted-foreground ${isRefreshing ? "animate-spin" : ""}`} />
+          </button>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search payments..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full md:w-64 bg-secondary/50"
+            />
+          </div>
         </div>
       </div>
 
