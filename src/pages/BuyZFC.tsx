@@ -168,7 +168,7 @@ export const BuyZFC = () => {
     }
   };
 
-  const handlePaymentComplete = async (event?: React.MouseEvent) => {
+  const handlePaymentComplete = (event?: React.MouseEvent) => {
     // Prevent any default behavior
     event?.preventDefault();
     event?.stopPropagation();
@@ -183,76 +183,94 @@ export const BuyZFC = () => {
       return;
     }
     
+    // Mark as submitting and IMMEDIATELY navigate to pending
     setIsSubmitting(true);
+    setStep("pending");
     
-    try {
-      // Get current user directly from Supabase to avoid auth state sync issues
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !currentUser) {
-        toast({ title: "Session expired", description: "Please log in again", variant: "destructive" });
+    // Run Supabase operations in the background (fire-and-forget with error handling)
+    const processPaymentInBackground = async () => {
+      try {
+        // Get current user directly from Supabase
+        const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !currentUser) {
+          toast({ 
+            title: "Session Issue", 
+            description: "Please check your login status", 
+            variant: "destructive" 
+          });
+          return;
+        }
+        
+        // 1. Upload receipt to storage
+        const fileExt = receiptFile.name.split('.').pop();
+        const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('receipts')
+          .upload(fileName, receiptFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+        
+        if (uploadError) {
+          console.error("Upload error:", uploadError);
+          toast({ 
+            title: "Upload Issue", 
+            description: "Receipt may need to be re-uploaded", 
+            variant: "destructive" 
+          });
+          return;
+        }
+        
+        // 2. Get public URL for the receipt
+        const { data: urlData } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(fileName);
+        
+        const receiptUrl = urlData.publicUrl;
+        
+        // 3. Create payment record - fire and forget
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert({
+            user_id: currentUser.id,
+            amount: AMOUNT,
+            zfc_amount: ZFC_AMOUNT,
+            account_name: formData.fullName || profile?.full_name || "Unknown",
+            receipt_url: receiptUrl,
+            status: 'pending'
+          });
+        
+        if (paymentError) {
+          console.error("Payment error:", paymentError);
+          toast({ 
+            title: "Submission Issue", 
+            description: "Payment record may need review", 
+            variant: "destructive" 
+          });
+          return;
+        }
+        
+        // Success toast (user is already on pending screen)
+        toast({
+          title: "Payment Submitted",
+          description: "Your payment is now being verified",
+        });
+      } catch (error) {
+        console.error("Background payment error:", error);
+        toast({ 
+          title: "Processing Issue", 
+          description: "Our team will review your submission", 
+          variant: "destructive" 
+        });
+      } finally {
         setIsSubmitting(false);
-        navigate("/login");
-        return;
       }
-      
-      // 1. Upload receipt to storage
-      const fileExt = receiptFile.name.split('.').pop();
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, receiptFile, {
-          cacheControl: '3600',
-          upsert: false
-        });
-      
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error("Failed to upload receipt");
-      }
-      
-      // 2. Get public URL for the receipt
-      const { data: urlData } = supabase.storage
-        .from('receipts')
-        .getPublicUrl(fileName);
-      
-      const receiptUrl = urlData.publicUrl;
-      
-      // 3. Create payment record - NO .select() to avoid abort issues
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert({
-          user_id: currentUser.id,
-          amount: AMOUNT,
-          zfc_amount: ZFC_AMOUNT,
-          account_name: formData.fullName || profile?.full_name || "Unknown",
-          receipt_url: receiptUrl,
-          status: 'pending'
-        });
-      
-      if (paymentError) {
-        console.error("Payment error:", paymentError);
-        throw new Error(paymentError.message || "Failed to create payment record");
-      }
-      
-      // SUCCESS - Move to pending screen immediately
-      setStep("pending");
-      
-      toast({
-        title: "Payment Submitted",
-        description: "Your payment is now being verified",
-      });
-    } catch (error) {
-      console.error("Payment submission error:", error);
-      toast({ 
-        title: "Submission Failed", 
-        description: error instanceof Error ? error.message : "Please try again", 
-        variant: "destructive" 
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    };
+    
+    // Execute in background - don't await
+    processPaymentInBackground();
   };
 
   const formatCurrency = (value: number) => {
@@ -670,25 +688,18 @@ export const BuyZFC = () => {
               </button>
             </section>
 
-            {/* CTA */}
+            {/* CTA - Instant navigation, no loading state shown */}
             <button
               type="button"
               onClick={(e) => handlePaymentComplete(e)}
               disabled={!receiptUploaded || isSubmitting}
-              className={`w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
+              className={`w-full h-14 rounded-2xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
                 receiptUploaded && !isSubmitting
                   ? "bg-gradient-to-r from-violet to-magenta text-white shadow-xl shadow-violet/25 hover:scale-[1.02] active:scale-[0.98]"
                   : "bg-secondary/60 text-muted-foreground cursor-not-allowed"
               }`}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Submitting...</span>
-                </>
-              ) : (
-                "I Have Made Payment"
-              )}
+              I Have Made Payment
             </button>
           </div>
         )}
