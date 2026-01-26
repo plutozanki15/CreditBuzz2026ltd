@@ -59,12 +59,40 @@ export const Dashboard = () => {
   // Track route for persistence
   useRouteHistory();
 
-  // Sync balance from profile
+  // Sync balance from profile + real-time subscription for instant updates
   useEffect(() => {
     if (profile?.balance !== undefined) {
       setBalance(Number(profile.balance));
     }
   }, [profile?.balance]);
+
+  // Real-time balance subscription for instant updates (new users, admin credits, etc.)
+  useEffect(() => {
+    if (!profile?.user_id) return;
+
+    const channel = supabase
+      .channel("dashboard-balance-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${profile.user_id}`,
+        },
+        (payload) => {
+          const newBalance = Number(payload.new.balance);
+          if (!isNaN(newBalance)) {
+            setBalance(newBalance);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.user_id]);
 
   // Update carousel slide indicator
   useEffect(() => {

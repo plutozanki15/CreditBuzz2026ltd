@@ -283,6 +283,19 @@ export const AccountDetails = ({ userId, paymentId, onUploadComplete }: AccountD
         Proceed to Payment Status
       </motion.button>
 
+      {/* Receipt Upload Warning */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="p-3 rounded-xl bg-gold/10 border border-gold/30"
+      >
+        <p className="text-xs text-gold font-medium text-center flex items-center justify-center gap-2">
+          <Upload className="w-3.5 h-3.5" />
+          Please upload your payment receipt for faster verification
+        </p>
+      </motion.div>
+
       {/* Security Footer */}
       <div className="text-center pt-2">
         <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">

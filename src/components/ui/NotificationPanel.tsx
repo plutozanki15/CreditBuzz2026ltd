@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, X, MessageSquare, Users, User, Check } from "lucide-react";
+import { Bell, X, MessageSquare, Users, User, Check, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -16,7 +16,7 @@ interface Message {
 }
 
 export const NotificationPanel = () => {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [showNotification, setShowNotification] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<Message | null>(null);
@@ -28,9 +28,9 @@ export const NotificationPanel = () => {
 
     fetchMessages();
 
-    // Real-time subscription for new messages
+    // Real-time subscription for INSTANT message delivery
     const channel = supabase
-      .channel("user-messages")
+      .channel("user-messages-instant")
       .on(
         "postgres_changes",
         {
@@ -57,7 +57,7 @@ export const NotificationPanel = () => {
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [profile?.id]);
 
@@ -89,6 +89,19 @@ export const NotificationPanel = () => {
       )
     );
     setUnreadCount((prev) => Math.max(0, prev - 1));
+  };
+
+  // Clear message from view (mark as read and hide)
+  const clearMessage = async (messageId: string) => {
+    await markAsRead(messageId);
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+  };
+
+  const handleNotificationClick = () => {
+    if (currentMessage) {
+      markAsRead(currentMessage.id);
+      setShowNotification(false);
+    }
   };
 
   const formatTime = (dateStr: string) => {
@@ -124,18 +137,19 @@ export const NotificationPanel = () => {
         )}
       </button>
 
-      {/* WhatsApp-style Slide-in Notification */}
+      {/* WhatsApp-style Slide-in Notification - Positioned lower for visibility */}
       <AnimatePresence>
         {showNotification && currentMessage && (
           <motion.div
-            initial={{ x: 400, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
+            initial={{ x: 400, opacity: 0, y: 0 }}
+            animate={{ x: 0, opacity: 1, y: 0 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-20 right-4 z-[100] w-[320px] max-w-[calc(100vw-32px)]"
+            className="fixed top-32 right-4 z-[100] w-[320px] max-w-[calc(100vw-32px)]"
+            onClick={handleNotificationClick}
           >
             <div
-              className="relative overflow-hidden rounded-2xl border shadow-2xl"
+              className="relative overflow-hidden rounded-2xl border shadow-2xl cursor-pointer hover:scale-[1.02] transition-transform"
               style={{
                 background: "linear-gradient(135deg, hsla(var(--card), 0.98), hsla(var(--card), 0.95))",
                 borderColor: currentMessage.is_broadcast
@@ -179,7 +193,11 @@ export const NotificationPanel = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => setShowNotification(false)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAsRead(currentMessage.id);
+                      setShowNotification(false);
+                    }}
                     className="p-1 rounded-lg hover:bg-secondary/50 transition-colors"
                   >
                     <X className="w-4 h-4 text-muted-foreground" />
@@ -199,15 +217,9 @@ export const NotificationPanel = () => {
                   <span className="text-[10px] text-muted-foreground/70">
                     {formatTime(currentMessage.created_at)}
                   </span>
-                  <button
-                    onClick={() => {
-                      markAsRead(currentMessage.id);
-                      setShowNotification(false);
-                    }}
-                    className="text-xs font-semibold text-violet hover:text-violet/80 transition-colors"
-                  >
-                    Mark as read
-                  </button>
+                  <span className="text-xs text-muted-foreground/50">
+                    Tap to dismiss
+                  </span>
                 </div>
               </div>
             </div>
@@ -269,6 +281,7 @@ export const NotificationPanel = () => {
                       key={message.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, x: 100 }}
                       transition={{ delay: index * 0.05 }}
                       className={`relative p-4 rounded-xl border transition-all ${
                         message.read_at
@@ -304,15 +317,28 @@ export const NotificationPanel = () => {
                         {message.content}
                       </p>
 
-                      {!message.read_at && (
+                      <div className="flex items-center justify-between mt-3">
+                        {!message.read_at ? (
+                          <button
+                            onClick={() => markAsRead(message.id)}
+                            className="flex items-center gap-1 text-xs font-semibold text-violet hover:text-violet/80 transition-colors"
+                          >
+                            <Check className="w-3 h-3" />
+                            Mark as read
+                          </button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">Read</span>
+                        )}
+                        
+                        {/* Clear/Remove button */}
                         <button
-                          onClick={() => markAsRead(message.id)}
-                          className="mt-3 flex items-center gap-1 text-xs font-semibold text-violet hover:text-violet/80 transition-colors"
+                          onClick={() => clearMessage(message.id)}
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
                         >
-                          <Check className="w-3 h-3" />
-                          Mark as read
+                          <Trash2 className="w-3 h-3" />
+                          Clear
                         </button>
-                      )}
+                      </div>
                     </motion.div>
                   ))
                 )}
