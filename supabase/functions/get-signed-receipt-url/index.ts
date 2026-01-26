@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,14 +25,13 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    // Verify user with anon client
-    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    // Fast auth validation (no extra /user roundtrip)
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    const userId = claimsData?.claims?.sub;
 
-    const { data: { user }, error: userError } = await anonClient.auth.getUser();
-
-    if (userError || !user) {
+    if (claimsError || !userId) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -47,6 +46,23 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "path is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Authorization: allow user to read only their own receipts; admins can read any.
+    const isOwner = typeof path === "string" && path.startsWith(`${userId}/`);
+    if (!isOwner) {
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: isAdmin, error: roleError } = await adminClient.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+
+      if (roleError || !isAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Use service role client to create signed download URL
