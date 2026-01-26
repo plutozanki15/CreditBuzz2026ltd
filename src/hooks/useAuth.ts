@@ -36,6 +36,7 @@ export const useAuth = () => {
 
   // Guard against racing auth events
   const initializedRef = useRef(false);
+  const profileChannelRef = useRef<any>(null);
 
   useEffect(() => {
     // Helper to load profile + admin status for a given user id
@@ -74,11 +75,9 @@ export const useAuth = () => {
       }
     });
 
-    // 2. Subscribe to future auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip initial event if already handled above
       if (!initializedRef.current) return;
 
       if (session?.user) {
@@ -95,7 +94,48 @@ export const useAuth = () => {
       }
     });
 
+    // 3. Set up realtime subscription for profile changes (ban status updates)
+    const setupProfileSubscription = (userId: string) => {
+      if (profileChannelRef.current) {
+        profileChannelRef.current.unsubscribe();
+      }
+
+      profileChannelRef.current = supabase
+        .channel(`profile-${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            const updatedProfile = payload.new as Profile;
+            setAuthState((prev) => ({
+              ...prev,
+              profile: updatedProfile,
+              isBanned: updatedProfile.status === "banned",
+            }));
+          }
+        )
+        .subscribe();
+    };
+
+    // Subscribe for current user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setupProfileSubscription(session.user.id);
+      }
+    });
+
     return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (profileChannelRef.current) {
+        profileChannelRef.current.unsubscribe();
+      }
+    };
   }, []);
 
   const signUp = async (

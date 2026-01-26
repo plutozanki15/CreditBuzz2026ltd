@@ -169,41 +169,28 @@ export const BuyZFC = () => {
   };
 
   const handlePaymentComplete = async (event?: React.MouseEvent) => {
-    // Prevent any default behavior
-    event?.preventDefault();
-    event?.stopPropagation();
-    
     if (!receiptUploaded || !receiptFile) {
       toast({ title: "Error", description: "Please upload a receipt first", variant: "destructive" });
       return;
     }
     
-    // Prevent double submissions
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return; // Prevent double clicks
     
     setIsSubmitting(true);
     
     try {
-      // Get current user directly from Supabase
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !currentUser) {
-        toast({ 
-          title: "Session Issue", 
-          description: "Please log in again", 
-          variant: "destructive" 
-        });
-        setIsSubmitting(false);
+        toast({ title: "Not logged in", description: "Please log in", variant: "destructive" });
         return;
       }
       
-      // 1. Upload receipt to storage
+      // Upload receipt
       const fileExt = receiptFile.name.split('.').pop();
       const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(fileName, receiptFile, {
           cacheControl: '3600',
@@ -211,67 +198,45 @@ export const BuyZFC = () => {
         });
       
       if (uploadError) {
-        console.error("Upload error:", uploadError);
-        toast({ 
-          title: "Upload Failed", 
-          description: "Could not upload receipt. Please try again.", 
-          variant: "destructive" 
-        });
-        setIsSubmitting(false);
+        toast({ title: "Upload Failed", description: uploadError.message, variant: "destructive" });
         return;
       }
       
-      // 2. Get public URL for the receipt
       const { data: urlData } = supabase.storage
         .from('receipts')
         .getPublicUrl(fileName);
       
       const receiptUrl = urlData.publicUrl;
       
-      // 3. Create payment record and get ID for realtime tracking
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
           user_id: currentUser.id,
           amount: AMOUNT,
           zfc_amount: ZFC_AMOUNT,
-          account_name: formData.fullName || profile?.full_name || "Unknown",
+          account_name: formData.fullName,
           receipt_url: receiptUrl,
-          status: 'pending'
+          status: 'pending',
+          created_at: new Date().toISOString()
         })
         .select('id')
         .single();
       
       if (paymentError) {
-        console.error("Payment error:", paymentError);
-        toast({ 
-          title: "Submission Failed", 
-          description: `Error: ${paymentError.message}`, 
-          variant: "destructive" 
-        });
-        setIsSubmitting(false);
+        toast({ title: "Submission Failed", description: paymentError.message, variant: "destructive" });
         return;
       }
       
-      // Set the payment ID for realtime tracking
       if (paymentData?.id) {
         setCurrentPaymentId(paymentData.id);
       }
       
-      // SUCCESS - Now navigate to pending
-      toast({
-        title: "Payment Submitted",
-        description: "Your payment is now being verified",
-      });
+      // Navigate to pending page
       setStep("pending");
+      toast({ title: "Payment Submitted", description: "Awaiting admin verification" });
       
     } catch (error) {
-      console.error("Payment submission error:", error);
-      toast({ 
-        title: "Submission Failed", 
-        description: "Please try again", 
-        variant: "destructive" 
-      });
+      toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
