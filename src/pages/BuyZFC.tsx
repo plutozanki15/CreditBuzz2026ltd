@@ -25,6 +25,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useReceiptUpload } from "@/hooks/useReceiptUpload";
+import { Progress } from "@/components/ui/progress";
 import { usePaymentSubmit } from "@/hooks/usePaymentSubmit";
 
 type Step = "form" | "processing" | "notice" | "transfer" | "pending" | "approved" | "rejected";
@@ -45,7 +46,7 @@ const processingSteps = [
 export const BuyZFC = () => {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { uploadReceipt, isUploading, uploadedUrl, fileName, resetUpload } = useReceiptUpload();
+  const { uploadReceipt, isUploading, uploadProgress, uploadedUrl, fileName, uploadError, resetUpload, retryUpload } = useReceiptUpload();
   const { submitPayment, isSubmitting } = usePaymentSubmit();
   
   const [step, setStep] = useState<Step>("form");
@@ -610,19 +611,34 @@ export const BuyZFC = () => {
                 className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all ${
                   uploadedUrl 
                     ? "border-teal/50 bg-teal/10" 
-                    : isUploading
-                      ? "border-violet/50 bg-violet/5"
-                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
+                    : uploadError
+                      ? "border-destructive/50 bg-destructive/5"
+                      : isUploading
+                        ? "border-violet/50 bg-violet/5"
+                        : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
                 }`}
               >
                 {isUploading ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-violet/20 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 text-violet animate-spin" />
+                      </div>
+                      <div className="text-left flex-1 min-w-0">
+                        <span className="text-base font-semibold text-violet block">Uploading...</span>
+                        <span className="text-sm text-muted-foreground">{uploadProgress}% complete</span>
+                      </div>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                ) : uploadError ? (
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-violet/20 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 text-violet animate-spin" />
+                    <div className="w-12 h-12 rounded-xl bg-destructive/20 flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-destructive" />
                     </div>
                     <div className="text-left flex-1 min-w-0">
-                      <span className="text-base font-semibold text-violet block">Uploading...</span>
-                      <span className="text-sm text-muted-foreground">Please wait</span>
+                      <span className="text-base font-semibold text-destructive block">Upload Failed</span>
+                      <span className="text-sm text-muted-foreground truncate block">{uploadError}</span>
                     </div>
                   </div>
                 ) : uploadedUrl ? (
@@ -645,6 +661,35 @@ export const BuyZFC = () => {
                   </div>
                 )}
               </button>
+              
+              {/* Retry button for failed uploads */}
+              {uploadError && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    retryUpload();
+                  }}
+                  className="w-full h-11 rounded-xl bg-secondary/50 hover:bg-secondary text-sm font-medium text-foreground flex items-center justify-center gap-2 transition-all"
+                >
+                  <Loader2 className="w-4 h-4" />
+                  Retry Upload
+                </button>
+              )}
+              
+              {/* Change receipt option when already uploaded */}
+              {uploadedUrl && !isUploading && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    resetUpload();
+                    fileInputRef.current?.click();
+                  }}
+                  className="w-full h-10 rounded-xl bg-secondary/30 hover:bg-secondary/50 text-xs font-medium text-muted-foreground flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  Change Receipt
+                </button>
+              )}
             </section>
 
             {/* CTA - Shows loading state during submission */}
