@@ -65,7 +65,7 @@ export const BuyZFC = () => {
   };
 
   const handleUploadComplete = () => {
-    navigate("/payments");
+    navigate("/payment-status");
   };
 
   if (isLoading) {

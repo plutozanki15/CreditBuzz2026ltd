@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -285,24 +286,47 @@ export const Settings = () => {
 
         {/* Admin Panel - Only show for admins */}
         {isAdmin && (
-          <button
-            onClick={() => navigate("/admin/payments")}
+          <motion.button
+            onClick={() => navigate("/admin")}
             className="w-full animate-fade-in-up"
             style={{ animationDelay: "0.15s" }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <GlassCard className="flex items-center justify-between hover:bg-violet/5 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-violet/20">
-                  <Settings2 className="w-5 h-5 text-violet" />
+            <GlassCard 
+              className="relative overflow-hidden group"
+              style={{
+                background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.15), hsla(300, 100%, 65%, 0.1))",
+                border: "1px solid hsla(262, 76%, 57%, 0.3)",
+              }}
+            >
+              {/* Shimmer effect */}
+              <div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+              />
+              
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="p-2.5 rounded-xl"
+                    style={{ 
+                      background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
+                      boxShadow: "0 4px 15px hsla(262, 76%, 57%, 0.4)",
+                    }}
+                  >
+                    <Settings2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-foreground flex items-center gap-2">
+                      🔐 Admin Dashboard
+                    </p>
+                    <p className="text-xs text-muted-foreground">Manage payments, users & analytics</p>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold">Admin Panel</p>
-                  <p className="text-xs text-muted-foreground">Manage payments & users</p>
-                </div>
+                <ChevronRight className="w-5 h-5 text-violet group-hover:translate-x-1 transition-transform" />
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
             </GlassCard>
-          </button>
+          </motion.button>
         )}
 
         {/* Security Status */}

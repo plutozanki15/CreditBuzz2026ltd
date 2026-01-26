@@ -15,6 +15,7 @@ import { Withdrawal } from "./pages/Withdrawal";
 import { Referral } from "./pages/Referral";
 import { BuyZFC } from "./pages/BuyZFC";
 import { PaymentsPending } from "./pages/PaymentsPending";
+import { PaymentStatus } from "./pages/PaymentStatus";
 import { AdminPayments } from "./pages/AdminPayments";
 import { AdminDashboard } from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/referral" element={<Referral />} />
           <Route path="/buy-zfc" element={<BuyZFC />} />
           <Route path="/payments" element={<PaymentsPending />} />
+          <Route path="/payment-status" element={<PaymentStatus />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
