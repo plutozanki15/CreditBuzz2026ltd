@@ -49,6 +49,7 @@ export const BuyZFC = () => {
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptName, setReceiptName] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [displayAmount, setDisplayAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showContent, setShowContent] = useState(false);
@@ -163,13 +164,57 @@ export const BuyZFC = () => {
     setStep("processing");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (!file || !user) return;
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please upload a file smaller than 10MB", variant: "destructive" });
+      return;
+    }
+    
+    setIsUploading(true);
+    setReceiptName(file.name);
+    
+    try {
+      // Upload directly to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+      
+      if (uploadError) {
+        throw new Error(uploadError.message);
+      }
+      
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('receipts')
+        .getPublicUrl(fileName);
+      
       setReceiptFile(file);
       setReceiptUploaded(true);
-      setReceiptName(file.name);
-      toast({ title: "Receipt attached", description: file.name });
+      toast({ title: "Receipt uploaded", description: "Your payment proof is ready" });
+      
+      // Store URL for later use
+      (file as any).uploadedUrl = urlData.publicUrl;
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({ 
+        title: "Upload failed", 
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive" 
+      });
+      setReceiptName("");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -182,27 +227,14 @@ export const BuyZFC = () => {
     setIsSubmitting(true);
     
     try {
-      // 1. Upload receipt to storage
-      const fileExt = receiptFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      // Get the already-uploaded URL from the file
+      const receiptUrl = (receiptFile as any).uploadedUrl;
       
-      const { error: uploadError } = await supabase.storage
-        .from('receipts')
-        .upload(fileName, receiptFile);
-      
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw new Error("Failed to upload receipt");
+      if (!receiptUrl) {
+        throw new Error("Receipt URL not found. Please re-upload.");
       }
       
-      // 2. Get public URL for the receipt
-      const { data: urlData } = supabase.storage
-        .from('receipts')
-        .getPublicUrl(fileName);
-      
-      const receiptUrl = urlData.publicUrl;
-      
-      // 3. Create payment record
+      // Create payment record
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -624,13 +656,26 @@ export const BuyZFC = () => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
                 className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all ${
                   receiptUploaded 
                     ? "border-teal/50 bg-teal/10" 
-                    : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
+                    : isUploading
+                      ? "border-violet/50 bg-violet/5"
+                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
                 }`}
               >
-                {receiptUploaded ? (
+                {isUploading ? (
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-violet/20 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 text-violet animate-spin" />
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <span className="text-base font-semibold text-violet block">Uploading...</span>
+                      <span className="text-sm text-muted-foreground truncate block">{receiptName}</span>
+                    </div>
+                  </div>
+                ) : receiptUploaded ? (
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center">
                       <CheckCircle2 className="w-6 h-6 text-teal" />
@@ -646,7 +691,7 @@ export const BuyZFC = () => {
                       <Upload className="w-7 h-7 text-muted-foreground" />
                     </div>
                     <span className="text-base font-medium text-muted-foreground">Tap to upload receipt</span>
-                    <span className="text-xs text-muted-foreground/60">Supports PNG, JPG, or PDF</span>
+                    <span className="text-xs text-muted-foreground/60">Supports PNG, JPG, or PDF (max 10MB)</span>
                   </div>
                 )}
               </button>
@@ -655,9 +700,9 @@ export const BuyZFC = () => {
             {/* CTA */}
             <button
               onClick={handlePaymentComplete}
-              disabled={!receiptUploaded || isSubmitting}
+              disabled={!receiptUploaded || isSubmitting || isUploading}
               className={`w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
-                receiptUploaded && !isSubmitting
+                receiptUploaded && !isSubmitting && !isUploading
                   ? "bg-gradient-to-r from-violet to-magenta text-white shadow-xl shadow-violet/25 hover:scale-[1.02] active:scale-[0.98]"
                   : "bg-secondary/60 text-muted-foreground cursor-not-allowed"
               }`}
@@ -665,7 +710,7 @@ export const BuyZFC = () => {
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Processing...</span>
+                  <span>Submitting...</span>
                 </>
               ) : (
                 "Confirm Payment"
