@@ -174,6 +174,11 @@ export const BuyZFC = () => {
       return;
     }
     
+    // Prevent double submissions
+    if (isSubmitting) {
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -192,7 +197,10 @@ export const BuyZFC = () => {
       
       const { error: uploadError } = await supabase.storage
         .from('receipts')
-        .upload(fileName, receiptFile);
+        .upload(fileName, receiptFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
       
       if (uploadError) {
         console.error("Upload error:", uploadError);
@@ -221,7 +229,7 @@ export const BuyZFC = () => {
       
       if (paymentError) {
         console.error("Payment error:", paymentError);
-        throw new Error("Failed to create payment record");
+        throw new Error(paymentError.message || "Failed to create payment record");
       }
       
       // Handle array response from insert
@@ -234,13 +242,18 @@ export const BuyZFC = () => {
       // Store payment ID for real-time subscription
       setCurrentPaymentId(paymentId);
       
-      // Move to pending immediately
+      // SUCCESS - Move to pending screen immediately
       setStep("pending");
+      
+      toast({
+        title: "Payment Submitted",
+        description: "Your payment is now being verified",
+      });
     } catch (error) {
       console.error("Payment submission error:", error);
       toast({ 
         title: "Submission Failed", 
-        description: error instanceof Error ? error.message : "Please try again", 
+        description: error instanceof Error ? error.message : "signal is aborted without reason", 
         variant: "destructive" 
       });
     } finally {
@@ -665,6 +678,7 @@ export const BuyZFC = () => {
 
             {/* CTA */}
             <button
+              type="button"
               onClick={handlePaymentComplete}
               disabled={!receiptUploaded || isSubmitting}
               className={`w-full h-14 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2 ${
