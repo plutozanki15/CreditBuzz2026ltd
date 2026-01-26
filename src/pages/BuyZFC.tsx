@@ -161,11 +161,71 @@ export const BuyZFC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setReceiptFile(file);
-      setReceiptUploaded(true);
-      setReceiptName(file.name);
-      toast({ title: "Receipt attached", description: file.name });
+      // Compress image on mobile for faster upload
+      if (file.type.startsWith('image/') && file.size > 500000) {
+        compressImage(file).then((compressedFile) => {
+          setReceiptFile(compressedFile);
+          setReceiptUploaded(true);
+          setReceiptName(file.name);
+          toast({ title: "Receipt attached", description: file.name });
+        }).catch(() => {
+          // Fallback to original file if compression fails
+          setReceiptFile(file);
+          setReceiptUploaded(true);
+          setReceiptName(file.name);
+          toast({ title: "Receipt attached", description: file.name });
+        });
+      } else {
+        setReceiptFile(file);
+        setReceiptUploaded(true);
+        setReceiptName(file.name);
+        toast({ title: "Receipt attached", description: file.name });
+      }
     }
+    // Reset input to allow re-selecting the same file
+    e.target.value = '';
+  };
+
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        let { width, height } = img;
+        
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        if (height > maxHeight) {
+          width = (width * maxHeight) / height;
+          height = maxHeight;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+            } else {
+              reject(new Error('Compression failed'));
+            }
+          },
+          'image/jpeg',
+          0.8
+        );
+      };
+      
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const handlePaymentComplete = async (event?: React.MouseEvent) => {
@@ -623,9 +683,11 @@ export const BuyZFC = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.pdf"
+                accept="image/*,application/pdf"
+                capture="environment"
                 onChange={handleFileUpload}
                 className="hidden"
+                style={{ display: 'none' }}
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
@@ -657,7 +719,7 @@ export const BuyZFC = () => {
               </button>
             </section>
 
-            {/* CTA - Instant navigation, no loading state shown */}
+            {/* CTA - Shows loading state during submission */}
             <button
               type="button"
               onClick={(e) => handlePaymentComplete(e)}
@@ -668,7 +730,14 @@ export const BuyZFC = () => {
                   : "bg-secondary/60 text-muted-foreground cursor-not-allowed"
               }`}
             >
-              I Have Made Payment
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "I Have Made Payment"
+              )}
             </button>
           </div>
         )}
