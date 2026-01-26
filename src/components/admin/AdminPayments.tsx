@@ -153,43 +153,17 @@ export const AdminPayments = () => {
                   <Calendar className="w-4 h-4" />
                   <span>{format(new Date(payment.created_at), "MMM d, yyyy 'at' h:mm a")}</span>
                 </div>
+                {payment.receipt_url && (
+                  <button
+                    onClick={() => setReceiptPreview(payment.receipt_url)}
+                    className="flex items-center gap-2 text-violet hover:text-violet/80 transition-colors"
+                  >
+                    <Receipt className="w-4 h-4" />
+                    <span>View Receipt</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
               </div>
-
-              {/* Receipt Preview Section */}
-              {payment.receipt_url && (
-                <div className="pt-3 border-t border-border/30">
-                  <div className="flex items-center gap-3">
-                    {/* Thumbnail */}
-                    <button
-                      onClick={() => setReceiptPreview(payment.receipt_url)}
-                      className="relative w-16 h-16 rounded-xl overflow-hidden border border-border/50 hover:border-violet/50 transition-all group flex-shrink-0"
-                    >
-                      <img 
-                        src={payment.receipt_url} 
-                        alt="Receipt" 
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                        <ExternalLink className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </button>
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground mb-1">Payment Receipt</p>
-                      <button
-                        onClick={() => setReceiptPreview(payment.receipt_url)}
-                        className="text-sm text-violet hover:text-violet/80 font-medium flex items-center gap-1"
-                      >
-                        <Receipt className="w-4 h-4" />
-                        View Full Size
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-2 border-t border-border/30">
