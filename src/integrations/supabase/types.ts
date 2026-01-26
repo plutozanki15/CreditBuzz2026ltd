@@ -17,6 +17,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          archived: boolean
           created_at: string
           email: string
           full_name: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           amount?: number
+          archived?: boolean
           created_at?: string
           email: string
           full_name: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          archived?: boolean
           created_at?: string
           email?: string
           full_name?: string

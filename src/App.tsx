@@ -16,6 +16,7 @@ import { Referral } from "./pages/Referral";
 import { BuyZFC } from "./pages/BuyZFC";
 import { PaymentsPending } from "./pages/PaymentsPending";
 import { AdminPayments } from "./pages/AdminPayments";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/buy-zfc" element={<BuyZFC />} />
           <Route path="/payments" element={<PaymentsPending />} />
           <Route path="/admin/payments" element={<AdminPayments />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
