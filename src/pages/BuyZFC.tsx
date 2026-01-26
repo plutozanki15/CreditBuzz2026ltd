@@ -640,21 +640,25 @@ export const BuyZFC = () => {
               <p className="text-xs text-muted-foreground">Upload your bank transfer receipt or screenshot</p>
               
               <input
+                id="receipt-upload"
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf"
+                capture="environment"
                 onChange={handleFileUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
+                className="sr-only"
                 disabled={isUploading}
-                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all ${
+              />
+              <label
+                htmlFor="receipt-upload"
+                className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all block cursor-pointer ${
+                  isUploading ? "pointer-events-none" : ""
+                } ${
                   receiptUploaded 
                     ? "border-teal/50 bg-teal/10" 
                     : isUploading
                       ? "border-violet/50 bg-violet/5"
-                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
+                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5 active:scale-[0.98]"
                 }`}
               >
                 {isUploading ? (
@@ -686,7 +690,7 @@ export const BuyZFC = () => {
                     <span className="text-xs text-muted-foreground/60">Supports PNG, JPG, or PDF (max 10MB)</span>
                   </div>
                 )}
-              </button>
+              </label>
             </section>
 
             {/* CTA */}
