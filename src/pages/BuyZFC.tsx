@@ -50,7 +50,8 @@ export const BuyZFC = () => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [receiptUploaded, setReceiptUploaded] = useState(false);
   const [receiptName, setReceiptName] = useState("");
-  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null); // Store uploaded URL
+  const [isUploading, setIsUploading] = useState(false); // Track upload state
   const [displayAmount, setDisplayAmount] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showContent, setShowContent] = useState(false);
@@ -158,34 +159,6 @@ export const BuyZFC = () => {
     setStep("processing");
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Compress image on mobile for faster upload
-      if (file.type.startsWith('image/') && file.size > 500000) {
-        compressImage(file).then((compressedFile) => {
-          setReceiptFile(compressedFile);
-          setReceiptUploaded(true);
-          setReceiptName(file.name);
-          toast({ title: "Receipt attached", description: file.name });
-        }).catch(() => {
-          // Fallback to original file if compression fails
-          setReceiptFile(file);
-          setReceiptUploaded(true);
-          setReceiptName(file.name);
-          toast({ title: "Receipt attached", description: file.name });
-        });
-      } else {
-        setReceiptFile(file);
-        setReceiptUploaded(true);
-        setReceiptName(file.name);
-        toast({ title: "Receipt attached", description: file.name });
-      }
-    }
-    // Reset input to allow re-selecting the same file
-    e.target.value = '';
-  };
-
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement('canvas');
@@ -228,46 +201,97 @@ export const BuyZFC = () => {
     });
   };
 
-  const handlePaymentComplete = async (event?: React.MouseEvent) => {
-    if (!receiptUploaded || !receiptFile) {
-      toast({ title: "Error", description: "Please upload a receipt first", variant: "destructive" });
-      return;
-    }
+  // Upload receipt IMMEDIATELY when file is selected - store URL in state
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     
-    if (isSubmitting) return; // Prevent double clicks
+    // Reset input to allow re-selecting the same file
+    e.target.value = '';
     
-    setIsSubmitting(true);
+    setIsUploading(true);
+    setReceiptName(file.name);
     
     try {
+      // Get current user directly
       const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
       
       if (userError || !currentUser) {
-        toast({ title: "Not logged in", description: "Please log in", variant: "destructive" });
+        toast({ title: "Not logged in", description: "Please log in first", variant: "destructive" });
+        setIsUploading(false);
         return;
       }
       
-      // Upload receipt
-      const fileExt = receiptFile.name.split('.').pop();
+      // Compress image if needed
+      let fileToUpload = file;
+      if (file.type.startsWith('image/') && file.size > 500000) {
+        try {
+          fileToUpload = await compressImage(file);
+        } catch {
+          // Use original file if compression fails
+          fileToUpload = file;
+        }
+      }
+      
+      // Upload to storage immediately
+      const fileExt = file.name.split('.').pop();
       const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('receipts')
-        .upload(fileName, receiptFile, {
+        .upload(fileName, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         });
       
       if (uploadError) {
         toast({ title: "Upload Failed", description: uploadError.message, variant: "destructive" });
+        setIsUploading(false);
+        setReceiptName("");
         return;
       }
       
+      // Get public URL and store it
       const { data: urlData } = supabase.storage
         .from('receipts')
         .getPublicUrl(fileName);
       
-      const receiptUrl = urlData.publicUrl;
+      // Store URL in state - upload complete!
+      setReceiptUrl(urlData.publicUrl);
+      setReceiptUploaded(true);
+      toast({ title: "Receipt uploaded", description: file.name });
       
+    } catch (error) {
+      toast({ title: "Upload Error", description: "Failed to upload receipt", variant: "destructive" });
+      setReceiptName("");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // On "I Have Made Payment" click - ONLY do database insert, NO upload
+  const handlePaymentComplete = async () => {
+    // Safety: Check if receipt_url exists
+    if (!receiptUploaded || !receiptUrl) {
+      toast({ title: "Error", description: "Please upload a receipt first", variant: "destructive" });
+      return;
+    }
+    
+    // Prevent double clicks
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      // Get current user
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !currentUser) {
+        toast({ title: "Not logged in", description: "Please log in", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // ONLY database insert - NO upload here (already done)
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
@@ -275,7 +299,7 @@ export const BuyZFC = () => {
           amount: AMOUNT,
           zfc_amount: ZFC_AMOUNT,
           account_name: formData.fullName,
-          receipt_url: receiptUrl,
+          receipt_url: receiptUrl, // Use stored URL
           status: 'pending',
           created_at: new Date().toISOString()
         })
@@ -284,20 +308,21 @@ export const BuyZFC = () => {
       
       if (paymentError) {
         toast({ title: "Submission Failed", description: paymentError.message, variant: "destructive" });
+        setIsSubmitting(false);
         return;
       }
       
+      // Store payment ID for realtime tracking
       if (paymentData?.id) {
         setCurrentPaymentId(paymentData.id);
       }
       
-      // Navigate to pending page
+      // Navigate IMMEDIATELY to pending - no waiting
       setStep("pending");
-      toast({ title: "Payment Submitted", description: "Awaiting admin verification" });
+      setIsSubmitting(false);
       
     } catch (error) {
       toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -691,13 +716,22 @@ export const BuyZFC = () => {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
                 className={`w-full p-5 rounded-2xl border-2 border-dashed transition-all ${
                   receiptUploaded 
                     ? "border-teal/50 bg-teal/10" 
-                    : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
+                    : isUploading
+                      ? "border-violet/50 bg-violet/5"
+                      : "border-border/50 hover:border-violet/50 hover:bg-violet/5"
                 }`}
               >
-                {receiptUploaded ? (
+                {isUploading ? (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <Loader2 className="w-8 h-8 text-violet animate-spin" />
+                    <span className="text-base font-medium text-violet">Uploading...</span>
+                    <span className="text-xs text-muted-foreground/60">{receiptName}</span>
+                  </div>
+                ) : receiptUploaded ? (
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-teal/20 flex items-center justify-center">
                       <CheckCircle2 className="w-6 h-6 text-teal" />
@@ -722,7 +756,7 @@ export const BuyZFC = () => {
             {/* CTA - Shows loading state during submission */}
             <button
               type="button"
-              onClick={(e) => handlePaymentComplete(e)}
+              onClick={() => handlePaymentComplete()}
               disabled={!receiptUploaded || isSubmitting}
               className={`w-full h-14 rounded-2xl font-bold text-base transition-all duration-200 flex items-center justify-center gap-2 ${
                 receiptUploaded && !isSubmitting
@@ -1046,7 +1080,7 @@ export const BuyZFC = () => {
                 onClick={() => {
                   setStep("form");
                   setReceiptUploaded(false);
-                  setReceiptFile(null);
+                  setReceiptUrl(null);
                   setReceiptName("");
                   setCurrentPaymentId(null);
                 }}
@@ -1186,7 +1220,7 @@ export const BuyZFC = () => {
                 onClick={() => {
                   setStep("form");
                   setReceiptUploaded(false);
-                  setReceiptFile(null);
+                  setReceiptUrl(null);
                   setReceiptName("");
                   setCurrentPaymentId(null);
                   setRejectionReason(null);
