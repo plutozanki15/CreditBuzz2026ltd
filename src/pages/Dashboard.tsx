@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { VirtualBankCard } from "@/components/ui/VirtualBankCard";
@@ -109,27 +110,49 @@ export const Dashboard = () => {
     setShowOnboarding(false);
   };
 
-  const handleClaim = () => {
-    if (!canClaim || isClaiming) return;
+  const handleClaim = async () => {
+    if (!canClaim || isClaiming || !profile?.user_id) return;
     
     setIsClaiming(true);
     
-    // INSTANT update - no delay
-    const newBalance = balance + 10000;
-    setBalance(newBalance);
-    localStorage.setItem("zenfi_balance", newBalance.toString());
-    addTransaction("claim", 10000);
-    startCooldown();
-    
-    // Brief visual feedback then reset
-    setTimeout(() => {
+    try {
+      // BACKEND FIRST - Update Supabase balance
+      const { error } = await supabase.rpc('credit_user_balance', {
+        p_user_id: profile.user_id,
+        p_amount: 10000
+      });
+      
+      if (error) {
+        console.error("Claim error:", error);
+        toast({
+          title: "Claim Failed",
+          description: "Please try again",
+          variant: "destructive",
+        });
+        setIsClaiming(false);
+        return;
+      }
+      
+      // SUCCESS - Now update UI
+      const newBalance = balance + 10000;
+      setBalance(newBalance);
+      addTransaction("claim", 10000);
+      startCooldown();
+      
+      toast({
+        title: "₦10,000 Successfully Claimed!",
+        description: "Your balance has been updated.",
+      });
+    } catch (error) {
+      console.error("Claim error:", error);
+      toast({
+        title: "Claim Failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
       setIsClaiming(false);
-    }, 300);
-    
-    toast({
-      title: "₦10,000 Successfully Claimed!",
-      description: "Your balance has been updated.",
-    });
+    }
   };
 
   const handleActionClick = (route?: string) => {
