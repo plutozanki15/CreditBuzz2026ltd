@@ -27,8 +27,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 type Step = "form" | "processing" | "notice" | "transfer" | "confirming" | "pending" | "approved" | "rejected";
 
-// NOTE: "confirming" step is deprecated - we go directly to "pending" after payment submission
-
 const AMOUNT = 5700;
 const ZFC_AMOUNT = 180000; // ZFC amount user will receive
 const BANK_NAME = "Moniepoint MFB";
@@ -111,6 +109,13 @@ export const BuyZFC = () => {
     }
   }, [step]);
 
+  // Confirming step
+  useEffect(() => {
+    if (step === "confirming") {
+      setTimeout(() => setStep("pending"), 2000);
+    }
+  }, [step]);
+
   // Real-time subscription for payment status updates
   useEffect(() => {
     if (!currentPaymentId || !user) return;
@@ -169,26 +174,17 @@ export const BuyZFC = () => {
   };
 
   const handlePaymentComplete = async () => {
-    if (!receiptUploaded || !receiptFile) {
-      toast({ title: "Error", description: "Please upload a receipt first", variant: "destructive" });
+    if (!receiptUploaded || !receiptFile || !user) {
+      toast({ title: "Error", description: "Please upload a receipt and ensure you're logged in", variant: "destructive" });
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      // Get current user directly from Supabase to avoid auth state sync issues
-      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !currentUser) {
-        toast({ title: "Session expired", description: "Please log in again", variant: "destructive" });
-        navigate("/login");
-        return;
-      }
-      
       // 1. Upload receipt to storage
       const fileExt = receiptFile.name.split('.').pop();
-      const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('receipts')
@@ -210,7 +206,7 @@ export const BuyZFC = () => {
       const { data: paymentData, error: paymentError } = await supabase
         .from('payments')
         .insert({
-          user_id: currentUser.id,
+          user_id: user.id,
           amount: AMOUNT,
           zfc_amount: ZFC_AMOUNT,
           account_name: formData.fullName || profile?.full_name || "Unknown",
@@ -228,8 +224,7 @@ export const BuyZFC = () => {
       // Store payment ID for real-time subscription
       setCurrentPaymentId(paymentData.id);
       
-      // Move to pending immediately
-      setStep("pending");
+      setStep("confirming");
     } catch (error) {
       console.error("Payment submission error:", error);
       toast({ 
@@ -814,170 +809,69 @@ export const BuyZFC = () => {
 
         {/* ============ STEP 7: APPROVED ============ */}
         {step === "approved" && (
-          <div className="min-h-[70vh] flex flex-col items-center justify-center">
+          <div className="min-h-[65vh] flex flex-col items-center justify-center animate-fade-in">
             
-            {/* Celebration Confetti Particles */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {[...Array(12)].map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute w-2 h-2 rounded-full"
-                  style={{
-                    left: `${10 + Math.random() * 80}%`,
-                    top: `${20 + Math.random() * 40}%`,
-                    background: i % 3 === 0 ? 'hsl(var(--teal))' : i % 3 === 1 ? 'hsl(var(--gold))' : 'hsl(var(--violet))',
-                    animation: `confettiFall ${2 + Math.random() * 2}s ease-in-out infinite`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    opacity: 0.7,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Premium Success Ring Animation */}
-            <div className="relative mb-10" style={{ animation: "successEntrance 0.8s ease-out forwards" }}>
-              {/* Multi-layer glow effect */}
-              <div className="absolute -inset-6 rounded-full bg-teal/10 blur-3xl" style={{ animation: "approvedGlow 3s ease-in-out infinite" }} />
-              <div className="absolute -inset-4 rounded-full bg-teal/20 blur-xl" style={{ animation: "approvedGlow 2.5s ease-in-out infinite", animationDelay: "0.5s" }} />
+            {/* Success Ring Animation */}
+            <div className="relative mb-8">
+              {/* Outer glow */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full bg-teal/20 blur-xl" style={{ animation: "approvedGlow 2s ease-in-out infinite" }} />
               
-              {/* Outer rotating ring */}
-              <div 
-                className="absolute -inset-3 rounded-full"
-                style={{
-                  background: "conic-gradient(from 0deg, transparent, hsl(var(--teal)), transparent, hsl(var(--gold)), transparent)",
-                  animation: "spinSlow 4s linear infinite",
-                  opacity: 0.5,
-                }}
-              />
+              {/* Rotating celebration ring */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full border-2 border-dashed border-teal/40" style={{ animation: "spinSlow 6s linear infinite" }} />
               
-              {/* Secondary rotating ring */}
-              <div 
-                className="absolute -inset-1.5 rounded-full border border-dashed border-teal/30"
-                style={{ animation: "spinSlow 8s linear infinite reverse" }}
-              />
-              
-              {/* Inner success container with glassmorphism */}
-              <div className="relative w-32 h-32 flex items-center justify-center">
-                <div 
-                  className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(46, 242, 226, 0.3), rgba(46, 242, 226, 0.1))",
-                    backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(46, 242, 226, 0.4)",
-                    boxShadow: "0 0 60px rgba(46, 242, 226, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
-                  }}
-                >
-                  <CheckCircle2 
-                    className="w-12 h-12 text-teal" 
-                    style={{ animation: "successBounce 0.6s ease-out 0.3s both, iconPulse 2s ease-in-out 1s infinite" }} 
-                  />
+              {/* Inner success container */}
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal/40 to-teal/20 border border-teal/50 flex items-center justify-center shadow-lg shadow-teal/30">
+                  <CheckCircle2 className="w-8 h-8 text-teal" style={{ animation: "successBounce 0.6s ease-out" }} />
                 </div>
               </div>
               
-              {/* Celebration sparkles */}
-              <Sparkles className="absolute -top-3 -right-2 w-5 h-5 text-gold" style={{ animation: "sparkle 1.5s ease-in-out infinite" }} />
-              <Sparkles className="absolute -bottom-2 -left-3 w-4 h-4 text-teal" style={{ animation: "sparkle 2s ease-in-out infinite", animationDelay: "0.5s" }} />
-              <Zap className="absolute top-1/4 -right-4 w-4 h-4 text-violet" style={{ animation: "sparkle 1.8s ease-in-out infinite", animationDelay: "0.3s" }} />
+              {/* Celebration particles */}
+              <div className="absolute -top-2 right-0 w-2 h-2 bg-teal/60 rounded-full" style={{ animation: "floatUp 1.5s ease-in-out infinite" }} />
+              <div className="absolute bottom-0 -left-2 w-2 h-2 bg-gold/60 rounded-full" style={{ animation: "floatUp 2s ease-in-out infinite", animationDelay: "0.3s" }} />
+              <div className="absolute top-1/3 -right-3 w-1.5 h-1.5 bg-violet/60 rounded-full" style={{ animation: "floatUp 2.5s ease-in-out infinite", animationDelay: "0.6s" }} />
             </div>
 
-            {/* Success Typography */}
-            <div className="text-center mb-8" style={{ animation: "slideUpFade 0.6s ease-out 0.4s both" }}>
-              <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight" style={{ fontFamily: "Outfit, sans-serif" }}>
-                Payment <span className="gradient-text">Approved!</span>
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-[300px] leading-relaxed">
-                Your ZFC credits have been instantly added to your account balance.
-              </p>
+            {/* Success Text */}
+            <h2 className="text-2xl font-bold text-foreground mb-2">Payment Approved!</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-[280px] leading-relaxed mb-4">
+              Your ZFC credits have been successfully added to your account.
+            </p>
+
+            {/* Credited Amount Card */}
+            <div className="w-full rounded-xl bg-gradient-to-r from-teal/15 to-teal/5 border border-teal/30 p-5 mb-6 text-center">
+              <span className="text-xs text-teal uppercase tracking-widest font-semibold block mb-2">Amount Credited</span>
+              <span className="text-3xl font-bold text-foreground">{creditedAmount.toLocaleString()} ZFC</span>
             </div>
 
-            {/* Premium Amount Card */}
-            <div 
-              className="w-full relative overflow-hidden rounded-2xl mb-6"
-              style={{ 
-                animation: "slideUpFade 0.6s ease-out 0.5s both",
-                background: "linear-gradient(135deg, rgba(46, 242, 226, 0.15), rgba(46, 242, 226, 0.05))",
-                border: "1px solid rgba(46, 242, 226, 0.3)",
-              }}
-            >
-              {/* Shimmer effect */}
-              <div 
-                className="absolute inset-0"
-                style={{
-                  background: "linear-gradient(90deg, transparent, rgba(46, 242, 226, 0.1), transparent)",
-                  animation: "shimmerSlide 3s ease-in-out infinite",
-                }}
-              />
-              
-              <div className="relative p-6 text-center">
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <BadgeCheck className="w-4 h-4 text-teal" />
-                  <span className="text-[11px] uppercase tracking-[0.2em] text-teal font-semibold">Amount Credited</span>
+            {/* Success Details */}
+            <div className="w-full rounded-xl bg-secondary/30 border border-border/40 overflow-hidden mb-6">
+              <div className="px-4 py-2.5 border-b border-border/30 bg-secondary/20">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Transaction Complete</span>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-teal/20 text-teal">Approved</span>
                 </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span 
-                    className="text-5xl font-bold text-foreground tracking-tight"
-                    style={{ fontFamily: "Outfit, sans-serif", animation: "countPop 0.8s ease-out 0.6s both" }}
-                  >
-                    5,700
-                  </span>
-                  <span className="text-xl font-semibold text-teal">ZFC</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">Amount Paid</span>
+                  <span className="text-sm font-bold text-foreground">{formatCurrency(AMOUNT)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-muted-foreground">ZFC Received</span>
+                  <span className="text-sm font-bold text-teal">{creditedAmount.toLocaleString()} ZFC</span>
                 </div>
               </div>
             </div>
 
-            {/* Transaction Summary Card */}
-            <div 
-              className="w-full rounded-2xl overflow-hidden mb-6"
-              style={{ 
-                animation: "slideUpFade 0.6s ease-out 0.6s both",
-                background: "rgba(11, 11, 15, 0.6)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              <div className="px-5 py-3 border-b border-border/30 flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
-                <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">Transaction Complete</span>
-              </div>
-              <div className="p-5 space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-medium">Status</span>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-teal" style={{ animation: "pulse 2s ease-in-out infinite" }} />
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal/20 text-teal">Approved</span>
-                  </div>
-                </div>
-                <div className="h-px bg-border/30" />
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-medium">Amount Paid</span>
-                  <span className="text-base font-bold text-foreground">{formatCurrency(AMOUNT)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-medium">ZFC Received</span>
-                  <span className="text-base font-bold text-teal">5,700 ZFC</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground font-medium">Reference</span>
-                  <span className="text-xs font-mono text-muted-foreground">ZF-{Date.now().toString().slice(-8)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Premium Actions */}
-            <div className="w-full space-y-3" style={{ animation: "slideUpFade 0.6s ease-out 0.7s both" }}>
+            {/* Actions */}
+            <div className="w-full space-y-2.5">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="w-full h-14 rounded-xl font-bold text-sm transition-all active:scale-[0.98] relative overflow-hidden group"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--teal)), hsl(174, 88%, 45%))",
-                  boxShadow: "0 0 40px rgba(46, 242, 226, 0.3)",
-                }}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-teal to-teal/80 text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-teal/20"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                <span className="relative text-white flex items-center justify-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Go to Dashboard
-                </span>
+                Go to Dashboard
               </button>
               <button
                 onClick={() => {
@@ -987,138 +881,71 @@ export const BuyZFC = () => {
                   setReceiptName("");
                   setCurrentPaymentId(null);
                 }}
-                className="w-full h-11 rounded-xl text-sm font-medium text-muted-foreground hover:text-teal border border-border/40 hover:border-teal/30 transition-all"
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 Buy More ZFC
               </button>
-            </div>
-
-            {/* Trust Footer */}
-            <div className="flex items-center justify-center gap-3 mt-6 text-muted-foreground" style={{ animation: "fadeIn 0.6s ease-out 0.8s both" }}>
-              <div className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                <span className="text-[10px] font-medium">Verified</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <div className="flex items-center gap-1">
-                <Lock className="w-3 h-3" />
-                <span className="text-[10px] font-medium">Secure</span>
-              </div>
-              <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
-              <div className="flex items-center gap-1">
-                <Banknote className="w-3 h-3" />
-                <span className="text-[10px] font-medium">Instant</span>
-              </div>
             </div>
           </div>
         )}
 
         {/* ============ STEP 8: REJECTED ============ */}
         {step === "rejected" && (
-          <div className="min-h-[70vh] flex flex-col items-center justify-center">
+          <div className="min-h-[65vh] flex flex-col items-center justify-center animate-fade-in">
             
-            {/* Rejection Ring Animation */}
-            <div className="relative mb-10" style={{ animation: "rejectEntrance 0.6s ease-out forwards" }}>
-              {/* Multi-layer glow */}
-              <div className="absolute -inset-6 rounded-full bg-destructive/10 blur-3xl" style={{ animation: "rejectPulse 3s ease-in-out infinite" }} />
-              <div className="absolute -inset-4 rounded-full bg-destructive/15 blur-xl" />
-              
-              {/* Warning ring */}
-              <div 
-                className="absolute -inset-2 rounded-full border-2 border-destructive/30"
-                style={{ animation: "pulseRing 2s ease-in-out infinite" }}
-              />
+            {/* Rejection Ring */}
+            <div className="relative mb-8">
+              {/* Outer glow */}
+              <div className="absolute inset-0 w-28 h-28 rounded-full bg-destructive/15 blur-xl" />
               
               {/* Inner container */}
-              <div className="relative w-32 h-32 flex items-center justify-center">
-                <div 
-                  className="w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05))",
-                    backdropFilter: "blur(20px)",
-                    border: "1px solid rgba(239, 68, 68, 0.3)",
-                    boxShadow: "0 0 40px rgba(239, 68, 68, 0.2)",
-                  }}
-                >
-                  <AlertTriangle 
-                    className="w-12 h-12 text-destructive" 
-                    style={{ animation: "shake 0.5s ease-in-out 0.3s" }} 
-                  />
+              <div className="relative w-28 h-28 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-destructive/30 to-destructive/10 border border-destructive/40 flex items-center justify-center shadow-lg shadow-destructive/20">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
                 </div>
               </div>
             </div>
 
-            {/* Rejection Typography */}
-            <div className="text-center mb-8" style={{ animation: "slideUpFade 0.5s ease-out 0.3s both" }}>
-              <h2 className="text-2xl font-bold text-foreground mb-3 tracking-tight" style={{ fontFamily: "Outfit, sans-serif" }}>
-                Payment <span className="text-destructive">Rejected</span>
-              </h2>
-              <p className="text-sm text-muted-foreground max-w-[300px] leading-relaxed">
-                We couldn't verify your payment. Please review the details below.
-              </p>
-            </div>
+            {/* Rejection Text */}
+            <h2 className="text-xl font-bold text-foreground mb-2">Payment Rejected</h2>
+            <p className="text-sm text-muted-foreground text-center max-w-[280px] leading-relaxed mb-4">
+              Unfortunately, your payment could not be verified.
+            </p>
 
             {/* Rejection Reason Card */}
-            <div 
-              className="w-full relative overflow-hidden rounded-2xl mb-6"
-              style={{ 
-                animation: "slideUpFade 0.5s ease-out 0.4s both",
-                background: "linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.03))",
-                border: "1px solid rgba(239, 68, 68, 0.25)",
-              }}
-            >
-              <div className="p-5">
-                <div className="flex items-start gap-4">
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(239, 68, 68, 0.15)" }}
-                  >
-                    <AlertTriangle className="w-5 h-5 text-destructive" />
-                  </div>
-                  <div>
-                    <span className="text-xs uppercase tracking-[0.15em] text-destructive font-semibold block mb-2">Rejection Reason</span>
-                    <p className="text-sm text-foreground leading-relaxed font-medium">
-                      {rejectionReason || "The payment details could not be verified. Please ensure the transfer was completed correctly."}
-                    </p>
-                  </div>
+            <div className="w-full rounded-xl bg-destructive/10 border border-destructive/25 p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <div>
+                  <span className="text-sm font-semibold text-foreground block mb-1">Reason</span>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {rejectionReason || "The payment details could not be verified. Please ensure the transfer was completed correctly."}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* Next Steps Card */}
-            <div 
-              className="w-full rounded-2xl overflow-hidden mb-6"
-              style={{ 
-                animation: "slideUpFade 0.5s ease-out 0.5s both",
-                background: "rgba(11, 11, 15, 0.6)",
-                backdropFilter: "blur(20px)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              <div className="px-5 py-3 border-b border-border/30 flex items-center gap-2">
-                <Zap className="w-3.5 h-3.5 text-violet" />
-                <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-semibold">What You Can Do</span>
-              </div>
-              <div className="p-5 space-y-3">
-                {[
-                  { icon: CheckCircle2, text: "Verify the payment was sent to the correct account", color: "text-teal" },
-                  { icon: FileCheck, text: "Ensure the receipt image is clear and shows all details", color: "text-violet" },
-                  { icon: Shield, text: "Contact support if you believe this is an error", color: "text-gold" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 group">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 bg-secondary/50 ${item.color}`}>
-                      <item.icon className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
-                      {item.text}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            {/* What To Do Next */}
+            <div className="w-full rounded-xl bg-secondary/30 border border-border/40 p-4 mb-6">
+              <h4 className="text-sm font-semibold text-foreground mb-2">What you can do:</h4>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Double-check that the payment was sent to the correct account</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Ensure the receipt image is clear and shows all details</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-violet mt-0.5">•</span>
+                  <span>Contact support if you believe this is an error</span>
+                </li>
+              </ul>
             </div>
 
             {/* Actions */}
-            <div className="w-full space-y-3" style={{ animation: "slideUpFade 0.5s ease-out 0.6s both" }}>
+            <div className="w-full space-y-2.5">
               <button
                 onClick={() => {
                   setStep("form");
@@ -1128,23 +955,14 @@ export const BuyZFC = () => {
                   setCurrentPaymentId(null);
                   setRejectionReason(null);
                 }}
-                className="w-full h-14 rounded-xl font-bold text-sm transition-all active:scale-[0.98] relative overflow-hidden group"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
-                  boxShadow: "0 0 40px rgba(123, 63, 228, 0.3)",
-                }}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-violet to-magenta text-white font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-violet/20"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                <span className="relative text-white flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  Try Again
-                </span>
+                Try Again
               </button>
               <button
                 onClick={() => navigate("/support")}
-                className="w-full h-11 rounded-xl text-sm font-medium text-muted-foreground hover:text-violet border border-border/40 hover:border-violet/30 transition-all flex items-center justify-center gap-2"
+                className="w-full h-10 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Shield className="w-4 h-4" />
                 Contact Support
               </button>
               <button
@@ -1182,72 +1000,13 @@ export const BuyZFC = () => {
           50% { transform: translateY(-8px) scale(1.2); opacity: 1; }
         }
         @keyframes approvedGlow {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.15); }
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
         }
         @keyframes successBounce {
           0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.3); }
+          50% { transform: scale(1.2); }
           100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes successEntrance {
-          0% { transform: scale(0.5) translateY(20px); opacity: 0; }
-          60% { transform: scale(1.05) translateY(-5px); }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        @keyframes rejectEntrance {
-          0% { transform: scale(0.8) translateY(20px); opacity: 0; }
-          100% { transform: scale(1) translateY(0); opacity: 1; }
-        }
-        @keyframes slideUpFade {
-          0% { transform: translateY(20px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes fadeIn {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-        @keyframes confettiFall {
-          0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
-          25% { transform: translateY(-15px) rotate(90deg); opacity: 1; }
-          50% { transform: translateY(5px) rotate(180deg); opacity: 0.8; }
-          75% { transform: translateY(-10px) rotate(270deg); opacity: 1; }
-        }
-        @keyframes sparkle {
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.6; }
-          50% { transform: scale(1.3) rotate(10deg); opacity: 1; }
-        }
-        @keyframes iconPulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-        @keyframes shimmerSlide {
-          0% { transform: translateX(-100%); }
-          50%, 100% { transform: translateX(200%); }
-        }
-        @keyframes countPop {
-          0% { transform: scale(0.5); opacity: 0; }
-          60% { transform: scale(1.1); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes rejectPulse {
-          0%, 100% { opacity: 0.3; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes pulseRing {
-          0%, 100% { transform: scale(1); opacity: 0.5; }
-          50% { transform: scale(1.05); opacity: 0.8; }
-        }
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20% { transform: translateX(-5px) rotate(-2deg); }
-          40% { transform: translateX(5px) rotate(2deg); }
-          60% { transform: translateX(-3px) rotate(-1deg); }
-          80% { transform: translateX(3px) rotate(1deg); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
         }
       `}</style>
     </div>

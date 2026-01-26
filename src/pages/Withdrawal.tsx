@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, AlertCircle } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -26,7 +25,6 @@ const nigerianBanks = [
 export const Withdrawal = () => {
   const navigate = useNavigate();
   const [availableBalance, setAvailableBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     accountNumber: "",
@@ -37,45 +35,11 @@ export const Withdrawal = () => {
   });
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("balance")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        setAvailableBalance(profile.balance);
-      }
-      setIsLoading(false);
-    };
-
-    fetchBalance();
-
-    // Subscribe to realtime balance updates
-    const channel = supabase
-      .channel("withdrawal-balance")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles" },
-        (payload) => {
-          if (payload.new && typeof payload.new.balance === "number") {
-            setAvailableBalance(payload.new.balance);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [navigate]);
+    const savedBalance = localStorage.getItem("zenfi_balance");
+    if (savedBalance) {
+      setAvailableBalance(parseInt(savedBalance, 10));
+    }
+  }, []);
 
   const formatBalance = (value: number) => {
     return new Intl.NumberFormat('en-NG', {
