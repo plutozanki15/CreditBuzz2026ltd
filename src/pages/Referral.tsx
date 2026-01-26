@@ -31,9 +31,9 @@ export const Referral = () => {
   const referralLink = `https://zenfi.com/ref/${referralCode}`;
   
   const stats = {
-    totalReferrals: 12,
-    pendingRewards: 3,
-    totalEarnings: 45000,
+    totalReferrals: 0,
+    pendingRewards: 0,
+    totalEarnings: 0,
   };
 
   const formatCurrency = (value: number) => {
