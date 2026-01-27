@@ -99,22 +99,13 @@ export const BuyZFC = () => {
         </div>
       </header>
 
-      <main className="relative z-10 px-5 py-6 pb-8 w-full max-w-md mx-auto">
+      <main className="relative z-10 px-5 py-4 pb-6 w-full max-w-md mx-auto">
         {currentStep === "form" && (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-foreground mb-2">Purchase ZFC</h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your details to proceed with the purchase
-              </p>
-            </div>
-
-            <PaymentForm
-              onSubmit={handleFormSubmit}
-              defaultEmail={profile?.email || ""}
-              defaultName={profile?.full_name || ""}
-            />
-          </div>
+          <PaymentForm
+            onSubmit={handleFormSubmit}
+            defaultEmail={profile?.email || ""}
+            defaultName={profile?.full_name || ""}
+          />
         )}
 
         {currentStep === "details" && user && formData && (
