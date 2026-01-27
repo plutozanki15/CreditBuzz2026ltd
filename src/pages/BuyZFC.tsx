@@ -12,16 +12,17 @@ import { AccountDetails } from "@/components/payment/AccountDetails";
 
 type FlowStep = "form" | "processing" | "notice" | "details";
 
+interface FormData {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+
 export const BuyZFC = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState<FlowStep>("form");
-  const [paymentId, setPaymentId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<{
-    fullName: string;
-    phone: string;
-    email: string;
-  } | null>(null);
+  const [formData, setFormData] = useState<FormData | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -29,31 +30,10 @@ export const BuyZFC = () => {
     }
   }, [user, isLoading, navigate]);
 
-  const handleFormSubmit = async (data: { fullName: string; phone: string; email: string }) => {
-    if (!user) return;
-    
+  const handleFormSubmit = (data: FormData) => {
+    // Just store form data and proceed to processing animation
+    // Payment will be created only when user clicks "Confirm Payment"
     setFormData(data);
-    
-    // Create payment record IMMEDIATELY so admin can see it
-    const { data: paymentData, error } = await supabase
-      .from("payments")
-      .insert({
-        user_id: user.id,
-        full_name: data.fullName,
-        phone: data.phone,
-        email: data.email,
-        amount: 5700,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      console.error("Error creating payment:", error);
-      return;
-    }
-
-    setPaymentId(paymentData.id);
     setCurrentStep("processing");
   };
 
@@ -61,13 +41,13 @@ export const BuyZFC = () => {
     setCurrentStep("notice");
   };
 
-  const handleNoticeProceed = async () => {
-    // Payment already created, just proceed to details
+  const handleNoticeProceed = () => {
     setCurrentStep("details");
   };
 
-  const handleUploadComplete = () => {
-    navigate("/payment-status");
+  const handlePaymentConfirmed = (paymentId: string) => {
+    // Payment was just created with receipt, navigate to pending page
+    navigate("/payment-status", { state: { paymentId } });
   };
 
   if (isLoading) {
@@ -137,11 +117,11 @@ export const BuyZFC = () => {
           </div>
         )}
 
-        {currentStep === "details" && user && paymentId && (
+        {currentStep === "details" && user && formData && (
           <AccountDetails
             userId={user.id}
-            paymentId={paymentId}
-            onUploadComplete={handleUploadComplete}
+            formData={formData}
+            onPaymentConfirmed={handlePaymentConfirmed}
           />
         )}
       </main>

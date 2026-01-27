@@ -10,16 +10,24 @@ const BANK_NAME = "Moniepoint MFB";
 const ACCOUNT_NUMBER = "8102562883";
 const ACCOUNT_NAME = "CHARIS BENJAMIN SOMTOCHUKWU";
 
-interface AccountDetailsProps {
-  userId: string;
-  paymentId: string;
-  onUploadComplete: () => void;
+interface FormData {
+  fullName: string;
+  phone: string;
+  email: string;
 }
 
-export const AccountDetails = ({ userId, paymentId, onUploadComplete }: AccountDetailsProps) => {
+interface AccountDetailsProps {
+  userId: string;
+  formData: FormData;
+  onPaymentConfirmed: (paymentId: string) => void;
+}
+
+export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: AccountDetailsProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [tempReceiptFile, setTempReceiptFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCopy = async (text: string, field: string) => {
@@ -61,24 +69,56 @@ export const AccountDetails = ({ userId, paymentId, onUploadComplete }: AccountD
       return;
     }
 
-    setIsUploading(true);
+    // Store file for later upload and show preview
+    setTempReceiptFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setUploadedFile(previewUrl);
+    toast({
+      title: "Receipt ready",
+      description: "Click 'Confirm Payment' to submit",
+    });
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!tempReceiptFile) return;
+
+    setIsSubmitting(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
+      // 1. Create payment record first
+      const { data: paymentData, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          user_id: userId,
+          full_name: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          amount: 5700,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (paymentError) throw paymentError;
+
+      const paymentId = paymentData.id;
+
+      // 2. Upload receipt to storage
+      setIsUploading(true);
+      const fileExt = tempReceiptFile.name.split(".").pop();
       const fileName = `${userId}/${paymentId}.${fileExt}`;
 
-      const { data, error } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("receipts")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, tempReceiptFile, { upsert: true });
 
-      if (error) throw error;
+      if (uploadError) throw uploadError;
 
-      // Get public URL
+      // 3. Get public URL and update payment record
       const { data: urlData } = supabase.storage
         .from("receipts")
         .getPublicUrl(fileName);
 
-      // Update payment record with receipt URL
       const { error: updateError } = await supabase
         .from("payments")
         .update({ receipt_url: urlData.publicUrl })
@@ -86,20 +126,19 @@ export const AccountDetails = ({ userId, paymentId, onUploadComplete }: AccountD
 
       if (updateError) throw updateError;
 
-      setUploadedFile(urlData.publicUrl);
-      toast({
-        title: "Receipt uploaded!",
-        description: "Your payment receipt has been uploaded successfully",
-      });
+      // 4. Navigate to pending page - admin can now see this payment
+      onPaymentConfirmed(paymentId);
+
     } catch (error: any) {
-      console.error("Upload error:", error);
+      console.error("Payment submission error:", error);
       toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload receipt",
+        title: "Submission failed",
+        description: error.message || "Failed to submit payment",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -270,17 +309,24 @@ export const AccountDetails = ({ userId, paymentId, onUploadComplete }: AccountD
 
       {/* Confirm Payment Button */}
       <motion.button
-        onClick={onUploadComplete}
-        disabled={!uploadedFile}
-        whileHover={{ scale: uploadedFile ? 1.02 : 1 }}
-        whileTap={{ scale: uploadedFile ? 0.98 : 1 }}
+        onClick={handleConfirmPayment}
+        disabled={!uploadedFile || isSubmitting}
+        whileHover={{ scale: uploadedFile && !isSubmitting ? 1.02 : 1 }}
+        whileTap={{ scale: uploadedFile && !isSubmitting ? 0.98 : 1 }}
         className={`w-full py-3.5 px-4 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 ${
-          uploadedFile
+          uploadedFile && !isSubmitting
             ? "bg-gradient-to-r from-violet to-magenta text-white shadow-lg shadow-violet/25"
             : "bg-secondary/50 text-muted-foreground cursor-not-allowed"
         }`}
       >
-        ✓ Confirm Payment
+        {isSubmitting ? (
+          <>
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            Submitting...
+          </>
+        ) : (
+          "✓ Confirm Payment"
+        )}
       </motion.button>
 
       {/* Receipt Upload Warning */}
