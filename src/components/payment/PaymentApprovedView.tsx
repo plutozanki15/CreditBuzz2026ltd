@@ -149,13 +149,13 @@ export const PaymentApprovedView = () => {
       >
         <div className="flex items-center gap-2">
           <Wallet className="w-4 h-4 text-teal" />
-          <span className="text-teal font-bold text-lg">₦180,000 ZFC</span>
+          <span className="text-teal font-bold text-lg">₦5,700</span>
           <motion.span
             className="text-xs text-teal/70 font-medium"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            Added
+            Credited
           </motion.span>
         </div>
       </motion.div>

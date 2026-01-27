@@ -148,6 +148,18 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {/* Receipt Upload Warning - Moved to Top */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="p-3 rounded-xl bg-gold/10 border border-gold/30"
+      >
+        <p className="text-xs text-gold font-medium text-center flex items-center justify-center gap-2">
+          <Upload className="w-3.5 h-3.5" />
+          ⚠️ You MUST upload your payment receipt before confirming
+        </p>
+      </motion.div>
+
       {/* Amount Card */}
       <section className="relative overflow-hidden rounded-xl bg-gradient-to-r from-violet/12 to-magenta/8 border border-violet/20 p-4">
         <div className="absolute top-0 right-0 w-24 h-24 bg-violet/15 rounded-full blur-2xl" />
@@ -329,18 +341,7 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
         )}
       </motion.button>
 
-      {/* Receipt Upload Warning */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="p-3 rounded-xl bg-gold/10 border border-gold/30"
-      >
-        <p className="text-xs text-gold font-medium text-center flex items-center justify-center gap-2">
-          <Upload className="w-3.5 h-3.5" />
-          Please upload your payment receipt for faster verification
-        </p>
-      </motion.div>
+
 
       {/* Security Footer */}
       <div className="text-center pt-2">
