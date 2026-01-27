@@ -88,38 +88,42 @@ export const AdminPayments = () => {
     setProcessingId(paymentId);
 
     try {
+      const payment = payments.find((p) => p.id === paymentId);
+      if (!payment) throw new Error("Payment not found");
+
+      // If approved, credit the user's balance FIRST
+      if (newStatus === "approved") {
+        // Get current balance
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("balance")
+          .eq("user_id", payment.user_id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Calculate ZFC amount (₦5700 = 180,000 ZFC)
+        const zfcAmount = (payment.amount / 5700) * 180000;
+        const newBalance = Number(profile?.balance || 0) + zfcAmount;
+
+        // Update balance - this triggers realtime update on user's dashboard
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ balance: newBalance })
+          .eq("user_id", payment.user_id);
+
+        if (updateError) throw updateError;
+
+        console.log(`Balance updated for user ${payment.user_id}: +${zfcAmount} ZFC (new total: ${newBalance})`);
+      }
+
+      // Now update the payment status
       const { error } = await supabase
         .from("payments")
         .update({ status: newStatus })
         .eq("id", paymentId);
 
       if (error) throw error;
-
-      // If approved, credit the user's balance
-      if (newStatus === "approved") {
-        const payment = payments.find((p) => p.id === paymentId);
-        if (payment) {
-          // Get current balance
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("balance")
-            .eq("user_id", payment.user_id)
-            .single();
-
-          if (profileError) throw profileError;
-
-          // Calculate ZFC amount (₦5700 = 180,000 ZFC)
-          const zfcAmount = (payment.amount / 5700) * 180000;
-
-          // Update balance
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ balance: (profile?.balance || 0) + zfcAmount })
-            .eq("user_id", payment.user_id);
-
-          if (updateError) throw updateError;
-        }
-      }
 
       // Update local state
       setPayments((prev) =>
@@ -128,7 +132,7 @@ export const AdminPayments = () => {
 
       toast({
         title: "Success",
-        description: `Payment ${newStatus}`,
+        description: `Payment ${newStatus}${newStatus === "approved" ? " - User balance updated" : ""}`,
       });
     } catch (error: any) {
       console.error("Error updating payment:", error);

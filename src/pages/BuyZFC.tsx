@@ -30,25 +30,18 @@ export const BuyZFC = () => {
   }, [user, isLoading, navigate]);
 
   const handleFormSubmit = async (data: { fullName: string; phone: string; email: string }) => {
+    if (!user) return;
+    
     setFormData(data);
-    setCurrentStep("processing");
-  };
-
-  const handleProcessingComplete = () => {
-    setCurrentStep("notice");
-  };
-
-  const handleNoticeProceed = async () => {
-    if (!user || !formData) return;
-
-    // Create payment record
-    const { data, error } = await supabase
+    
+    // Create payment record IMMEDIATELY so admin can see it
+    const { data: paymentData, error } = await supabase
       .from("payments")
       .insert({
         user_id: user.id,
-        full_name: formData.fullName,
-        phone: formData.phone,
-        email: formData.email,
+        full_name: data.fullName,
+        phone: data.phone,
+        email: data.email,
         amount: 5700,
         status: "pending",
       })
@@ -60,7 +53,16 @@ export const BuyZFC = () => {
       return;
     }
 
-    setPaymentId(data.id);
+    setPaymentId(paymentData.id);
+    setCurrentStep("processing");
+  };
+
+  const handleProcessingComplete = () => {
+    setCurrentStep("notice");
+  };
+
+  const handleNoticeProceed = async () => {
+    // Payment already created, just proceed to details
     setCurrentStep("details");
   };
 
