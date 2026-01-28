@@ -232,7 +232,7 @@ export const Dashboard = () => {
       <WarningBanner />
       
       {/* Compact Header */}
-      <header className="relative z-10 px-4 py-3 flex items-center justify-between">
+      <header className="relative z-50 px-4 py-3 flex items-center justify-between">
         <ZenfiLogo size="sm" />
         <div className="flex items-center gap-2">
           <NotificationPanel />
@@ -246,7 +246,7 @@ export const Dashboard = () => {
         </div>
       </header>
 
-      <main className="relative z-10 px-4 space-y-4">
+      <main className="relative z-0 px-4 space-y-4">
         {/* Compact Virtual Bank Card */}
         <div className="animate-fade-in-up">
           <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[110px]" />
