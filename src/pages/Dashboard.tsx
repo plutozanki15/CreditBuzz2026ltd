@@ -391,11 +391,11 @@ export const Dashboard = () => {
           </div>
           
           <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
-            <div className="flex gap-3">
+            <div className="flex">
               {carouselImages.map((image, index) => (
                 <div 
                   key={index}
-                  className="flex-[0_0_88%] min-w-0 rounded-xl overflow-hidden relative h-32"
+                  className="flex-[0_0_100%] min-w-0 rounded-xl overflow-hidden relative h-32"
                 >
                   <img 
                     src={image} 
