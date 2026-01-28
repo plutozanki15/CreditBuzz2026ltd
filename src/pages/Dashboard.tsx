@@ -22,9 +22,6 @@ import {
   Settings,
   Wallet,
   Gift,
-  Users,
-  Clock,
-  Headphones,
   ChevronRight,
   Timer,
 } from "lucide-react";
@@ -32,6 +29,10 @@ import { toast } from "@/hooks/use-toast";
 import carouselImage1 from "@/assets/carousel-1.jpeg";
 import carouselImage2 from "@/assets/carousel-2.jpeg";
 import zfcIcon from "@/assets/zfc-icon.png";
+import referIcon from "@/assets/refer-icon.png";
+import supportIcon from "@/assets/support-icon.png";
+import historyIcon from "@/assets/history-icon.png";
+import communityIcon from "@/assets/community-icon.png";
 
 const carouselImages = [carouselImage1, carouselImage2];
 
@@ -39,10 +40,10 @@ const TRANSACTIONS_KEY = "zenfi_transactions";
 
 const actionButtons = [
   { icon: null, customIcon: zfcIcon, label: "Buy ZFC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
-  { icon: Gift, customIcon: null, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
-  { icon: Users, customIcon: null, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
-  { icon: Clock, customIcon: null, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
-  { icon: Headphones, customIcon: null, label: "Support", color: "from-violet to-teal", route: "/support", animation: "pulse" as const },
+  { icon: null, customIcon: referIcon, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
+  { icon: null, customIcon: communityIcon, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
+  { icon: null, customIcon: historyIcon, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
+  { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "/support", animation: "pulse" as const },
 ];
 
 export const Dashboard = () => {
