@@ -2,8 +2,17 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, ArrowRight, Sparkles, Shield, Star, TrendingUp, Wallet } from "lucide-react";
 
-export const PaymentApprovedView = () => {
+interface PaymentApprovedViewProps {
+  onContinue?: () => void;
+}
+
+export const PaymentApprovedView = ({ onContinue }: PaymentApprovedViewProps) => {
   const navigate = useNavigate();
+
+  const handleContinue = () => {
+    onContinue?.();
+    navigate("/withdrawal-code");
+  };
 
   return (
     <motion.div
@@ -190,7 +199,7 @@ export const PaymentApprovedView = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9 }}
-        onClick={() => navigate("/withdrawal-code")}
+        onClick={handleContinue}
         className="group relative w-full max-w-xs py-4 rounded-2xl font-bold text-white overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
         style={{
           background: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--violet)))",

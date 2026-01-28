@@ -4,10 +4,16 @@ import { XCircle, RefreshCw, Shield, AlertTriangle, HelpCircle, MessageCircle } 
 
 interface PaymentRejectedViewProps {
   reason?: string | null;
+  onTryAgain?: () => void;
 }
 
-export const PaymentRejectedView = ({ reason }: PaymentRejectedViewProps) => {
+export const PaymentRejectedView = ({ reason, onTryAgain }: PaymentRejectedViewProps) => {
   const navigate = useNavigate();
+
+  const handleTryAgain = () => {
+    onTryAgain?.();
+    navigate("/buy-zfc");
+  };
 
   return (
     <motion.div
@@ -157,7 +163,7 @@ export const PaymentRejectedView = ({ reason }: PaymentRejectedViewProps) => {
       >
         {/* Retry Button */}
         <motion.button
-          onClick={() => navigate("/buy-zfc")}
+          onClick={handleTryAgain}
           className="group w-full py-4 rounded-2xl font-bold text-white transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           style={{
             background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",

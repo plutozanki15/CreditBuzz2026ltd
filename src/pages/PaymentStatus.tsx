@@ -12,7 +12,7 @@ import { PaymentRejectedView } from "@/components/payment/PaymentRejectedView";
 export const PaymentStatus = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const { latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
+  const { latestPayment, isLoading: paymentLoading, clearStatusChange } = usePaymentState(user?.id);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -20,6 +20,20 @@ export const PaymentStatus = () => {
       return;
     }
   }, [user, authLoading, navigate]);
+
+  // Clear status change acknowledgement when user views the status page
+  useEffect(() => {
+    // We'll clear when they leave or interact, not immediately
+    return () => {
+      // Cleanup on unmount - acknowledge the status was viewed
+    };
+  }, []);
+
+  const handleBackToDashboard = () => {
+    // Clear the status change flag so they don't get redirected again
+    clearStatusChange();
+    navigate("/dashboard");
+  };
 
   if (authLoading || paymentLoading) {
     return (
@@ -50,9 +64,9 @@ export const PaymentStatus = () => {
 
     switch (latestPayment.status) {
       case "approved":
-        return <PaymentApprovedView />;
+        return <PaymentApprovedView onContinue={clearStatusChange} />;
       case "rejected":
-        return <PaymentRejectedView reason={latestPayment.rejection_reason} />;
+        return <PaymentRejectedView reason={latestPayment.rejection_reason} onTryAgain={clearStatusChange} />;
       default:
         return <PaymentPendingView />;
     }
@@ -66,7 +80,7 @@ export const PaymentStatus = () => {
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/40">
         <div className="flex items-center justify-between px-4 py-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={handleBackToDashboard}
             className="p-2 -ml-2 rounded-xl hover:bg-secondary/50 transition-all active:scale-95"
           >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />

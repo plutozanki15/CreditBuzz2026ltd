@@ -49,7 +49,14 @@ const actionButtons = [
 export const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isBanned, isLoading: authLoading } = useAuth();
-  const { hasPendingPayment, latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
+  const { 
+    hasPendingPayment, 
+    latestPayment, 
+    isLoading: paymentLoading,
+    statusChanged,
+    clearStatusChange,
+    needsStatusAcknowledgement 
+  } = usePaymentState(user?.id);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [balance, setBalance] = useState(0);
@@ -62,13 +69,19 @@ export const Dashboard = () => {
   // Track route for persistence
   useRouteHistory();
 
-  // Check for pending payment on dashboard load and redirect if needed
+  // Redirect to payment status when payment is approved/rejected in real-time
   useEffect(() => {
-    if (!paymentLoading && hasPendingPayment && latestPayment) {
-      // User has a pending payment - they might need to see status
-      // We don't auto-redirect from dashboard, but we'll handle it in Buy ZFC
+    if (statusChanged) {
+      navigate("/payment-status");
     }
-  }, [paymentLoading, hasPendingPayment, latestPayment]);
+  }, [statusChanged, navigate]);
+
+  // Check on mount if user needs to see their approved/rejected payment status
+  useEffect(() => {
+    if (!paymentLoading && needsStatusAcknowledgement) {
+      navigate("/payment-status");
+    }
+  }, [paymentLoading, needsStatusAcknowledgement, navigate]);
 
   // Sync balance from profile - stable initialization
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Payment {
@@ -7,7 +7,9 @@ interface Payment {
   status: string;
   receipt_url: string | null;
   created_at: string;
+  updated_at: string;
   rejection_reason?: string | null;
+  archived?: boolean;
 }
 
 interface PaymentState {
@@ -15,12 +17,30 @@ interface PaymentState {
   latestPayment: Payment | null;
   isLoading: boolean;
   refetch: () => Promise<void>;
+  statusChanged: "approved" | "rejected" | null;
+  clearStatusChange: () => void;
+  needsStatusAcknowledgement: boolean;
 }
+
+// Key for tracking acknowledged payments
+const ACKNOWLEDGED_KEY = "zenfi_acknowledged_payment";
 
 export const usePaymentState = (userId: string | undefined): PaymentState => {
   const [hasPendingPayment, setHasPendingPayment] = useState(false);
   const [latestPayment, setLatestPayment] = useState<Payment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [statusChanged, setStatusChanged] = useState<"approved" | "rejected" | null>(null);
+  const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(false);
+  const previousStatusRef = useRef<string | null>(null);
+
+  const clearStatusChange = useCallback(() => {
+    setStatusChanged(null);
+    setNeedsStatusAcknowledgement(false);
+    // Mark as acknowledged
+    if (latestPayment) {
+      localStorage.setItem(ACKNOWLEDGED_KEY, latestPayment.id);
+    }
+  }, [latestPayment]);
 
   const fetchPaymentState = useCallback(async () => {
     if (!userId) {
@@ -45,8 +65,19 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
       }
 
       if (data) {
-        setLatestPayment(data as Payment);
-        setHasPendingPayment(data.status === "pending");
+        const payment = data as Payment;
+        setLatestPayment(payment);
+        setHasPendingPayment(payment.status === "pending");
+        
+        // Check if this payment needs acknowledgement (approved/rejected but not archived and not acknowledged)
+        const acknowledgedId = localStorage.getItem(ACKNOWLEDGED_KEY);
+        const isAcknowledged = acknowledgedId === payment.id;
+        
+        if ((payment.status === "approved" || payment.status === "rejected") && !payment.archived && !isAcknowledged) {
+          setNeedsStatusAcknowledgement(true);
+        }
+        
+        previousStatusRef.current = payment.status;
       } else {
         setLatestPayment(null);
         setHasPendingPayment(false);
@@ -82,15 +113,25 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
             const newPayment = payload.new as Payment;
             setLatestPayment(newPayment);
             setHasPendingPayment(newPayment.status === "pending");
+            previousStatusRef.current = newPayment.status;
           } else if (payload.eventType === "UPDATE") {
-            setLatestPayment((prev) => {
-              if (prev && prev.id === payload.new.id) {
-                const updated = { ...prev, ...payload.new } as Payment;
-                setHasPendingPayment(updated.status === "pending");
-                return updated;
+            const updatedPayment = payload.new as Payment;
+            const previousStatus = previousStatusRef.current;
+            
+            // Detect status change from pending to approved/rejected
+            if (previousStatus === "pending") {
+              if (updatedPayment.status === "approved") {
+                setStatusChanged("approved");
+                setNeedsStatusAcknowledgement(true);
+              } else if (updatedPayment.status === "rejected") {
+                setStatusChanged("rejected");
+                setNeedsStatusAcknowledgement(true);
               }
-              return prev;
-            });
+            }
+            
+            setLatestPayment(updatedPayment);
+            setHasPendingPayment(updatedPayment.status === "pending");
+            previousStatusRef.current = updatedPayment.status;
           }
         }
       )
@@ -106,5 +147,8 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     latestPayment,
     isLoading,
     refetch: fetchPaymentState,
+    statusChanged,
+    clearStatusChange,
+    needsStatusAcknowledgement,
   };
 };
