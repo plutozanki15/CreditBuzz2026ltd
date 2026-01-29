@@ -59,7 +59,9 @@ export const BuyZFC = () => {
     navigate("/payment-status", { state: { paymentId } });
   };
 
-  if (isLoading || paymentLoading) {
+  // Only show loading if auth is loading AND we have no cached profile
+  // This allows instant page display when navigating from dashboard
+  if (isLoading && !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
