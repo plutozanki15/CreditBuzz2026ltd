@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Payment {
   id: string;
+  user_id: string;
   amount: number;
   status: string;
   receipt_url: string | null;
@@ -25,14 +26,49 @@ interface PaymentState {
 // Key for tracking acknowledged payments
 const ACKNOWLEDGED_KEY = "zenfi_acknowledged_payment";
 
+// Cache latest payment so UI can render instantly on app resume/cold start
+const LATEST_PAYMENT_CACHE_KEY = "zenfi_latest_payment_cache_v1";
+
+const readCachedLatestPayment = (userId: string | undefined): Payment | null => {
+  if (!userId) return null;
+  try {
+    const raw = localStorage.getItem(LATEST_PAYMENT_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Payment;
+    if (!parsed?.id || !parsed?.status || parsed.user_id !== userId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedLatestPayment = (payment: Payment | null) => {
+  try {
+    if (!payment) {
+      localStorage.removeItem(LATEST_PAYMENT_CACHE_KEY);
+      return;
+    }
+    localStorage.setItem(LATEST_PAYMENT_CACHE_KEY, JSON.stringify(payment));
+  } catch {
+    // ignore storage failures
+  }
+};
+
 export const usePaymentState = (userId: string | undefined): PaymentState => {
-  const [hasPendingPayment, setHasPendingPayment] = useState(false);
-  const [latestPayment, setLatestPayment] = useState<Payment | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const cachedPayment = readCachedLatestPayment(userId);
+  const initialAcknowledgedId = typeof window !== "undefined" ? localStorage.getItem(ACKNOWLEDGED_KEY) : null;
+  const initialNeedsAck =
+    !!cachedPayment &&
+    (cachedPayment.status === "approved" || cachedPayment.status === "rejected") &&
+    initialAcknowledgedId !== cachedPayment.id;
+
+  const [hasPendingPayment, setHasPendingPayment] = useState(!!cachedPayment && cachedPayment.status === "pending");
+  const [latestPayment, setLatestPayment] = useState<Payment | null>(cachedPayment);
+  const [isLoading, setIsLoading] = useState(() => Boolean(userId && !cachedPayment));
   const [statusChanged, setStatusChanged] = useState<"approved" | "rejected" | null>(null);
-  const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(false);
-  const previousStatusRef = useRef<string | null>(null);
-  const hasInitiallyLoadedRef = useRef(false);
+  const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(initialNeedsAck);
+  const previousStatusRef = useRef<string | null>(cachedPayment?.status ?? null);
+  const hasInitiallyLoadedRef = useRef(Boolean(cachedPayment));
 
   const clearStatusChange = useCallback(() => {
     setStatusChanged(null);
@@ -74,6 +110,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
         const payment = data as Payment;
         setLatestPayment(payment);
         setHasPendingPayment(payment.status === "pending");
+        writeCachedLatestPayment(payment);
         
         // Check if this payment needs acknowledgement (approved/rejected and not yet acknowledged)
         const acknowledgedId = localStorage.getItem(ACKNOWLEDGED_KEY);
@@ -87,6 +124,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
       } else {
         setLatestPayment(null);
         setHasPendingPayment(false);
+        writeCachedLatestPayment(null);
       }
     } catch (error) {
       console.error("Error in fetchPaymentState:", error);
@@ -100,9 +138,29 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
 
   // Initial fetch - only this one shows loading
   useEffect(() => {
-    hasInitiallyLoadedRef.current = false;
+    // If we have a cached payment, skip the initial loading spinner and render instantly.
+    hasInitiallyLoadedRef.current = Boolean(readCachedLatestPayment(userId));
     fetchPaymentState(true);
   }, [fetchPaymentState]);
+
+  // If user changes (login/logout), hydrate immediately from cache for that user.
+  useEffect(() => {
+    const cached = readCachedLatestPayment(userId);
+    setLatestPayment(cached);
+    setHasPendingPayment(!!cached && cached.status === "pending");
+
+    const acknowledgedId = localStorage.getItem(ACKNOWLEDGED_KEY);
+    const needsAck =
+      !!cached &&
+      (cached.status === "approved" || cached.status === "rejected") &&
+      acknowledgedId !== cached.id;
+    setNeedsStatusAcknowledgement(needsAck);
+
+    previousStatusRef.current = cached?.status ?? null;
+    if (!userId) {
+      setIsLoading(false);
+    }
+  }, [userId]);
 
   // Refetch on app resume (visibility change) to catch status changes while minimized - INSTANT, NO LOADING
   useEffect(() => {
@@ -148,6 +206,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
             const newPayment = payload.new as Payment;
             setLatestPayment(newPayment);
             setHasPendingPayment(newPayment.status === "pending");
+            writeCachedLatestPayment(newPayment);
             previousStatusRef.current = newPayment.status;
           } else if (payload.eventType === "UPDATE") {
             const updatedPayment = payload.new as Payment;
@@ -166,6 +225,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
             
             setLatestPayment(updatedPayment);
             setHasPendingPayment(updatedPayment.status === "pending");
+            writeCachedLatestPayment(updatedPayment);
             previousStatusRef.current = updatedPayment.status;
           }
         }

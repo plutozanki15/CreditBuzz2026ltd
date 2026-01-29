@@ -19,7 +19,8 @@ export const PaymentStatusGate = () => {
     usePaymentState(user?.id);
 
   useEffect(() => {
-    if (authLoading || paymentLoading || roleLoading) return;
+    // If we already have a cached user, don't block redirects on authLoading.
+    if ((authLoading && !user) || paymentLoading || roleLoading) return;
     if (!user) return;
     // Admins should not be redirected
     if (isAdmin) return;
