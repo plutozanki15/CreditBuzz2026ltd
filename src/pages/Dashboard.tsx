@@ -59,8 +59,12 @@ export const Dashboard = () => {
   } = usePaymentState(user?.id);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
-  const [balance, setBalance] = useState(0);
+  // Initialize balance from profile immediately to avoid 0 flash
+  const [balance, setBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
+  
+  // Derive display balance - use profile balance directly until local state is set
+  const displayBalance = balance !== null ? balance : (profile?.balance ?? 0);
   const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
 
@@ -83,15 +87,15 @@ export const Dashboard = () => {
     }
   }, [paymentLoading, needsStatusAcknowledgement, navigate]);
 
-  // Sync balance from profile - stable initialization
+  // Sync balance from profile - only update local state when profile changes
   useEffect(() => {
     if (profile?.balance !== undefined && profile?.balance !== null) {
       const numBalance = Number(profile.balance);
-      if (!isNaN(numBalance) && numBalance >= 0) {
+      if (!isNaN(numBalance) && numBalance >= 0 && numBalance !== balance) {
         setBalance(numBalance);
       }
     }
-  }, [profile?.balance]);
+  }, [profile?.balance, balance]);
 
   // Real-time balance subscription for instant updates (new users, admin credits, etc.)
   useEffect(() => {
@@ -161,12 +165,13 @@ export const Dashboard = () => {
     if (!canClaim || isClaiming || !profile?.user_id) return;
     
     setIsClaiming(true);
+    const currentBalance = balance !== null ? balance : (profile?.balance ?? 0);
     
     try {
       // Update balance directly in profiles table
       const { error } = await supabase
         .from('profiles')
-        .update({ balance: balance + 10000 })
+        .update({ balance: currentBalance + 10000 })
         .eq('user_id', profile.user_id);
       
       if (error) {
@@ -181,7 +186,7 @@ export const Dashboard = () => {
       }
       
       // SUCCESS - Now update UI
-      const newBalance = balance + 10000;
+      const newBalance = currentBalance + 10000;
       setBalance(newBalance);
       addTransaction("claim", 10000);
       startCooldown();
@@ -249,7 +254,7 @@ export const Dashboard = () => {
       <main className="relative z-0 px-4 space-y-4">
         {/* Compact Virtual Bank Card */}
         <div className="animate-fade-in-up">
-          <VirtualBankCard balance={balance} cardNumber="4829" className="min-h-[110px]" />
+          <VirtualBankCard balance={displayBalance} cardNumber="4829" className="min-h-[110px]" />
         </div>
 
         {/* Primary Action Buttons - More Compact */}
