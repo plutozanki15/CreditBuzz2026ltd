@@ -94,18 +94,20 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     fetchPaymentState();
   }, [fetchPaymentState]);
 
-  // Refetch on app resume (visibility change) to catch status changes while minimized
+  // Refetch on app resume (visibility change) to catch status changes while minimized - INSTANT
   useEffect(() => {
+    if (!userId) return;
+
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible" && userId) {
+      if (document.visibilityState === "visible") {
+        // Immediately fetch without any delay
         fetchPaymentState();
       }
     };
 
     const handleFocus = () => {
-      if (userId) {
-        fetchPaymentState();
-      }
+      // Immediately fetch without any delay
+      fetchPaymentState();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
