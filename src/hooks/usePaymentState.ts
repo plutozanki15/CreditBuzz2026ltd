@@ -94,6 +94,28 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     fetchPaymentState();
   }, [fetchPaymentState]);
 
+  // Refetch on app resume (visibility change) to catch status changes while minimized
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPaymentState();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Also refetch on window focus for additional coverage
+    const handleFocus = () => {
+      fetchPaymentState();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [fetchPaymentState]);
+
   // Real-time subscription for payment status changes
   useEffect(() => {
     if (!userId) return;
