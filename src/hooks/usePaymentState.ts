@@ -7,6 +7,7 @@ interface Payment {
   amount: number;
   status: string;
   receipt_url: string | null;
+  receipt_status?: string | null;
   created_at: string;
   updated_at: string;
   rejection_reason?: string | null;
