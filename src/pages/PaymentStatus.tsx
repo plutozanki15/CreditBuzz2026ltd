@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, Receipt } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,7 +35,9 @@ export const PaymentStatus = () => {
     navigate("/dashboard");
   };
 
-  if (authLoading || paymentLoading) {
+  // Only show loading if we're still loading auth OR if we have no payment data yet on initial load
+  // Don't show loading spinner when switching between statuses to avoid the "bug page" flash
+  if (authLoading || (paymentLoading && !latestPayment)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
@@ -94,16 +96,15 @@ export const PaymentStatus = () => {
       </header>
 
       <main className="relative z-10 w-full max-w-md mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={latestPayment?.status || "empty"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {getStatusView()}
-          </motion.div>
-        </AnimatePresence>
+        {/* Removed AnimatePresence mode="wait" to prevent delay when switching status views */}
+        <motion.div
+          key={latestPayment?.status || "empty"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          {getStatusView()}
+        </motion.div>
       </main>
     </div>
   );
