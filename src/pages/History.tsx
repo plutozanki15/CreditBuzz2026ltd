@@ -4,6 +4,8 @@ import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft,
   ArrowDownCircle,
@@ -22,27 +24,95 @@ interface Transaction {
   status: "success" | "pending" | "failed";
 }
 
-const STORAGE_KEY = "zenfi_transactions";
+const LOCAL_CLAIMS_KEY = "zenfi_transactions";
 
 export const History = () => {
   const navigate = useNavigate();
+  const { user, isLoading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useRouteHistory();
 
-  useEffect(() => {
-    // Simulate loading for premium feel
-    const timer = setTimeout(() => {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setTransactions(JSON.parse(saved));
-      }
-      setIsLoading(false);
-    }, 500);
+  // Fetch withdrawals from database + local claims
+  const fetchTransactions = async () => {
+    if (!user) return;
 
-    return () => clearTimeout(timer);
-  }, []);
+    try {
+      // Fetch withdrawals from database
+      const { data: withdrawals, error } = await supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching withdrawals:", error);
+      }
+
+      // Convert withdrawals to transaction format
+      const withdrawalTxns: Transaction[] = (withdrawals || []).map((w) => ({
+        id: w.id,
+        type: "withdraw" as const,
+        amount: Number(w.amount),
+        date: w.created_at,
+        status: w.status === "completed" ? "success" : w.status === "failed" ? "failed" : "pending",
+      }));
+
+      // Get local claims (these are stored in localStorage)
+      const savedClaims = localStorage.getItem(LOCAL_CLAIMS_KEY);
+      const localClaims: Transaction[] = savedClaims ? JSON.parse(savedClaims) : [];
+      
+      // Filter to only claims (type = "claim")
+      const claimTxns = localClaims.filter((t) => t.type === "claim");
+
+      // Combine and sort by date
+      const allTransactions = [...withdrawalTxns, ...claimTxns].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      setTransactions(allTransactions);
+    } catch (error) {
+      console.error("Error in fetchTransactions:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    if (!authLoading && user) {
+      fetchTransactions();
+    } else if (!authLoading && !user) {
+      setIsLoading(false);
+    }
+  }, [user, authLoading]);
+
+  // Real-time subscription for withdrawals
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("history-withdrawals")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "withdrawals",
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Refetch on any change
+          fetchTransactions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -86,7 +156,7 @@ export const History = () => {
     if (type === "withdraw") {
       switch (status) {
         case "success":
-          return "Deducted";
+          return "Completed";
         case "pending":
           return "Deducted";
         case "failed":
@@ -140,7 +210,7 @@ export const History = () => {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">Last 30 days</p>
+              <p className="text-xs text-muted-foreground">Real-time sync</p>
               <p className="text-xs text-teal">All records secured</p>
             </div>
           </div>

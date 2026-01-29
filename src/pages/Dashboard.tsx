@@ -59,12 +59,13 @@ export const Dashboard = () => {
   } = usePaymentState(user?.id);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
-  // Initialize balance from profile immediately to avoid 0 flash
-  const [balance, setBalance] = useState<number | null>(null);
+  // Balance is derived from profile - null means "loading/unknown"
+  const [localBalance, setLocalBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   
-  // Derive display balance - use profile balance directly until local state is set
-  const displayBalance = balance !== null ? balance : (profile?.balance ?? 0);
+  // Display balance: prioritize local state (after updates), then profile, show skeleton if both null
+  const displayBalance = localBalance !== null ? localBalance : (profile?.balance ?? null);
+  const isBalanceLoading = displayBalance === null;
   const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
 
@@ -87,15 +88,15 @@ export const Dashboard = () => {
     }
   }, [paymentLoading, needsStatusAcknowledgement, navigate]);
 
-  // Sync balance from profile - only update local state when profile changes
+  // Sync balance from profile - update local state when profile changes
   useEffect(() => {
     if (profile?.balance !== undefined && profile?.balance !== null) {
       const numBalance = Number(profile.balance);
-      if (!isNaN(numBalance) && numBalance >= 0 && numBalance !== balance) {
-        setBalance(numBalance);
+      if (!isNaN(numBalance) && numBalance >= 0) {
+        setLocalBalance(numBalance);
       }
     }
-  }, [profile?.balance, balance]);
+  }, [profile?.balance]);
 
   // Real-time balance subscription for instant updates (new users, admin credits, etc.)
   useEffect(() => {
@@ -115,7 +116,7 @@ export const Dashboard = () => {
           const newBalance = Number(payload.new.balance);
           // Only update if valid number and greater than or equal to 0
           if (!isNaN(newBalance) && newBalance >= 0) {
-            setBalance(newBalance);
+            setLocalBalance(newBalance);
           }
         }
       )
@@ -165,7 +166,7 @@ export const Dashboard = () => {
     if (!canClaim || isClaiming || !profile?.user_id) return;
     
     setIsClaiming(true);
-    const currentBalance = balance !== null ? balance : (profile?.balance ?? 0);
+    const currentBalance = localBalance !== null ? localBalance : (profile?.balance ?? 0);
     
     try {
       // Update balance directly in profiles table
@@ -187,7 +188,7 @@ export const Dashboard = () => {
       
       // SUCCESS - Now update UI
       const newBalance = currentBalance + 10000;
-      setBalance(newBalance);
+      setLocalBalance(newBalance);
       addTransaction("claim", 10000);
       startCooldown();
       
@@ -252,9 +253,14 @@ export const Dashboard = () => {
       </header>
 
       <main className="relative z-0 px-4 space-y-4">
-        {/* Compact Virtual Bank Card */}
+        {/* Compact Virtual Bank Card - show skeleton if balance loading */}
         <div className="animate-fade-in-up">
-          <VirtualBankCard balance={displayBalance} cardNumber="4829" className="min-h-[110px]" />
+          <VirtualBankCard 
+            balance={isBalanceLoading ? 0 : displayBalance} 
+            cardNumber="4829" 
+            className="min-h-[110px]"
+            isLoading={isBalanceLoading}
+          />
         </div>
 
         {/* Primary Action Buttons - More Compact */}

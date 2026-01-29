@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
+// LocalStorage key for caching profile
+const PROFILE_CACHE_KEY = "zenfi_profile_cache";
+
 interface Profile {
   id: string;
   user_id: string;
@@ -23,13 +26,42 @@ interface AuthState {
   isBanned: boolean;
 }
 
+// Load cached profile from localStorage for instant display
+const loadCachedProfile = (): Profile | null => {
+  try {
+    const cached = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.error("Failed to load cached profile:", e);
+  }
+  return null;
+};
+
+// Save profile to localStorage for persistence
+const cacheProfile = (profile: Profile | null) => {
+  try {
+    if (profile) {
+      localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(PROFILE_CACHE_KEY);
+    }
+  } catch (e) {
+    console.error("Failed to cache profile:", e);
+  }
+};
+
 export const useAuth = () => {
+  // Initialize with cached profile for instant display (no 0 flash)
+  const cachedProfile = loadCachedProfile();
+  
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
     session: null,
-    profile: null,
+    profile: cachedProfile,
     isLoading: true,
-    isBanned: false,
+    isBanned: cachedProfile?.status === "banned" || false,
   });
 
   // Guard against racing auth events
@@ -47,6 +79,9 @@ export const useAuth = () => {
 
       const typedProfile = profile as Profile | null;
       const isBanned = typedProfile?.status === "banned";
+
+      // Cache the profile for instant loading next time
+      cacheProfile(typedProfile);
 
       setAuthState({
         user,
@@ -76,6 +111,8 @@ export const useAuth = () => {
       if (session?.user) {
         await loadUserData(session.user, session);
       } else {
+        // Clear cached profile on logout
+        cacheProfile(null);
         setAuthState({
           user: null,
           session: null,
@@ -104,6 +141,8 @@ export const useAuth = () => {
           },
           (payload) => {
             const updatedProfile = payload.new as Profile;
+            // Update cache with realtime data
+            cacheProfile(updatedProfile);
             setAuthState((prev) => ({
               ...prev,
               profile: updatedProfile,
@@ -174,10 +213,13 @@ export const useAuth = () => {
       .maybeSingle();
 
     if (data) {
+      const typedProfile = data as Profile;
+      // Update cache
+      cacheProfile(typedProfile);
       setAuthState((prev) => ({
         ...prev,
-        profile: data as Profile,
-        isBanned: data.status === "banned",
+        profile: typedProfile,
+        isBanned: typedProfile.status === "banned",
       }));
     }
   };

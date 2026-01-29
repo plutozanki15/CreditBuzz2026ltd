@@ -8,6 +8,7 @@ interface VirtualBankCardProps {
   className?: string;
   userId?: string;
   referralCount?: number;
+  isLoading?: boolean;
 }
 
 export const VirtualBankCard = ({
@@ -16,6 +17,7 @@ export const VirtualBankCard = ({
   className,
   userId = "ZF-7829401",
   referralCount = 3,
+  isLoading = false,
 }: VirtualBankCardProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [displayBalance, setDisplayBalance] = useState(balance);
@@ -122,22 +124,27 @@ export const VirtualBankCard = ({
           Available Balance
         </p>
         <div className="flex items-center gap-2">
-          <h2 
-            className={cn(
-              "text-2xl font-bold text-foreground transition-all duration-300",
-              isGlowing && "scale-[1.02]"
-            )}
-            style={{
-              textShadow: isGlowing 
-                ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
-                : "0 0 30px hsla(262, 76%, 57%, 0.3)",
-            }}
-          >
-            {isHidden ? "••••••••" : formatBalance(displayBalance)}
-          </h2>
+          {isLoading ? (
+            <div className="h-8 w-32 bg-muted/50 rounded-lg animate-pulse" />
+          ) : (
+            <h2 
+              className={cn(
+                "text-2xl font-bold text-foreground transition-all duration-300",
+                isGlowing && "scale-[1.02]"
+              )}
+              style={{
+                textShadow: isGlowing 
+                  ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
+                  : "0 0 30px hsla(262, 76%, 57%, 0.3)",
+              }}
+            >
+              {isHidden ? "••••••••" : formatBalance(displayBalance)}
+            </h2>
+          )}
           <button
             onClick={() => setIsHidden(!isHidden)}
             className="p-1.5 rounded-lg bg-secondary/50 hover:bg-secondary active:scale-90 transition-all duration-200"
+            disabled={isLoading}
           >
             {isHidden ? (
               <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />

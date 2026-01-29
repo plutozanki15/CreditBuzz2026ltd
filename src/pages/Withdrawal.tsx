@@ -26,9 +26,20 @@ const nigerianBanks = [
   "United Bank for Africa", "Unity Bank", "VFD Microfinance Bank", "Wema Bank", "Zenith Bank"
 ].sort();
 
+// Cache key for last known balance
+const BALANCE_CACHE_KEY = "zenfi_withdrawal_balance";
+
 export const Withdrawal = () => {
   const navigate = useNavigate();
-  const [availableBalance, setAvailableBalance] = useState(0);
+  // Load cached balance for instant display
+  const cachedBalance = (() => {
+    try {
+      const val = localStorage.getItem(BALANCE_CACHE_KEY);
+      return val ? Number(val) : null;
+    } catch { return null; }
+  })();
+  
+  const [availableBalance, setAvailableBalance] = useState<number | null>(cachedBalance);
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,33 +68,54 @@ export const Withdrawal = () => {
         .single();
 
       if (profile) {
-        setAvailableBalance(Number(profile.balance));
+        const bal = Number(profile.balance);
+        setAvailableBalance(bal);
+        // Cache for next time
+        localStorage.setItem(BALANCE_CACHE_KEY, String(bal));
       }
       setIsLoading(false);
     };
 
     fetchBalance();
 
-    // Subscribe to realtime balance updates
-    const channel = supabase
-      .channel("withdrawal-balance")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles" },
-        (payload) => {
-          if (payload.new && typeof payload.new.balance === "number") {
-            setAvailableBalance(Number(payload.new.balance));
+    // Subscribe to realtime balance updates with user filter
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      return supabase
+        .channel("withdrawal-balance")
+        .on(
+          "postgres_changes",
+          { 
+            event: "UPDATE", 
+            schema: "public", 
+            table: "profiles",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (payload.new && payload.new.balance !== undefined) {
+              const newBal = Number(payload.new.balance);
+              setAvailableBalance(newBal);
+              localStorage.setItem(BALANCE_CACHE_KEY, String(newBal));
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    };
+
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    setupRealtimeSubscription().then((ch) => { channel = ch; });
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [navigate]);
 
-  const formatBalance = (value: number) => {
+  const formatBalance = (value: number | null) => {
+    if (value === null) return "Loading...";
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
@@ -91,6 +123,8 @@ export const Withdrawal = () => {
       maximumFractionDigits: 0,
     }).format(value);
   };
+
+  const displayBalance = availableBalance ?? 0;
 
   const addTransaction = (type: "claim" | "withdraw", amount: number, status: "success" | "pending" | "failed" = "pending") => {
     const transaction = {
@@ -143,6 +177,15 @@ export const Withdrawal = () => {
     }
 
     // Validate balance
+    if (availableBalance === null) {
+      toast({
+        title: "Please Wait",
+        description: "Balance is still loading. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (amount > availableBalance) {
       toast({
         title: "Insufficient Balance",
@@ -165,7 +208,7 @@ export const Withdrawal = () => {
 
     try {
       // 1. Deduct balance from user's profile
-      const newBalance = availableBalance - amount;
+      const newBalance = displayBalance - amount;
       const { error: balanceError } = await supabase
         .from("profiles")
         .update({ balance: newBalance })
@@ -252,7 +295,11 @@ export const Withdrawal = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Available Balance</p>
-                <p className="text-2xl font-display font-bold text-foreground">{formatBalance(availableBalance)}</p>
+                {availableBalance === null ? (
+                  <div className="h-8 w-28 bg-muted/50 rounded-lg animate-pulse" />
+                ) : (
+                  <p className="text-2xl font-display font-bold text-foreground">{formatBalance(availableBalance)}</p>
+                )}
               </div>
               <div
                 className="p-3 rounded-xl"
