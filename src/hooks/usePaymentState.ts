@@ -32,6 +32,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
   const [statusChanged, setStatusChanged] = useState<"approved" | "rejected" | null>(null);
   const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(false);
   const previousStatusRef = useRef<string | null>(null);
+  const hasInitiallyLoadedRef = useRef(false);
 
   const clearStatusChange = useCallback(() => {
     setStatusChanged(null);
@@ -42,10 +43,15 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     }
   }, [latestPayment]);
 
-  const fetchPaymentState = useCallback(async () => {
+  const fetchPaymentState = useCallback(async (isInitialLoad = false) => {
     if (!userId) {
       setIsLoading(false);
       return;
+    }
+
+    // Only show loading on initial load, never on refetches
+    if (isInitialLoad && !hasInitiallyLoadedRef.current) {
+      setIsLoading(true);
     }
 
     try {
@@ -60,7 +66,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
 
       if (error) {
         console.error("Error fetching payment state:", error);
-        setIsLoading(false);
+        if (isInitialLoad) setIsLoading(false);
         return;
       }
 
@@ -85,29 +91,33 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     } catch (error) {
       console.error("Error in fetchPaymentState:", error);
     } finally {
-      setIsLoading(false);
+      if (isInitialLoad) {
+        hasInitiallyLoadedRef.current = true;
+        setIsLoading(false);
+      }
     }
   }, [userId]);
 
-  // Initial fetch
+  // Initial fetch - only this one shows loading
   useEffect(() => {
-    fetchPaymentState();
+    hasInitiallyLoadedRef.current = false;
+    fetchPaymentState(true);
   }, [fetchPaymentState]);
 
-  // Refetch on app resume (visibility change) to catch status changes while minimized - INSTANT
+  // Refetch on app resume (visibility change) to catch status changes while minimized - INSTANT, NO LOADING
   useEffect(() => {
     if (!userId) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        // Immediately fetch without any delay
-        fetchPaymentState();
+        // Immediately fetch without any delay or loading state
+        fetchPaymentState(false);
       }
     };
 
     const handleFocus = () => {
-      // Immediately fetch without any delay
-      fetchPaymentState();
+      // Immediately fetch without any delay or loading state
+      fetchPaymentState(false);
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -171,7 +181,7 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
     hasPendingPayment,
     latestPayment,
     isLoading,
-    refetch: fetchPaymentState,
+    refetch: () => fetchPaymentState(false),
     statusChanged,
     clearStatusChange,
     needsStatusAcknowledgement,
