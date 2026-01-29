@@ -210,32 +210,33 @@ export const PaymentPendingView = () => {
       >
         <button
           onClick={() => navigate("/dashboard")}
-          className="group relative flex items-center justify-center gap-3 px-8 py-3.5 rounded-xl font-semibold text-sm uppercase tracking-wider transition-all duration-300 overflow-hidden"
+          className="group relative flex items-center justify-center gap-3 px-10 py-4 rounded-xl font-bold text-base uppercase tracking-wider transition-all duration-300 overflow-hidden"
           style={{
-            background: "linear-gradient(135deg, hsla(var(--secondary), 0.8), hsla(var(--secondary), 0.4))",
-            border: "1.5px solid hsla(var(--gold), 0.3)",
-            boxShadow: "0 4px 20px hsla(0, 0%, 0%, 0.3), inset 0 1px 0 hsla(255, 255%, 255%, 0.05)",
+            background: "linear-gradient(135deg, hsl(var(--gold)) 0%, hsl(45, 90%, 45%) 50%, hsl(var(--gold)) 100%)",
+            border: "2px solid hsla(var(--gold), 0.8)",
+            boxShadow: "0 6px 30px hsla(var(--gold), 0.4), 0 2px 10px hsla(var(--gold), 0.3), inset 0 1px 0 hsla(0, 0%, 100%, 0.2)",
           }}
         >
-          {/* Hover glow effect */}
+          {/* Shine effect */}
           <span 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-300"
             style={{
-              background: "linear-gradient(135deg, hsla(var(--gold), 0.1), hsla(var(--violet), 0.1))",
+              background: "linear-gradient(110deg, transparent 25%, hsla(0, 0%, 100%, 0.4) 50%, transparent 75%)",
+              backgroundSize: "200% 100%",
             }}
           />
           
           {/* Arrow with animation */}
           <motion.span
             className="relative z-10"
-            whileHover={{ x: -3 }}
+            whileHover={{ x: -4 }}
             transition={{ type: "spring", stiffness: 400 }}
           >
-            <ArrowLeft className="w-5 h-5 text-gold" strokeWidth={2.5} />
+            <ArrowLeft className="w-5 h-5 text-background" strokeWidth={3} />
           </motion.span>
           
           {/* Text */}
-          <span className="relative z-10 text-foreground group-hover:text-gold transition-colors duration-300">
+          <span className="relative z-10 text-background font-bold drop-shadow-sm">
             Back to Dashboard
           </span>
         </button>

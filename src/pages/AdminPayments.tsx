@@ -46,6 +46,7 @@ export const AdminPayments = () => {
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // Auth check effect
   useEffect(() => {
     if (!authLoading && !roleLoading) {
       if (!user) {
@@ -62,50 +63,60 @@ export const AdminPayments = () => {
         return;
       }
       fetchPayments();
-
-      // Real-time subscription for new payments and updates
-      const channel = supabase
-        .channel("admin-payments-realtime")
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "payments",
-          },
-          (payload) => {
-            // New payment submitted - add to list instantly
-            console.log("New payment received:", payload.new);
-            setPayments((prev) => [payload.new as Payment, ...prev]);
-            toast({
-              title: "New Payment",
-              description: `New payment from ${(payload.new as Payment).full_name}`,
-            });
-          }
-        )
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "payments",
-          },
-          (payload) => {
-            // Payment updated (receipt uploaded, status changed)
-            setPayments((prev) =>
-              prev.map((p) =>
-                p.id === payload.new.id ? { ...p, ...payload.new } as Payment : p
-              )
-            );
-          }
-        )
-        .subscribe();
-
-      return () => {
-        channel.unsubscribe();
-      };
     }
   }, [user, isAdmin, authLoading, roleLoading, navigate]);
+
+  // Real-time subscription - separate effect for stability
+  useEffect(() => {
+    if (!isAdmin || authLoading || roleLoading) return;
+
+    const channelName = `admin-payments-realtime-${Date.now()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "payments",
+        },
+        (payload) => {
+          console.log("New payment received:", payload.new);
+          setPayments((prev) => {
+            // Prevent duplicates
+            if (prev.some((p) => p.id === payload.new.id)) return prev;
+            return [payload.new as Payment, ...prev];
+          });
+          toast({
+            title: "New Payment",
+            description: `New payment from ${(payload.new as Payment).full_name}`,
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "payments",
+        },
+        (payload) => {
+          console.log("Payment updated:", payload.new);
+          setPayments((prev) =>
+            prev.map((p) =>
+              p.id === payload.new.id ? { ...p, ...(payload.new as Payment) } : p
+            )
+          );
+        }
+      )
+      .subscribe((status) => {
+        console.log("Admin payments channel status:", status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin, authLoading, roleLoading]);
 
   const fetchPayments = async () => {
     const { data, error } = await supabase
