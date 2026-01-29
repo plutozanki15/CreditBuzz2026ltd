@@ -69,11 +69,11 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
         setLatestPayment(payment);
         setHasPendingPayment(payment.status === "pending");
         
-        // Check if this payment needs acknowledgement (approved/rejected but not archived and not acknowledged)
+        // Check if this payment needs acknowledgement (approved/rejected and not yet acknowledged)
         const acknowledgedId = localStorage.getItem(ACKNOWLEDGED_KEY);
         const isAcknowledged = acknowledgedId === payment.id;
         
-        if ((payment.status === "approved" || payment.status === "rejected") && !payment.archived && !isAcknowledged) {
+        if ((payment.status === "approved" || payment.status === "rejected") && !isAcknowledged) {
           setNeedsStatusAcknowledgement(true);
         }
         
