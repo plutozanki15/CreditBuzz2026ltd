@@ -1,7 +1,11 @@
 import { motion } from "framer-motion";
-import { Clock, Shield, Loader2, Zap, Lock, CheckCircle2 } from "lucide-react";
+import { Clock, Shield, Loader2, Zap, Lock, CheckCircle2, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 export const PaymentPendingView = () => {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -195,6 +199,23 @@ export const PaymentPendingView = () => {
         <span className="text-[10px] uppercase tracking-widest font-medium">
           Bank-Grade Security • 256-bit SSL
         </span>
+      </motion.div>
+
+      {/* Back to Dashboard Button */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+        className="mt-8"
+      >
+        <Button
+          variant="outline"
+          onClick={() => navigate("/dashboard")}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-border/50 hover:bg-secondary/50 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </Button>
       </motion.div>
     </motion.div>
   );
