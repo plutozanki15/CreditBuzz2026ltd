@@ -22,58 +22,16 @@ interface PaymentState {
   needsStatusAcknowledgement: boolean;
 }
 
-// Keys for localStorage
+// Key for tracking acknowledged payments
 const ACKNOWLEDGED_KEY = "zenfi_acknowledged_payment";
-const PAYMENT_CACHE_KEY = "zenfi_payment_cache";
-
-// Cache payment to localStorage for instant loading
-const cachePayment = (payment: Payment | null, userId: string) => {
-  try {
-    if (payment) {
-      localStorage.setItem(PAYMENT_CACHE_KEY, JSON.stringify({ payment, userId }));
-    } else {
-      localStorage.removeItem(PAYMENT_CACHE_KEY);
-    }
-  } catch (e) {
-    console.error("Failed to cache payment:", e);
-  }
-};
-
-// Load cached payment from localStorage
-const loadCachedPayment = (userId: string): Payment | null => {
-  try {
-    const cached = localStorage.getItem(PAYMENT_CACHE_KEY);
-    if (cached) {
-      const { payment, userId: cachedUserId } = JSON.parse(cached);
-      // Only use cache if it's for the same user
-      if (cachedUserId === userId) {
-        return payment;
-      }
-    }
-  } catch (e) {
-    console.error("Failed to load cached payment:", e);
-  }
-  return null;
-};
 
 export const usePaymentState = (userId: string | undefined): PaymentState => {
-  // Initialize from cache for instant display
-  const cachedPayment = userId ? loadCachedPayment(userId) : null;
-  
-  // Check if cached payment needs acknowledgement
-  const cachedNeedsAck = (() => {
-    if (!cachedPayment) return false;
-    const acknowledgedId = localStorage.getItem(ACKNOWLEDGED_KEY);
-    const isAcknowledged = acknowledgedId === cachedPayment.id;
-    return (cachedPayment.status === "approved" || cachedPayment.status === "rejected") && !isAcknowledged;
-  })();
-  
-  const [hasPendingPayment, setHasPendingPayment] = useState(cachedPayment?.status === "pending" || false);
-  const [latestPayment, setLatestPayment] = useState<Payment | null>(cachedPayment);
-  const [isLoading, setIsLoading] = useState(!cachedPayment); // No loading if we have cache
+  const [hasPendingPayment, setHasPendingPayment] = useState(false);
+  const [latestPayment, setLatestPayment] = useState<Payment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [statusChanged, setStatusChanged] = useState<"approved" | "rejected" | null>(null);
-  const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(cachedNeedsAck);
-  const previousStatusRef = useRef<string | null>(cachedPayment?.status || null);
+  const [needsStatusAcknowledgement, setNeedsStatusAcknowledgement] = useState(false);
+  const previousStatusRef = useRef<string | null>(null);
   const hasInitiallyLoadedRef = useRef(false);
 
   const clearStatusChange = useCallback(() => {
@@ -91,8 +49,8 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
       return;
     }
 
-    // Only show loading on initial load AND if we have no cached payment
-    if (isInitialLoad && !hasInitiallyLoadedRef.current && !latestPayment) {
+    // Only show loading on initial load, never on refetches
+    if (isInitialLoad && !hasInitiallyLoadedRef.current) {
       setIsLoading(true);
     }
 
@@ -114,10 +72,6 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
 
       if (data) {
         const payment = data as Payment;
-        
-        // Cache the payment for instant loading on next app open
-        cachePayment(payment, userId);
-        
         setLatestPayment(payment);
         setHasPendingPayment(payment.status === "pending");
         
@@ -131,7 +85,6 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
         
         previousStatusRef.current = payment.status;
       } else {
-        cachePayment(null, userId);
         setLatestPayment(null);
         setHasPendingPayment(false);
       }
@@ -143,9 +96,9 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
         setIsLoading(false);
       }
     }
-  }, [userId, latestPayment]);
+  }, [userId]);
 
-  // Initial fetch - only this one shows loading (and only if no cache)
+  // Initial fetch - only this one shows loading
   useEffect(() => {
     hasInitiallyLoadedRef.current = false;
     fetchPaymentState(true);
@@ -193,16 +146,12 @@ export const usePaymentState = (userId: string | undefined): PaymentState => {
         (payload) => {
           if (payload.eventType === "INSERT") {
             const newPayment = payload.new as Payment;
-            cachePayment(newPayment, userId);
             setLatestPayment(newPayment);
             setHasPendingPayment(newPayment.status === "pending");
             previousStatusRef.current = newPayment.status;
           } else if (payload.eventType === "UPDATE") {
             const updatedPayment = payload.new as Payment;
             const previousStatus = previousStatusRef.current;
-            
-            // Cache the updated payment
-            cachePayment(updatedPayment, userId);
             
             // Detect status change from pending to approved/rejected
             if (previousStatus === "pending") {
