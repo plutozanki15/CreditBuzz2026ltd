@@ -85,10 +85,41 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
     setIsSubmitting(true);
 
     try {
-      // 1. Create payment record first (fast)
-      const { data: paymentData, error: paymentError } = await supabase
+      // Generate an ID client-side so we can navigate instantly.
+      const generateUuidV4 = () => {
+        const c = crypto as Crypto;
+        const bytes = new Uint8Array(16);
+        c.getRandomValues(bytes);
+        // RFC4122 v4
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+      };
+
+      const paymentId =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function"
+            ? generateUuidV4()
+            : null;
+
+      if (!paymentId) {
+        throw new Error("Unsupported browser. Please update your browser and try again.");
+      }
+
+      // 1. Navigate IMMEDIATELY (no waiting on network)
+      onPaymentConfirmed(paymentId);
+
+      // 2. Create payment record + upload receipt in background
+      const fileToUpload = tempReceiptFile;
+      const fileExt = fileToUpload.name.split(".").pop();
+      const fileName = `${userId}/${paymentId}.${fileExt}`;
+
+      supabase
         .from("payments")
         .insert({
+          id: paymentId,
           user_id: userId,
           full_name: formData.fullName,
           phone: formData.phone,
@@ -96,42 +127,44 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
           amount: 5700,
           status: "pending",
         })
-        .select("id")
-        .single();
-
-      if (paymentError) throw paymentError;
-
-      const paymentId = paymentData.id;
-
-      // 2. Navigate IMMEDIATELY - don't wait for upload
-      onPaymentConfirmed(paymentId);
-
-      // 3. Upload receipt in background (fire-and-forget)
-      const fileToUpload = tempReceiptFile;
-      const fileExt = fileToUpload.name.split(".").pop();
-      const fileName = `${userId}/${paymentId}.${fileExt}`;
-
-      supabase.storage
-        .from("receipts")
-        .upload(fileName, fileToUpload, { upsert: true })
-        .then(({ error: uploadError }) => {
-          if (uploadError) {
-            console.error("Background receipt upload failed:", uploadError);
+        .then(({ error: insertError }) => {
+          if (insertError) {
+            console.error("Background payment insert failed:", insertError);
+            toast({
+              title: "Submission failed",
+              description: insertError.message || "Failed to submit payment",
+              variant: "destructive",
+            });
             return;
           }
-          // Update payment with receipt URL
-          const { data: urlData } = supabase.storage
-            .from("receipts")
-            .getPublicUrl(fileName);
 
-          supabase
-            .from("payments")
-            .update({ receipt_url: urlData.publicUrl })
-            .eq("id", paymentId)
-            .then(({ error: updateError }) => {
-              if (updateError) {
-                console.error("Background receipt URL update failed:", updateError);
+          return supabase.storage
+            .from("receipts")
+            .upload(fileName, fileToUpload, { upsert: true })
+            .then(({ error: uploadError }) => {
+              if (uploadError) {
+                console.error("Background receipt upload failed:", uploadError);
+                toast({
+                  title: "Receipt upload failed",
+                  description: uploadError.message || "Failed to upload receipt",
+                  variant: "destructive",
+                });
+                return;
               }
+
+              const { data: urlData } = supabase.storage
+                .from("receipts")
+                .getPublicUrl(fileName);
+
+              return supabase
+                .from("payments")
+                .update({ receipt_url: urlData.publicUrl })
+                .eq("id", paymentId)
+                .then(({ error: updateError }) => {
+                  if (updateError) {
+                    console.error("Background receipt URL update failed:", updateError);
+                  }
+                });
             });
         });
 

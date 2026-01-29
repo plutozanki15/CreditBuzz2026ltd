@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Receipt } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
@@ -11,8 +11,39 @@ import { PaymentRejectedView } from "@/components/payment/PaymentRejectedView";
 
 export const PaymentStatus = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
-  const { latestPayment, isLoading: paymentLoading, clearStatusChange } = usePaymentState(user?.id);
+  const { latestPayment, isLoading: paymentLoading, clearStatusChange, refetch } = usePaymentState(user?.id);
+
+  const submittedPaymentId = (location.state as any)?.paymentId as string | undefined;
+  const [submitWaitExpired, setSubmitWaitExpired] = useState(false);
+
+  // If we just came from submitting, aggressively refetch a few times so the status page
+  // picks up the new payment as soon as it exists.
+  useEffect(() => {
+    if (!submittedPaymentId || !user) return;
+
+    const timers = [0, 600, 1200, 2000].map((delay) =>
+      window.setTimeout(() => {
+        refetch();
+      }, delay)
+    );
+
+    return () => {
+      timers.forEach((t) => window.clearTimeout(t));
+    };
+  }, [submittedPaymentId, user, refetch]);
+
+  // Don't show "No payments"/spinner immediately after submit; give it a short window.
+  useEffect(() => {
+    if (!submittedPaymentId) {
+      setSubmitWaitExpired(false);
+      return;
+    }
+    setSubmitWaitExpired(false);
+    const t = window.setTimeout(() => setSubmitWaitExpired(true), 8000);
+    return () => window.clearTimeout(t);
+  }, [submittedPaymentId]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,7 +68,12 @@ export const PaymentStatus = () => {
 
   // Only show loading if we're still loading auth OR if we have no payment data yet on initial load
   // Don't show loading spinner when switching between statuses to avoid the "bug page" flash
-  if ((authLoading && !user) || (paymentLoading && !latestPayment)) {
+  const isAwaitingSubmission =
+    !!submittedPaymentId &&
+    !submitWaitExpired &&
+    latestPayment?.id !== submittedPaymentId;
+
+  if (((authLoading && !user) || (paymentLoading && !latestPayment)) && !isAwaitingSubmission) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
@@ -46,6 +82,10 @@ export const PaymentStatus = () => {
   }
 
   const getStatusView = () => {
+    if (isAwaitingSubmission) {
+      return <PaymentPendingView />;
+    }
+
     if (!latestPayment) {
       return (
         <div className="flex flex-col items-center justify-center py-16 text-center px-5">
