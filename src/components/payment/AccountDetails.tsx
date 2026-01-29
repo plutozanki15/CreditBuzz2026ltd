@@ -85,7 +85,7 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
     setIsSubmitting(true);
 
     try {
-      // 1. Create payment record first
+      // 1. Create payment record first (fast)
       const { data: paymentData, error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -103,31 +103,37 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
 
       const paymentId = paymentData.id;
 
-      // 2. Upload receipt to storage
-      setIsUploading(true);
-      const fileExt = tempReceiptFile.name.split(".").pop();
+      // 2. Navigate IMMEDIATELY - don't wait for upload
+      onPaymentConfirmed(paymentId);
+
+      // 3. Upload receipt in background (fire-and-forget)
+      const fileToUpload = tempReceiptFile;
+      const fileExt = fileToUpload.name.split(".").pop();
       const fileName = `${userId}/${paymentId}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      supabase.storage
         .from("receipts")
-        .upload(fileName, tempReceiptFile, { upsert: true });
+        .upload(fileName, fileToUpload, { upsert: true })
+        .then(({ error: uploadError }) => {
+          if (uploadError) {
+            console.error("Background receipt upload failed:", uploadError);
+            return;
+          }
+          // Update payment with receipt URL
+          const { data: urlData } = supabase.storage
+            .from("receipts")
+            .getPublicUrl(fileName);
 
-      if (uploadError) throw uploadError;
-
-      // 3. Get public URL and update payment record
-      const { data: urlData } = supabase.storage
-        .from("receipts")
-        .getPublicUrl(fileName);
-
-      const { error: updateError } = await supabase
-        .from("payments")
-        .update({ receipt_url: urlData.publicUrl })
-        .eq("id", paymentId);
-
-      if (updateError) throw updateError;
-
-      // 4. Navigate to pending page - admin can now see this payment
-      onPaymentConfirmed(paymentId);
+          supabase
+            .from("payments")
+            .update({ receipt_url: urlData.publicUrl })
+            .eq("id", paymentId)
+            .then(({ error: updateError }) => {
+              if (updateError) {
+                console.error("Background receipt URL update failed:", updateError);
+              }
+            });
+        });
 
     } catch (error: any) {
       console.error("Payment submission error:", error);
@@ -136,8 +142,6 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
         description: error.message || "Failed to submit payment",
         variant: "destructive",
       });
-    } finally {
-      setIsUploading(false);
       setIsSubmitting(false);
     }
   };
