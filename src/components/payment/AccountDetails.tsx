@@ -80,9 +80,13 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
   };
 
   const handleConfirmPayment = async () => {
-    if (!tempReceiptFile) return;
+    if (!tempReceiptFile || isSubmitting) return;
 
     setIsSubmitting(true);
+
+    // Store file reference before any async operations
+    const fileToUpload = tempReceiptFile;
+    const fileExt = fileToUpload.name.split(".").pop();
 
     try {
       // 1. Create payment record first (fast)
@@ -102,21 +106,22 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
       if (paymentError) throw paymentError;
 
       const paymentId = paymentData.id;
-
-      // 2. Navigate IMMEDIATELY - don't wait for upload
-      onPaymentConfirmed(paymentId);
-
-      // 3. Upload receipt in background (fire-and-forget)
-      const fileToUpload = tempReceiptFile;
-      const fileExt = fileToUpload.name.split(".").pop();
       const fileName = `${userId}/${paymentId}.${fileExt}`;
 
+      // 2. Store paymentId locally for recovery
+      localStorage.setItem("zenfi_pending_upload_payment", paymentId);
+
+      // 3. Navigate IMMEDIATELY - don't wait for upload
+      onPaymentConfirmed(paymentId);
+
+      // 4. Upload receipt in background (fire-and-forget) - no await
       supabase.storage
         .from("receipts")
         .upload(fileName, fileToUpload, { upsert: true })
         .then(({ error: uploadError }) => {
           if (uploadError) {
             console.error("Background receipt upload failed:", uploadError);
+            localStorage.removeItem("zenfi_pending_upload_payment");
             return;
           }
           // Update payment with receipt URL
@@ -128,10 +133,8 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
             .from("payments")
             .update({ receipt_url: urlData.publicUrl })
             .eq("id", paymentId)
-            .then(({ error: updateError }) => {
-              if (updateError) {
-                console.error("Background receipt URL update failed:", updateError);
-              }
+            .then(() => {
+              localStorage.removeItem("zenfi_pending_upload_payment");
             });
         });
 
