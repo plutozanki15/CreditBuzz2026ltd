@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
+import { WithdrawalSuccess } from "@/components/withdrawal/WithdrawalSuccess";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -29,6 +30,16 @@ const nigerianBanks = [
 // Cache key for last known balance
 const BALANCE_CACHE_KEY = "zenfi_withdrawal_balance";
 
+// Type for successful withdrawal data
+interface WithdrawalData {
+  amount: number;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  referenceId: string;
+  createdAt: string;
+}
+
 export const Withdrawal = () => {
   const navigate = useNavigate();
   // Load cached balance for instant display
@@ -43,6 +54,8 @@ export const Withdrawal = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // New state for success view
+  const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalData | null>(null);
   const [formData, setFormData] = useState({
     accountNumber: "",
     accountName: "",
@@ -216,8 +229,8 @@ export const Withdrawal = () => {
 
       if (balanceError) throw balanceError;
 
-      // 2. Create withdrawal record
-      const { error: withdrawalError } = await supabase
+      // 2. Create withdrawal record and get the reference ID
+      const { data: withdrawalRecord, error: withdrawalError } = await supabase
         .from("withdrawals")
         .insert({
           user_id: userId,
@@ -226,7 +239,9 @@ export const Withdrawal = () => {
           account_name: formData.accountName,
           bank_name: formData.bank,
           status: "processing",
-        });
+        })
+        .select("id, created_at")
+        .single();
 
       if (withdrawalError) throw withdrawalError;
 
@@ -234,18 +249,17 @@ export const Withdrawal = () => {
       setAvailableBalance(newBalance);
 
       // 4. Add to transaction history
-      addTransaction("withdraw", amount, "pending");
+      addTransaction("withdraw", amount, "success");
 
-      // 5. Show success notification
-      toast({
-        title: "🔔 Withdrawal Initiated",
-        description: `Your withdrawal of ${formatBalance(amount)} has been deducted from your dashboard balance.`,
+      // 5. Switch to success state with receipt data (NO toast yet)
+      setWithdrawalSuccess({
+        amount,
+        bankName: formData.bank,
+        accountNumber: formData.accountNumber,
+        accountName: formData.accountName,
+        referenceId: withdrawalRecord.id,
+        createdAt: withdrawalRecord.created_at,
       });
-
-      // 6. Navigate to dashboard
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
 
     } catch (error: any) {
       console.error("Withdrawal error:", error);
@@ -260,6 +274,20 @@ export const Withdrawal = () => {
   };
 
   const isFormValid = formData.accountNumber && formData.accountName && formData.bank && formData.amount && formData.zfcCode;
+
+  // Show success state if withdrawal completed
+  if (withdrawalSuccess) {
+    return (
+      <WithdrawalSuccess
+        amount={withdrawalSuccess.amount}
+        bankName={withdrawalSuccess.bankName}
+        accountNumber={withdrawalSuccess.accountNumber}
+        accountName={withdrawalSuccess.accountName}
+        referenceId={withdrawalSuccess.referenceId}
+        createdAt={withdrawalSuccess.createdAt}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
