@@ -37,7 +37,7 @@ export const PaymentStatus = () => {
 
   // Only show loading if we're still loading auth OR if we have no payment data yet on initial load
   // Don't show loading spinner when switching between statuses to avoid the "bug page" flash
-  if (authLoading || (paymentLoading && !latestPayment)) {
+  if ((authLoading && !user) || (paymentLoading && !latestPayment)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
