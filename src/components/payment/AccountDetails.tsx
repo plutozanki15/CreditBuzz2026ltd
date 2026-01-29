@@ -1,8 +1,16 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Copy, Check, Upload, Building2, Sparkles, Lock, ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  saveReceiptDraft,
+  loadReceiptDraft,
+  deleteReceiptDraft,
+  saveReceiptForPayment,
+  storedReceiptToFile,
+} from "@/lib/receiptStore";
+import { uploadReceiptForPayment } from "@/lib/receiptUpload";
 
 const AMOUNT = 5700;
 const ZFC_AMOUNT = 180000;
@@ -24,11 +32,25 @@ interface AccountDetailsProps {
 
 export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: AccountDetailsProps) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [tempReceiptFile, setTempReceiptFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submittedRef = useRef(false);
+
+  // Restore draft receipt from IndexedDB on mount (survives app backgrounding)
+  useEffect(() => {
+    let cancelled = false;
+    loadReceiptDraft(userId).then((stored) => {
+      if (cancelled || !stored) return;
+      const file = storedReceiptToFile(stored);
+      setTempReceiptFile(file);
+      setUploadedFile(URL.createObjectURL(file));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const handleCopy = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
@@ -69,7 +91,9 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
       return;
     }
 
-    // Store file for later upload and show preview
+    // Persist file to IndexedDB so it survives app backgrounding
+    await saveReceiptDraft(userId, file);
+
     setTempReceiptFile(file);
     const previewUrl = URL.createObjectURL(file);
     setUploadedFile(previewUrl);
@@ -80,16 +104,17 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
   };
 
   const handleConfirmPayment = async () => {
-    if (!tempReceiptFile || isSubmitting) return;
+    // Prevent double submit
+    if (!tempReceiptFile || isSubmitting || submittedRef.current) return;
 
+    submittedRef.current = true;
     setIsSubmitting(true);
 
-    // Store file reference before any async operations
+    // Capture file reference early
     const fileToUpload = tempReceiptFile;
-    const fileExt = fileToUpload.name.split(".").pop();
 
     try {
-      // 1. Create payment record first (fast)
+      // 1. Create payment record with receipt_status = 'uploading' (DB is source of truth)
       const { data: paymentData, error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -97,47 +122,43 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
           full_name: formData.fullName,
           phone: formData.phone,
           email: formData.email,
-          amount: 5700,
+          amount: AMOUNT,
           status: "pending",
-        })
+          receipt_status: "uploading",
+        } as any)
         .select("id")
         .single();
 
       if (paymentError) throw paymentError;
 
       const paymentId = paymentData.id;
-      const fileName = `${userId}/${paymentId}.${fileExt}`;
 
       // 2. Store paymentId locally for recovery
       localStorage.setItem("zenfi_pending_upload_payment", paymentId);
 
-      // 3. Navigate IMMEDIATELY - don't wait for upload
+      // 3. Persist receipt blob linked to this payment (for resume)
+      await saveReceiptForPayment(paymentId, fileToUpload);
+
+      // 4. Navigate IMMEDIATELY - don't wait for upload
       onPaymentConfirmed(paymentId);
 
-      // 4. Upload receipt in background (fire-and-forget) - no await
-      supabase.storage
-        .from("receipts")
-        .upload(fileName, fileToUpload, { upsert: true })
-        .then(({ error: uploadError }) => {
-          if (uploadError) {
-            console.error("Background receipt upload failed:", uploadError);
-            localStorage.removeItem("zenfi_pending_upload_payment");
-            return;
-          }
-          // Update payment with receipt URL
-          const { data: urlData } = supabase.storage
-            .from("receipts")
-            .getPublicUrl(fileName);
-
-          supabase
-            .from("payments")
-            .update({ receipt_url: urlData.publicUrl })
-            .eq("id", paymentId)
-            .then(() => {
-              localStorage.removeItem("zenfi_pending_upload_payment");
-            });
+      // 5. Upload receipt in background with 30s timeout
+      uploadReceiptForPayment({
+        userId,
+        paymentId,
+        file: fileToUpload,
+        timeoutMs: 30000,
+      })
+        .then(() => {
+          // Cleanup
+          localStorage.removeItem("zenfi_pending_upload_payment");
+          deleteReceiptDraft(userId);
+        })
+        .catch((err) => {
+          console.error("Background receipt upload failed:", err);
+          // DB already marked as 'failed' by uploadReceiptForPayment
+          localStorage.removeItem("zenfi_pending_upload_payment");
         });
-
     } catch (error: any) {
       console.error("Payment submission error:", error);
       toast({
@@ -145,6 +166,7 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
         description: error.message || "Failed to submit payment",
         variant: "destructive",
       });
+      submittedRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -268,7 +290,6 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
               </button>
             </div>
           </div>
-
         </div>
       </section>
 
@@ -304,24 +325,14 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
         ) : (
           <motion.button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="w-full py-6 border-2 border-dashed border-border/50 rounded-xl bg-secondary/20 hover:bg-secondary/30 transition-all flex flex-col items-center gap-3 disabled:opacity-50"
+            className="w-full py-6 border-2 border-dashed border-border/50 rounded-xl bg-secondary/20 hover:bg-secondary/30 transition-all flex flex-col items-center gap-3"
           >
-            {isUploading ? (
-              <>
-                <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-muted-foreground">Uploading...</span>
-              </>
-            ) : (
-              <>
-                <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Tap to upload payment screenshot
-                </span>
-              </>
-            )}
+            <ImageIcon className="w-8 h-8 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Tap to upload payment screenshot
+            </span>
           </motion.button>
         )}
       </section>
@@ -347,8 +358,6 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
           "✓ Confirm Payment"
         )}
       </motion.button>
-
-
 
       {/* Security Footer */}
       <div className="text-center pt-2">
