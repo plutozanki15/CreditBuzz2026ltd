@@ -27,25 +27,40 @@ import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
+const BUY_ZFC_STATE_KEY = "zenfi_buy_zfc_state";
+
+const hasPendingBuyZFCDetails = (): boolean => {
+  try {
+    const raw = localStorage.getItem(BUY_ZFC_STATE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    // Only consider it valid if step is "details" and not expired (1 hour)
+    if (parsed?.step !== "details") return false;
+    if (Date.now() - (parsed?.timestamp || 0) > 60 * 60 * 1000) return false;
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const RoutePersistence = () => {
   useRouteHistory();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
 
-  // On cold start/re-entry, restore the last in-app route for authenticated users.
-  // This prevents users from being forced back to the Buy ZFC form after leaving the app to pay.
-  // (Only restores when we land on / or /login.)
-  
+  // On cold start/re-entry, ONLY redirect to /buy-zfc if user was on Account Details step.
+  // This allows users to return after leaving to pay and continue submitting their receipt.
   useEffect(() => {
     if (isLoading) return;
     if (!user) return;
-    if (location.pathname !== "/" && location.pathname !== "/login") return;
+    // Only intercept when landing on root routes
+    if (location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/dashboard") return;
 
-    const lastRoute = getLastRoute();
-    if (!lastRoute) return;
-    if (lastRoute === location.pathname) return;
-    navigate(lastRoute, { replace: true });
+    // Check if user was in the middle of the Buy ZFC flow (on Account Details step)
+    if (hasPendingBuyZFCDetails()) {
+      navigate("/buy-zfc", { replace: true });
+    }
   }, [isLoading, user, location.pathname, navigate]);
 
   return null;
