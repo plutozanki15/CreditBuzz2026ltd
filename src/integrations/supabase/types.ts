@@ -56,7 +56,6 @@ export type Database = {
           full_name: string
           id: string
           phone: string
-          receipt_status: string
           receipt_url: string | null
           status: string
           updated_at: string
@@ -70,7 +69,6 @@ export type Database = {
           full_name: string
           id?: string
           phone: string
-          receipt_status?: string
           receipt_url?: string | null
           status?: string
           updated_at?: string
@@ -84,7 +82,6 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string
-          receipt_status?: string
           receipt_url?: string | null
           status?: string
           updated_at?: string
