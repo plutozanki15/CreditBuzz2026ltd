@@ -18,12 +18,58 @@ interface FormData {
   email: string;
 }
 
+const BUY_ZFC_STATE_KEY = "zenfi_buy_zfc_state";
+
+interface PersistedState {
+  step: FlowStep;
+  formData: FormData | null;
+  timestamp: number;
+}
+
+const readPersistedState = (): PersistedState | null => {
+  try {
+    const raw = localStorage.getItem(BUY_ZFC_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedState;
+    // Expire after 1 hour
+    if (Date.now() - parsed.timestamp > 60 * 60 * 1000) {
+      localStorage.removeItem(BUY_ZFC_STATE_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writePersistedState = (step: FlowStep, formData: FormData | null) => {
+  try {
+    const state: PersistedState = { step, formData, timestamp: Date.now() };
+    localStorage.setItem(BUY_ZFC_STATE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore
+  }
+};
+
+const clearPersistedState = () => {
+  try {
+    localStorage.removeItem(BUY_ZFC_STATE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
 export const BuyZFC = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const { hasPendingPayment, latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
-  const [currentStep, setCurrentStep] = useState<FlowStep>("form");
-  const [formData, setFormData] = useState<FormData | null>(null);
+  
+  // Restore state from localStorage on mount
+  const persistedState = readPersistedState();
+  const [currentStep, setCurrentStep] = useState<FlowStep>(
+    persistedState?.step === "details" ? "details" : "form"
+  );
+  const [formData, setFormData] = useState<FormData | null>(persistedState?.formData || null);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -45,6 +91,8 @@ export const BuyZFC = () => {
     }
     setFormData(data);
     setCurrentStep("processing");
+    // Persist state so user can return after leaving app to pay
+    writePersistedState("details", data);
   };
 
   const handleProcessingComplete = () => {
@@ -56,6 +104,8 @@ export const BuyZFC = () => {
   };
 
   const handlePaymentConfirmed = (paymentId: string) => {
+    // Clear persisted state on successful submission
+    clearPersistedState();
     navigate("/payment-status", { state: { paymentId } });
   };
 
