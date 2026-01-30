@@ -197,7 +197,11 @@ export const BuyZFC = () => {
       <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-xl border-b border-border/40">
         <div className="flex items-center justify-between px-4 py-3">
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => {
+              // Clear persisted state when going back so user isn't forced back here
+              clearPersistedState();
+              navigate("/dashboard");
+            }}
             className="p-2 -ml-2 rounded-xl hover:bg-secondary/50 transition-all active:scale-95"
           >
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
