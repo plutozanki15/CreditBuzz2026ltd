@@ -64,12 +64,23 @@ export const BuyZFC = () => {
   const { user, profile, isLoading } = useAuth();
   const { hasPendingPayment, latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
   
-  // Restore state from localStorage on mount
-  const persistedState = readPersistedState();
-  const [currentStep, setCurrentStep] = useState<FlowStep>(
-    persistedState?.step === "details" ? "details" : "form"
-  );
-  const [formData, setFormData] = useState<FormData | null>(persistedState?.formData || null);
+  // Restore state from localStorage on mount - do this inside useState to ensure it runs once
+  const [currentStep, setCurrentStep] = useState<FlowStep>(() => {
+    const persistedState = readPersistedState();
+    return persistedState?.step === "details" ? "details" : "form";
+  });
+  const [formData, setFormData] = useState<FormData | null>(() => {
+    const persistedState = readPersistedState();
+    return persistedState?.formData || null;
+  });
+  const [isReady, setIsReady] = useState(false);
+
+  // Mark as ready once auth is loaded
+  useEffect(() => {
+    if (!isLoading) {
+      setIsReady(true);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -123,9 +134,19 @@ export const BuyZFC = () => {
     navigate("/payment-status", { state: { paymentId } });
   };
 
-  // Only show loading if auth is loading AND we have no cached profile
-  // This allows instant page display when navigating from dashboard
-  if (isLoading && !profile) {
+  // Show loading until auth AND state restoration is complete
+  if (!isReady || (isLoading && !profile)) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // If on details step but formData is missing, reset to form step
+  if (currentStep === "details" && !formData) {
+    setCurrentStep("form");
+    clearPersistedState();
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-violet border-t-transparent rounded-full animate-spin" />
