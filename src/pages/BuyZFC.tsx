@@ -77,6 +77,20 @@ export const BuyZFC = () => {
     }
   }, [user, isLoading, navigate]);
 
+  // Auto-refresh on app resume to prevent stuck "Submitting" state
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        window.location.reload();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   // Redirect to payment status if user has a pending payment
   useEffect(() => {
     if (!paymentLoading && hasPendingPayment && latestPayment) {
