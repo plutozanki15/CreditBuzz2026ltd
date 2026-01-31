@@ -134,8 +134,9 @@ export const BuyZFC = () => {
     navigate("/payment-status", { state: { paymentId } });
   };
 
-  // Only block if auth is loading AND no cached user - otherwise show instantly
-  if (isLoading && !user && !profile) {
+  // NEVER block - show content instantly, redirect in background if needed
+  // The only case we show a loader is if there's truly no cached data at all
+  if (!user && !profile && isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <motion.div 
@@ -146,6 +147,11 @@ export const BuyZFC = () => {
       </div>
     );
   }
+
+  // If we're on details step and have form data, render immediately even without user
+  // The user object will populate from cache/auth quickly
+  const canShowDetails = currentStep === "details" && formData;
+  const effectiveUserId = user?.id || profile?.user_id || "";
 
   // Show pending payment warning if somehow still on this page
   if (hasPendingPayment) {
@@ -251,9 +257,9 @@ export const BuyZFC = () => {
           />
         )}
 
-        {currentStep === "details" && user && formData && (
+        {canShowDetails && effectiveUserId && (
           <AccountDetails
-            userId={user.id}
+            userId={effectiveUserId}
             formData={formData}
             onPaymentConfirmed={handlePaymentConfirmed}
           />
