@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, CreditCard, Wifi, Play, Users } from "lucide-react";
+import { Eye, EyeOff, CreditCard, Wifi, Play, Users, ArrowDownLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VirtualBankCardProps {
   balance: number;
@@ -26,6 +27,7 @@ export const VirtualBankCard = ({
   const [displayBalance, setDisplayBalance] = useState(WELCOME_START);
   const [isGlowing, setIsGlowing] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
+  const [showWithdrawNotification, setShowWithdrawNotification] = useState(false);
   const hasStartedCountdown = useRef(false);
   const prevBalanceRef = useRef(balance);
 
@@ -38,8 +40,16 @@ export const VirtualBankCard = ({
 
       let intervalId: number | null = null;
       
-      // Show 320k first for a moment
+      // Show 320k first for a moment, then show notification and start deduction
       const startDelay = window.setTimeout(() => {
+        // Show withdrawal notification
+        setShowWithdrawNotification(true);
+        
+        // Hide notification after 6 seconds
+        window.setTimeout(() => {
+          setShowWithdrawNotification(false);
+        }, 6000);
+
         const durationMs = 2800; // fast but not too fast
         const steps = 120;
         const stepMs = Math.max(10, Math.floor(durationMs / steps));
@@ -111,13 +121,58 @@ export const VirtualBankCard = ({
   };
 
   return (
-    <div 
-      className={cn(
-        "bank-card p-4 animate-card-float hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200",
-        className
-      )}
-    >
-      {/* Card Background Pattern */}
+    <>
+      {/* Withdrawal Notification Banner */}
+      <AnimatePresence>
+        {showWithdrawNotification && (
+          <motion.div
+            initial={{ y: -60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -60, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed top-20 left-4 right-4 z-[100] max-w-[380px] mx-auto"
+          >
+            <div
+              className="relative overflow-hidden rounded-xl border p-3"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--card)), hsl(var(--secondary)))",
+                borderColor: "hsl(var(--destructive))",
+                boxShadow: "0 8px 32px hsla(0, 70%, 50%, 0.3)",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--destructive)), hsl(0, 60%, 40%))",
+                  }}
+                >
+                  <ArrowDownLeft className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-destructive">
+                    💸 Withdrawal Processing
+                  </p>
+                  <p className="text-sm font-bold text-foreground">
+                    -₦{(WELCOME_START - DEDUCT_TARGET).toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Deducting from your balance...
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div 
+        className={cn(
+          "bank-card p-4 animate-card-float hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200",
+          className
+        )}
+      >
+        {/* Card Background Pattern */}
       <div 
         className="absolute inset-0 opacity-20"
         style={{
@@ -246,6 +301,7 @@ export const VirtualBankCard = ({
           🔒 Secured
         </p>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
