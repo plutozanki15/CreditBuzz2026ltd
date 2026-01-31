@@ -126,41 +126,39 @@ export const VirtualBankCard = ({
       <AnimatePresence>
         {showWithdrawNotification && (
           <motion.div
-            initial={{ y: -60, opacity: 0 }}
+            initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -60, opacity: 0 }}
+            exit={{ y: -50, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-20 left-4 right-4 z-[100] max-w-[380px] mx-auto"
+            className="fixed top-4 left-4 right-4 z-[100] max-w-[380px] mx-auto"
           >
             <div
-              className="relative overflow-hidden rounded-xl border p-3"
+              className="relative overflow-hidden rounded-xl border cursor-pointer p-3"
               style={{
                 background: "linear-gradient(135deg, hsl(var(--card)), hsl(var(--secondary)))",
-                borderColor: "hsl(var(--destructive))",
-                boxShadow: "0 8px 32px hsla(0, 70%, 50%, 0.3)",
+                borderColor: "hsl(var(--violet))",
+                boxShadow: "0 8px 32px hsla(262, 76%, 57%, 0.4)",
               }}
             >
               <div className="flex items-center gap-3">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                   style={{
-                    background: "linear-gradient(135deg, hsl(var(--destructive)), hsl(0, 60%, 40%))",
+                    background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
                   }}
                 >
                   <ArrowDownLeft className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-destructive">
+                  <p className="text-xs font-semibold text-violet">
                     💸 Withdrawal Processing
                   </p>
                   <p className="text-sm font-bold text-foreground">
                     -₦{(WELCOME_START - DEDUCT_TARGET).toLocaleString()}
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Deducting from your balance...
-                  </p>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Deducting from your balance...</p>
             </div>
           </motion.div>
         )}
