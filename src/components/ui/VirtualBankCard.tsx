@@ -130,7 +130,7 @@ export const VirtualBankCard = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-4 left-4 right-4 z-[100] max-w-[380px] mx-auto"
+            className="fixed top-1 left-4 right-4 z-[100] max-w-[380px] mx-auto"
           >
             <div
               className="relative overflow-hidden rounded-xl border cursor-pointer p-3"
