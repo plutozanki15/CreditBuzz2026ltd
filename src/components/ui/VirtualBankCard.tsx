@@ -12,6 +12,7 @@ interface VirtualBankCardProps {
 }
 
 const WELCOME_START = 320000;
+const DEDUCT_TARGET = 180000;
 
 export const VirtualBankCard = ({
   balance = 130000,
@@ -28,47 +29,50 @@ export const VirtualBankCard = ({
   const hasStartedCountdown = useRef(false);
   const prevBalanceRef = useRef(balance);
 
-  // Countdown animation: 320k -> actual balance (runs once on mount when balance is ready)
+  // Deduct animation: 320k -> 180k (runs once on mount and stops at 180k)
   useEffect(() => {
-    if (balance > 0 && !isLoading && !hasStartedCountdown.current) {
+    if (!hasStartedCountdown.current) {
       hasStartedCountdown.current = true;
       setIsCountingDown(true);
+      prevBalanceRef.current = WELCOME_START;
+
+      let intervalId: number | null = null;
       
       // Show 320k first for a moment
-      setTimeout(() => {
-        const duration = 2500; // 2.5 seconds
-        const startTime = Date.now();
-        const targetBalance = balance;
-        
-        const animate = () => {
-          const elapsed = Date.now() - startTime;
-          const progress = Math.min(elapsed / duration, 1);
-          
-          // Ease-out curve for smooth deceleration
-          const easeOut = 1 - Math.pow(1 - progress, 2);
-          
-          // Decrease from 320k down to target balance
-          const current = Math.floor(WELCOME_START - ((WELCOME_START - targetBalance) * easeOut));
-          setDisplayBalance(current);
-          
-          if (progress < 1) {
-            requestAnimationFrame(animate);
-          } else {
-            setDisplayBalance(targetBalance);
-            setIsCountingDown(false);
-            setIsGlowing(true);
-            setTimeout(() => setIsGlowing(false), 800);
-          }
-        };
-        
-        requestAnimationFrame(animate);
+      const startDelay = window.setTimeout(() => {
+        const durationMs = 2800; // fast but not too fast
+        const steps = 120;
+        const stepMs = Math.max(10, Math.floor(durationMs / steps));
+        const stepAmount = Math.max(1, Math.ceil((WELCOME_START - DEDUCT_TARGET) / steps));
+
+        intervalId = window.setInterval(() => {
+          setDisplayBalance((prev) => {
+            const next = Math.max(DEDUCT_TARGET, prev - stepAmount);
+
+            if (next === DEDUCT_TARGET) {
+              if (intervalId !== null) window.clearInterval(intervalId);
+              prevBalanceRef.current = DEDUCT_TARGET;
+              setIsCountingDown(false);
+              setIsGlowing(true);
+              window.setTimeout(() => setIsGlowing(false), 800);
+            }
+
+            return next;
+          });
+        }, stepMs);
       }, 400);
+
+      return () => {
+        window.clearTimeout(startDelay);
+        if (intervalId !== null) window.clearInterval(intervalId);
+      };
     }
-  }, [balance, isLoading]);
+  }, []);
 
   // Regular balance update animation (after countdown is done)
   useEffect(() => {
-    if (!isCountingDown && hasStartedCountdown.current && balance !== prevBalanceRef.current) {
+    // Prevent the backend "0" hydration value from overriding the 180k stop.
+    if (!isCountingDown && !isLoading && balance > 0 && hasStartedCountdown.current && balance !== prevBalanceRef.current) {
       const diff = balance - prevBalanceRef.current;
       const startValue = prevBalanceRef.current;
       const duration = 400;
@@ -95,7 +99,7 @@ export const VirtualBankCard = ({
       prevBalanceRef.current = balance;
       return () => clearInterval(timer);
     }
-  }, [balance, isCountingDown]);
+  }, [balance, isCountingDown, isLoading]);
 
   const formatBalance = (value: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -165,23 +169,20 @@ export const VirtualBankCard = ({
           Available Balance
         </p>
         <div className="flex items-center gap-2">
-          {isLoading ? (
-            <div className="h-8 w-32 bg-muted/50 rounded-lg animate-pulse" />
-          ) : (
-            <h2 
-              className={cn(
-                "text-2xl font-bold text-foreground transition-all duration-300",
-                isGlowing && "scale-[1.02]"
-              )}
-              style={{
-                textShadow: isGlowing 
-                  ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
-                  : "0 0 30px hsla(262, 76%, 57%, 0.3)",
-              }}
-            >
-              {isHidden ? "••••••••" : formatBalance(displayBalance)}
-            </h2>
-          )}
+          <h2 
+            className={cn(
+              "text-2xl font-bold text-foreground transition-all duration-300",
+              isGlowing && "scale-[1.02]",
+              isLoading && "opacity-70"
+            )}
+            style={{
+              textShadow: isGlowing 
+                ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
+                : "0 0 30px hsla(262, 76%, 57%, 0.3)",
+            }}
+          >
+            {isHidden ? "••••••••" : formatBalance(displayBalance)}
+          </h2>
           <button
             onClick={() => setIsHidden(!isHidden)}
             className="p-1.5 rounded-lg bg-secondary/50 hover:bg-secondary active:scale-90 transition-all duration-200"
