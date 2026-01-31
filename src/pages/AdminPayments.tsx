@@ -144,7 +144,7 @@ export const AdminPayments = () => {
       const payment = payments.find((p) => p.id === paymentId);
       if (!payment) throw new Error("Payment not found");
 
-      // If approved, credit the user's balance FIRST
+      // If approved, credit the user's balance and generate ZFC code
       if (newStatus === "approved") {
         // Get current balance
         const { data: profile, error: profileError } = await supabase
@@ -159,15 +159,22 @@ export const AdminPayments = () => {
         const zfcAmount = (payment.amount / 5700) * 180000;
         const newBalance = Number(profile?.balance || 0) + zfcAmount;
 
-        // Update balance - this triggers realtime update on user's dashboard
+        // Generate ZFC code (format: XFC + 6 random digits)
+        const zfcCode = `XFC${Math.floor(100000 + Math.random() * 900000)}`;
+
+        // Update balance and ZFC code - this triggers realtime update on user's dashboard
         const { error: updateError } = await supabase
           .from("profiles")
-          .update({ balance: newBalance })
+          .update({ 
+            balance: newBalance,
+            zfc_code: zfcCode,
+            zfc_code_purchased_at: new Date().toISOString()
+          })
           .eq("user_id", payment.user_id);
 
         if (updateError) throw updateError;
 
-        console.log(`Balance updated for user ${payment.user_id}: +${zfcAmount} ZFC (new total: ${newBalance})`);
+        console.log(`Balance updated for user ${payment.user_id}: +${zfcAmount} ZFC (new total: ${newBalance}), ZFC Code: ${zfcCode}`);
       }
 
       // Now update the payment status

@@ -106,6 +106,8 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string
+          zfc_code: string | null
+          zfc_code_purchased_at: string | null
         }
         Insert: {
           balance?: number
@@ -120,6 +122,8 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id: string
+          zfc_code?: string | null
+          zfc_code_purchased_at?: string | null
         }
         Update: {
           balance?: number
@@ -134,6 +138,8 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+          zfc_code?: string | null
+          zfc_code_purchased_at?: string | null
         }
         Relationships: [
           {

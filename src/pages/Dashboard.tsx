@@ -98,9 +98,12 @@ export const Dashboard = () => {
     }
   }, [profile?.balance]);
 
-  // Real-time balance subscription for instant updates (new users, admin credits, etc.)
+  // Real-time balance and ZFC code subscription for instant updates
   useEffect(() => {
     if (!profile?.user_id) return;
+
+    // Track current ZFC code to detect new purchases
+    const currentZfcCode = (profile as typeof profile & { zfc_code?: string })?.zfc_code;
 
     const channel = supabase
       .channel("dashboard-balance-updates")
@@ -113,10 +116,20 @@ export const Dashboard = () => {
           filter: `user_id=eq.${profile.user_id}`,
         },
         (payload) => {
-          const newBalance = Number(payload.new.balance);
-          // Only update if valid number and greater than or equal to 0
+          const newData = payload.new as { balance?: number; zfc_code?: string };
+          const newBalance = Number(newData.balance);
+          
+          // Update balance if valid
           if (!isNaN(newBalance) && newBalance >= 0) {
             setLocalBalance(newBalance);
+          }
+          
+          // Check if ZFC code was just purchased (wasn't there before, now it is)
+          if (newData.zfc_code && newData.zfc_code !== currentZfcCode) {
+            toast({
+              title: "🎉 ZFC Code Purchased!",
+              description: "Your withdrawal activation code is ready. View it in your profile.",
+            });
           }
         }
       )
@@ -125,7 +138,7 @@ export const Dashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.user_id]);
+  }, [profile?.user_id, profile]);
 
   // Update carousel slide indicator
   useEffect(() => {

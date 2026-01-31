@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, User, Mail, Shield, CheckCircle, Copy, ExternalLink } from "lucide-react";
+import { X, User, Mail, Shield, CheckCircle, Copy, ExternalLink, Eye, EyeOff, Key } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +11,7 @@ interface ProfilePanelProps {
 
 export const ProfilePanel = ({ isOpen, onClose }: ProfilePanelProps) => {
   const [copied, setCopied] = useState(false);
+  const [showZfcCode, setShowZfcCode] = useState(false);
   const { profile } = useAuth();
   
   // Use real user data from profile
@@ -21,6 +22,11 @@ export const ProfilePanel = ({ isOpen, onClose }: ProfilePanelProps) => {
     ? new Date(profile.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
     : "January 2024";
   const accountStatus = profile?.status === "active" ? "Active" : "Suspended";
+  
+  // ZFC Code from profile (cast to access new fields)
+  const profileData = profile as typeof profile & { zfc_code?: string; zfc_code_purchased_at?: string };
+  const zfcCode = profileData?.zfc_code;
+  const zfcCodePurchasedAt = profileData?.zfc_code_purchased_at;
 
   const handleCopyId = async () => {
     try {
@@ -28,6 +34,16 @@ export const ProfilePanel = ({ isOpen, onClose }: ProfilePanelProps) => {
       setCopied(true);
       toast({ title: "User ID Copied", description: userId });
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Failed to copy", variant: "destructive" });
+    }
+  };
+
+  const handleCopyZfcCode = async () => {
+    if (!zfcCode) return;
+    try {
+      await navigator.clipboard.writeText(zfcCode);
+      toast({ title: "ZFC Code Copied", description: zfcCode });
     } catch {
       toast({ title: "Failed to copy", variant: "destructive" });
     }
@@ -160,6 +176,56 @@ export const ProfilePanel = ({ isOpen, onClose }: ProfilePanelProps) => {
                 </div>
               </div>
             </div>
+
+            {/* ZFC Code Card - Only show if purchased */}
+            {zfcCode && (
+              <div 
+                className="p-4 rounded-2xl border"
+                style={{
+                  background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.15), hsla(289, 100%, 65%, 0.1))",
+                  borderColor: "hsla(262, 76%, 57%, 0.4)",
+                  boxShadow: "0 8px 24px hsla(262, 76%, 57%, 0.15)",
+                }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-xl bg-violet/20">
+                    <Key className="w-4 h-4 text-violet" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">ZFC Code Purchased</p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {zfcCodePurchasedAt ? new Date(zfcCodePurchasedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
+                    </p>
+                  </div>
+                  <CheckCircle className="w-5 h-5 text-teal" />
+                </div>
+                
+                {/* ZFC Code Display with Eye Toggle */}
+                <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-background/50 border border-border/30">
+                  <code className="flex-1 text-lg font-mono font-bold text-foreground tracking-widest">
+                    {showZfcCode ? zfcCode : "••••••••••"}
+                  </code>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowZfcCode(!showZfcCode)}
+                      className="p-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                    >
+                      {showZfcCode ? (
+                        <EyeOff className="w-4 h-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-violet" />
+                      )}
+                    </button>
+                    <button
+                      onClick={handleCopyZfcCode}
+                      className="p-2 rounded-lg hover:bg-secondary/80 transition-colors"
+                    >
+                      <Copy className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Security Badge */}
