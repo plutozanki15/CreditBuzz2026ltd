@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
-import { WithdrawalSuccess } from "@/components/withdrawal/WithdrawalSuccess";
+import { WithdrawalProcessing } from "@/components/withdrawal/WithdrawalProcessing";
+import { ActivationCodePage } from "@/components/withdrawal/ActivationCodePage";
+import { ActivationForm } from "@/components/withdrawal/ActivationForm";
+import { PaymentDetailsPage } from "@/components/withdrawal/PaymentDetailsPage";
+import { PaymentNotConfirmed } from "@/components/withdrawal/PaymentNotConfirmed";
+import { useWithdrawalFlow, WithdrawalFlowStep } from "@/hooks/useWithdrawalFlow";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
@@ -15,7 +20,6 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 const VALID_WITHDRAWAL_CODE = "XFC641400";
-const TRANSACTIONS_KEY = "zenfi_transactions";
 
 const nigerianBanks = [
   "Access Bank", "Citibank Nigeria", "Ecobank Nigeria", "Fidelity Bank",
@@ -30,18 +34,10 @@ const nigerianBanks = [
 // Cache key for last known balance
 const BALANCE_CACHE_KEY = "zenfi_withdrawal_balance";
 
-// Type for successful withdrawal data
-interface WithdrawalData {
-  amount: number;
-  bankName: string;
-  accountNumber: string;
-  accountName: string;
-  referenceId: string;
-  createdAt: string;
-}
-
 export const Withdrawal = () => {
   const navigate = useNavigate();
+  const { flowState, currentStep, updateFlowState, clearFlowState } = useWithdrawalFlow();
+  
   // Load cached balance for instant display
   const cachedBalance = (() => {
     try {
@@ -54,14 +50,12 @@ export const Withdrawal = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // New state for success view
-  const [withdrawalSuccess, setWithdrawalSuccess] = useState<WithdrawalData | null>(null);
   const [formData, setFormData] = useState({
-    accountNumber: "",
-    accountName: "",
-    bank: "",
-    amount: "",
-    zfcCode: "",
+    accountNumber: flowState?.formData?.accountNumber || "",
+    accountName: flowState?.formData?.accountName || "",
+    bank: flowState?.formData?.bank || "",
+    amount: flowState?.formData?.amount || "",
+    zfcCode: flowState?.formData?.zfcCode || "",
   });
 
   useEffect(() => {
@@ -83,7 +77,6 @@ export const Withdrawal = () => {
       if (profile) {
         const bal = Number(profile.balance);
         setAvailableBalance(bal);
-        // Cache for next time
         localStorage.setItem(BALANCE_CACHE_KEY, String(bal));
       }
       setIsLoading(false);
@@ -91,7 +84,6 @@ export const Withdrawal = () => {
 
     fetchBalance();
 
-    // Subscribe to realtime balance updates with user filter
     const setupRealtimeSubscription = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
@@ -139,21 +131,6 @@ export const Withdrawal = () => {
 
   const displayBalance = availableBalance ?? 0;
 
-  const addTransaction = (type: "claim" | "withdraw", amount: number, status: "success" | "pending" | "failed" = "pending") => {
-    const transaction = {
-      id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      amount,
-      date: new Date().toISOString(),
-      status,
-    };
-
-    const existing = localStorage.getItem(TRANSACTIONS_KEY);
-    const transactions = existing ? JSON.parse(existing) : [];
-    transactions.unshift(transaction);
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -179,7 +156,6 @@ export const Withdrawal = () => {
 
     const amount = parseInt(formData.amount, 10);
     
-    // Validate amount
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: "Invalid Amount",
@@ -189,7 +165,6 @@ export const Withdrawal = () => {
       return;
     }
 
-    // Validate balance
     if (availableBalance === null) {
       toast({
         title: "Please Wait",
@@ -220,16 +195,7 @@ export const Withdrawal = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. Deduct balance from user's profile
-      const newBalance = displayBalance - amount;
-      const { error: balanceError } = await supabase
-        .from("profiles")
-        .update({ balance: newBalance })
-        .eq("user_id", userId);
-
-      if (balanceError) throw balanceError;
-
-      // 2. Create withdrawal record and get the reference ID
+      // Save withdrawal request as "initiated" - NO balance deduction yet
       const { data: withdrawalRecord, error: withdrawalError } = await supabase
         .from("withdrawals")
         .insert({
@@ -238,33 +204,24 @@ export const Withdrawal = () => {
           account_number: formData.accountNumber,
           account_name: formData.accountName,
           bank_name: formData.bank,
-          status: "processing",
+          status: "initiated",
         })
-        .select("id, created_at")
+        .select("id")
         .single();
 
       if (withdrawalError) throw withdrawalError;
 
-      // 3. Update local balance immediately
-      setAvailableBalance(newBalance);
-
-      // 4. Add to transaction history
-      addTransaction("withdraw", amount, "success");
-
-      // 5. Switch to success state with receipt data (NO toast yet)
-      setWithdrawalSuccess({
-        amount,
-        bankName: formData.bank,
-        accountNumber: formData.accountNumber,
-        accountName: formData.accountName,
-        referenceId: withdrawalRecord.id,
-        createdAt: withdrawalRecord.created_at,
+      // Save form data and move to processing step
+      updateFlowState({
+        step: "processing",
+        withdrawalId: withdrawalRecord.id,
+        formData,
       });
 
     } catch (error: any) {
       console.error("Withdrawal error:", error);
       toast({
-        title: "Withdrawal Failed",
+        title: "Error",
         description: error.message || "An error occurred. Please try again.",
         variant: "destructive",
       });
@@ -273,22 +230,84 @@ export const Withdrawal = () => {
     }
   };
 
+  const handleProcessingComplete = () => {
+    updateFlowState({ step: "activation-code" });
+  };
+
+  const handleActivationCodeProceed = () => {
+    updateFlowState({ step: "activation-form" });
+  };
+
+  const handleActivationFormBack = () => {
+    updateFlowState({ step: "activation-code" });
+  };
+
+  const handleActivationFormSubmit = (data: { fullName: string; bankName: string; accountNumber: string; activationCode: string }) => {
+    updateFlowState({
+      step: "payment-details",
+      activationFormData: data,
+    });
+  };
+
+  const handlePaymentMade = () => {
+    updateFlowState({ step: "verifying-payment" });
+  };
+
+  const handleVerifyingComplete = () => {
+    updateFlowState({ step: "payment-not-confirmed" });
+  };
+
   const isFormValid = formData.accountNumber && formData.accountName && formData.bank && formData.amount && formData.zfcCode;
 
-  // Show success state if withdrawal completed
-  if (withdrawalSuccess) {
+  // Render based on current step
+  if (currentStep === "processing") {
     return (
-      <WithdrawalSuccess
-        amount={withdrawalSuccess.amount}
-        bankName={withdrawalSuccess.bankName}
-        accountNumber={withdrawalSuccess.accountNumber}
-        accountName={withdrawalSuccess.accountName}
-        referenceId={withdrawalSuccess.referenceId}
-        createdAt={withdrawalSuccess.createdAt}
+      <WithdrawalProcessing
+        message="Processing your withdrawal request…"
+        onComplete={handleProcessingComplete}
+        duration={2500}
       />
     );
   }
 
+  if (currentStep === "activation-code") {
+    return (
+      <ActivationCodePage
+        activationCode={VALID_WITHDRAWAL_CODE}
+        onProceed={handleActivationCodeProceed}
+      />
+    );
+  }
+
+  if (currentStep === "activation-form") {
+    return (
+      <ActivationForm
+        expectedCode={VALID_WITHDRAWAL_CODE}
+        onBack={handleActivationFormBack}
+        onSubmit={handleActivationFormSubmit}
+      />
+    );
+  }
+
+  if (currentStep === "payment-details") {
+    return <PaymentDetailsPage onPaymentMade={handlePaymentMade} />;
+  }
+
+  if (currentStep === "verifying-payment") {
+    return (
+      <WithdrawalProcessing
+        message="Verifying activation payment…"
+        onComplete={handleVerifyingComplete}
+        duration={3000}
+      />
+    );
+  }
+
+  if (currentStep === "payment-not-confirmed") {
+    return <PaymentNotConfirmed />;
+  }
+
+  // Default: Show withdrawal form
   return (
     <div className="min-h-screen bg-background">
       <FloatingParticles />
@@ -296,7 +315,10 @@ export const Withdrawal = () => {
       {/* Header */}
       <header className="relative z-10 px-4 py-4 flex items-center gap-4">
         <button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => {
+            clearFlowState();
+            navigate("/dashboard");
+          }}
           className="p-2.5 rounded-xl bg-secondary/80 hover:bg-muted transition-all duration-200 hover:scale-105 active:scale-95"
         >
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
