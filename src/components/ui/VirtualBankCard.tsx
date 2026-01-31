@@ -29,43 +29,47 @@ export const VirtualBankCard = ({
   const prevBalanceRef = useRef(balance);
   const hasRunWelcome = useRef(false);
 
-  // Welcome countdown animation (320k -> actual balance)
+  // Welcome countdown animation (320k -> actual balance) - COUNTS DOWN
   useEffect(() => {
     const alreadyDone = sessionStorage.getItem(WELCOME_ANIMATION_KEY);
     
     if (!alreadyDone && balance > 0 && !hasRunWelcome.current && !isLoading) {
       hasRunWelcome.current = true;
+      
+      // Start HIGH at 320k
       setDisplayBalance(WELCOME_START);
       setIsWelcomeAnimating(true);
       
-      // Small delay before starting countdown
+      // Delay before countdown starts so user sees 320k first
       const startDelay = setTimeout(() => {
-        const duration = 2800; // 2.8 seconds - smooth, not too fast
-        const steps = 80;
-        const diff = WELCOME_START - balance;
-        let step = 0;
+        const duration = 3000; // 3 seconds
+        const startTime = Date.now();
         
-        const timer = setInterval(() => {
-          step++;
-          const progress = step / steps;
-          // Ease-out cubic for smooth deceleration at the end
-          const easeOut = 1 - Math.pow(1 - progress, 3);
-          const currentValue = WELCOME_START - (diff * easeOut);
+        const animate = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
           
-          if (step >= steps) {
+          // Ease-out for smooth deceleration
+          const easeOut = 1 - Math.pow(1 - progress, 2.5);
+          
+          // COUNT DOWN from 320k to balance
+          const currentValue = WELCOME_START - ((WELCOME_START - balance) * easeOut);
+          
+          setDisplayBalance(Math.floor(currentValue));
+          
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
             setDisplayBalance(balance);
             setIsWelcomeAnimating(false);
             setIsGlowing(true);
             setTimeout(() => setIsGlowing(false), 800);
             sessionStorage.setItem(WELCOME_ANIMATION_KEY, "true");
-            clearInterval(timer);
-          } else {
-            setDisplayBalance(Math.floor(currentValue));
           }
-        }, duration / steps);
-
-        return () => clearInterval(timer);
-      }, 500);
+        };
+        
+        requestAnimationFrame(animate);
+      }, 600);
 
       return () => clearTimeout(startDelay);
     } else if (alreadyDone) {
