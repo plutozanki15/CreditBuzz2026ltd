@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Eye, EyeOff, CreditCard, Wifi, Play, Users, ArrowDownLeft } from "lucide-react";
+import { Eye, EyeOff, CreditCard, Wifi, Play, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface VirtualBankCardProps {
   balance: number;
@@ -12,9 +11,6 @@ interface VirtualBankCardProps {
   isLoading?: boolean;
 }
 
-const WELCOME_START = 320000;
-const DEDUCT_TARGET = 180000;
-
 export const VirtualBankCard = ({
   balance = 130000,
   cardNumber = "4829",
@@ -24,74 +20,20 @@ export const VirtualBankCard = ({
   isLoading = false,
 }: VirtualBankCardProps) => {
   const [isHidden, setIsHidden] = useState(false);
-  const [displayBalance, setDisplayBalance] = useState(WELCOME_START);
+  const [displayBalance, setDisplayBalance] = useState(balance);
   const [isGlowing, setIsGlowing] = useState(false);
-  const [isCountingDown, setIsCountingDown] = useState(false);
-  const [showWithdrawNotification, setShowWithdrawNotification] = useState(false);
-  const hasStartedCountdown = useRef(false);
   const prevBalanceRef = useRef(balance);
 
-  // Deduct animation: 320k -> 180k (runs once on mount and stops at 180k)
+  // Instant balance update with smooth count-up animation
   useEffect(() => {
-    if (!hasStartedCountdown.current) {
-      hasStartedCountdown.current = true;
-      setIsCountingDown(true);
-      prevBalanceRef.current = WELCOME_START;
-
-      let intervalId: number | null = null;
-      
-      // Show 320k first for a moment, then show notification and start deduction
-      const startDelay = window.setTimeout(() => {
-        // Show withdrawal notification
-        setShowWithdrawNotification(true);
-        
-        // Hide notification after 6 seconds
-        window.setTimeout(() => {
-          setShowWithdrawNotification(false);
-        }, 6000);
-
-        const durationMs = 2800; // fast but not too fast
-        const steps = 120;
-        const stepMs = Math.max(10, Math.floor(durationMs / steps));
-        const stepAmount = Math.max(1, Math.ceil((WELCOME_START - DEDUCT_TARGET) / steps));
-
-        intervalId = window.setInterval(() => {
-          setDisplayBalance((prev) => {
-            const next = Math.max(DEDUCT_TARGET, prev - stepAmount);
-
-            if (next === DEDUCT_TARGET) {
-              if (intervalId !== null) window.clearInterval(intervalId);
-              prevBalanceRef.current = DEDUCT_TARGET;
-              setIsCountingDown(false);
-              setIsGlowing(true);
-              window.setTimeout(() => setIsGlowing(false), 800);
-            }
-
-            return next;
-          });
-        }, stepMs);
-      }, 400);
-
-      return () => {
-        window.clearTimeout(startDelay);
-        if (intervalId !== null) window.clearInterval(intervalId);
-      };
-    }
-  }, []);
-
-  // Regular balance update animation (after countdown is done)
-  useEffect(() => {
-    // Clamp to 180k so the deduction never ends below the target.
-    const safeBalance = Math.max(balance, DEDUCT_TARGET);
-
-    // Prevent the backend "0" hydration value from overriding the 180k stop.
-    if (!isCountingDown && !isLoading && safeBalance > 0 && hasStartedCountdown.current && safeBalance !== prevBalanceRef.current) {
-      const diff = safeBalance - prevBalanceRef.current;
+    if (balance !== prevBalanceRef.current) {
+      const diff = balance - prevBalanceRef.current;
       const startValue = prevBalanceRef.current;
-      const duration = 400;
+      const duration = 400; // Fast count-up
       const steps = 20;
       let step = 0;
       
+      // Trigger glow effect
       setIsGlowing(true);
       setTimeout(() => setIsGlowing(false), 600);
       
@@ -102,17 +44,17 @@ export const VirtualBankCard = ({
         const currentValue = startValue + (diff * easeOut);
         
         if (step >= steps) {
-          setDisplayBalance(safeBalance);
+          setDisplayBalance(balance);
           clearInterval(timer);
         } else {
           setDisplayBalance(Math.floor(currentValue));
         }
       }, duration / steps);
 
-      prevBalanceRef.current = safeBalance;
+      prevBalanceRef.current = balance;
       return () => clearInterval(timer);
     }
-  }, [balance, isCountingDown, isLoading]);
+  }, [balance]);
 
   const formatBalance = (value: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -124,56 +66,13 @@ export const VirtualBankCard = ({
   };
 
   return (
-    <>
-      {/* Withdrawal Notification Banner */}
-      <AnimatePresence>
-        {showWithdrawNotification && (
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-28 left-4 right-4 z-[100] max-w-[380px] mx-auto"
-          >
-            <div
-              className="relative overflow-hidden rounded-xl border cursor-pointer hover:scale-[1.02] transition-transform p-3"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--card)), hsl(var(--secondary)))",
-                borderColor: "hsl(var(--violet))",
-                boxShadow: "0 8px 32px hsla(262, 76%, 57%, 0.4)",
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
-                  }}
-                >
-                  <ArrowDownLeft className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-violet">
-                    💸 Withdrawal Processing
-                  </p>
-                  <p className="text-sm font-bold text-foreground truncate">
-                    -₦{(WELCOME_START - DEDUCT_TARGET).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">Deducting from your balance...</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div 
-        className={cn(
-          "bank-card p-4 animate-card-float hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200",
-          className
-        )}
-      >
-        {/* Card Background Pattern */}
+    <div 
+      className={cn(
+        "bank-card p-4 animate-card-float hover:scale-[1.01] active:scale-[0.99] transition-transform duration-200",
+        className
+      )}
+    >
+      {/* Card Background Pattern */}
       <div 
         className="absolute inset-0 opacity-20"
         style={{
@@ -225,20 +124,23 @@ export const VirtualBankCard = ({
           Available Balance
         </p>
         <div className="flex items-center gap-2">
-          <h2 
-            className={cn(
-              "text-2xl font-bold text-foreground transition-all duration-300",
-              isGlowing && "scale-[1.02]",
-              isLoading && "opacity-70"
-            )}
-            style={{
-              textShadow: isGlowing 
-                ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
-                : "0 0 30px hsla(262, 76%, 57%, 0.3)",
-            }}
-          >
-            {isHidden ? "••••••••" : formatBalance(displayBalance)}
-          </h2>
+          {isLoading ? (
+            <div className="h-8 w-32 bg-muted/50 rounded-lg animate-pulse" />
+          ) : (
+            <h2 
+              className={cn(
+                "text-2xl font-bold text-foreground transition-all duration-300",
+                isGlowing && "scale-[1.02]"
+              )}
+              style={{
+                textShadow: isGlowing 
+                  ? "0 0 40px hsla(174, 88%, 56%, 0.6), 0 0 20px hsla(262, 76%, 57%, 0.4)" 
+                  : "0 0 30px hsla(262, 76%, 57%, 0.3)",
+              }}
+            >
+              {isHidden ? "••••••••" : formatBalance(displayBalance)}
+            </h2>
+          )}
           <button
             onClick={() => setIsHidden(!isHidden)}
             className="p-1.5 rounded-lg bg-secondary/50 hover:bg-secondary active:scale-90 transition-all duration-200"
@@ -302,7 +204,6 @@ export const VirtualBankCard = ({
           🔒 Secured
         </p>
       </div>
-      </div>
-    </>
+    </div>
   );
 };
