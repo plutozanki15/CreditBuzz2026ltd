@@ -133,34 +133,35 @@ export const VirtualBankCard = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed -top-3 left-4 right-4 z-[100] max-w-[320px] mx-auto"
+            className="fixed top-28 left-4 right-4 z-[100] max-w-[380px] mx-auto"
           >
             <div
-              className="relative overflow-hidden rounded-xl border p-2"
+              className="relative overflow-hidden rounded-xl border cursor-pointer hover:scale-[1.02] transition-transform p-3"
               style={{
                 background: "linear-gradient(135deg, hsl(var(--card)), hsl(var(--secondary)))",
                 borderColor: "hsl(var(--violet))",
                 boxShadow: "0 8px 32px hsla(262, 76%, 57%, 0.4)",
               }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
                   style={{
                     background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
                   }}
                 >
-                  <ArrowDownLeft className="w-4 h-4 text-white" />
+                  <ArrowDownLeft className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-semibold text-violet leading-tight truncate">
-                    💸 Withdrawal
+                  <p className="text-xs font-semibold text-violet">
+                    💸 Withdrawal Processing
                   </p>
-                  <p className="text-xs font-bold text-foreground leading-tight">
+                  <p className="text-sm font-bold text-foreground truncate">
                     -₦{(WELCOME_START - DEDUCT_TARGET).toLocaleString()}
                   </p>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-2 text-center">Deducting from your balance...</p>
             </div>
           </motion.div>
         )}
