@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Copy, Check, Upload, Building2, Sparkles, Lock, ImageIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { clearPaymentCache } from "@/hooks/usePaymentState";
 
 const AMOUNT = 5700;
 const ZFC_AMOUNT = 180000;
@@ -103,7 +104,10 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
 
       const paymentId = paymentData.id;
 
-      // 2. Navigate IMMEDIATELY - don't wait for upload
+      // 2. Clear old payment cache BEFORE navigating to prevent flash of old data
+      clearPaymentCache();
+
+      // 3. Navigate IMMEDIATELY - don't wait for upload
       onPaymentConfirmed(paymentId);
 
       // 3. Upload receipt in background (fire-and-forget)

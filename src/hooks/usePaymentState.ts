@@ -54,6 +54,16 @@ const writeCachedLatestPayment = (payment: Payment | null) => {
   }
 };
 
+// Export function to clear cache before new payment creation
+export const clearPaymentCache = () => {
+  try {
+    localStorage.removeItem(LATEST_PAYMENT_CACHE_KEY);
+    localStorage.removeItem(ACKNOWLEDGED_KEY);
+  } catch {
+    // ignore
+  }
+};
+
 export const usePaymentState = (userId: string | undefined): PaymentState => {
   const cachedPayment = readCachedLatestPayment(userId);
   const initialAcknowledgedId = typeof window !== "undefined" ? localStorage.getItem(ACKNOWLEDGED_KEY) : null;
