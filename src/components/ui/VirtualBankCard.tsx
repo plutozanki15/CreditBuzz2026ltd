@@ -12,7 +12,6 @@ interface VirtualBankCardProps {
 }
 
 const WELCOME_START = 320000;
-const WELCOME_ANIMATION_KEY = "zenfi_welcome_animation_done";
 
 export const VirtualBankCard = ({
   balance = 130000,
@@ -23,67 +22,53 @@ export const VirtualBankCard = ({
   isLoading = false,
 }: VirtualBankCardProps) => {
   const [isHidden, setIsHidden] = useState(false);
-  const [displayBalance, setDisplayBalance] = useState(balance);
+  const [displayBalance, setDisplayBalance] = useState(WELCOME_START);
   const [isGlowing, setIsGlowing] = useState(false);
-  const [isWelcomeAnimating, setIsWelcomeAnimating] = useState(false);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const hasStartedCountdown = useRef(false);
   const prevBalanceRef = useRef(balance);
-  const hasRunWelcome = useRef(false);
 
-  // Welcome countdown animation (320k -> actual balance) - COUNTS DOWN
+  // Countdown animation: 320k -> actual balance (runs once on mount when balance is ready)
   useEffect(() => {
-    const alreadyDone = sessionStorage.getItem(WELCOME_ANIMATION_KEY);
-    
-    if (!alreadyDone && balance > 0 && !hasRunWelcome.current && !isLoading) {
-      hasRunWelcome.current = true;
+    if (balance > 0 && !isLoading && !hasStartedCountdown.current) {
+      hasStartedCountdown.current = true;
+      setIsCountingDown(true);
       
-      // Start HIGH at 320k
-      setDisplayBalance(WELCOME_START);
-      setIsWelcomeAnimating(true);
-      
-      // Delay before countdown starts so user sees 320k first
-      const startDelay = setTimeout(() => {
-        const duration = 3000; // 3 seconds
+      // Show 320k first for a moment
+      setTimeout(() => {
+        const duration = 2500; // 2.5 seconds
         const startTime = Date.now();
+        const targetBalance = balance;
         
         const animate = () => {
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
           
-          // Ease-out for smooth deceleration
-          const easeOut = 1 - Math.pow(1 - progress, 2.5);
+          // Ease-out curve for smooth deceleration
+          const easeOut = 1 - Math.pow(1 - progress, 2);
           
-          // COUNT DOWN from 320k to balance
-          const currentValue = WELCOME_START - ((WELCOME_START - balance) * easeOut);
-          
-          setDisplayBalance(Math.floor(currentValue));
+          // Decrease from 320k down to target balance
+          const current = Math.floor(WELCOME_START - ((WELCOME_START - targetBalance) * easeOut));
+          setDisplayBalance(current);
           
           if (progress < 1) {
             requestAnimationFrame(animate);
           } else {
-            setDisplayBalance(balance);
-            setIsWelcomeAnimating(false);
+            setDisplayBalance(targetBalance);
+            setIsCountingDown(false);
             setIsGlowing(true);
             setTimeout(() => setIsGlowing(false), 800);
-            sessionStorage.setItem(WELCOME_ANIMATION_KEY, "true");
           }
         };
         
         requestAnimationFrame(animate);
-      }, 600);
-
-      return () => clearTimeout(startDelay);
-    } else if (alreadyDone) {
-      setDisplayBalance(balance);
+      }, 400);
     }
-    
-    prevBalanceRef.current = balance;
   }, [balance, isLoading]);
 
-  // Regular balance update animation (after welcome is done)
+  // Regular balance update animation (after countdown is done)
   useEffect(() => {
-    const alreadyDone = sessionStorage.getItem(WELCOME_ANIMATION_KEY);
-    
-    if (alreadyDone && balance !== prevBalanceRef.current && !isWelcomeAnimating) {
+    if (!isCountingDown && hasStartedCountdown.current && balance !== prevBalanceRef.current) {
       const diff = balance - prevBalanceRef.current;
       const startValue = prevBalanceRef.current;
       const duration = 400;
@@ -110,7 +95,7 @@ export const VirtualBankCard = ({
       prevBalanceRef.current = balance;
       return () => clearInterval(timer);
     }
-  }, [balance, isWelcomeAnimating]);
+  }, [balance, isCountingDown]);
 
   const formatBalance = (value: number) => {
     return new Intl.NumberFormat('en-NG', {
