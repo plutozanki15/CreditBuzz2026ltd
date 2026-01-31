@@ -81,9 +81,12 @@ export const VirtualBankCard = ({
 
   // Regular balance update animation (after countdown is done)
   useEffect(() => {
+    // Clamp to 180k so the deduction never ends below the target.
+    const safeBalance = Math.max(balance, DEDUCT_TARGET);
+
     // Prevent the backend "0" hydration value from overriding the 180k stop.
-    if (!isCountingDown && !isLoading && balance > 0 && hasStartedCountdown.current && balance !== prevBalanceRef.current) {
-      const diff = balance - prevBalanceRef.current;
+    if (!isCountingDown && !isLoading && safeBalance > 0 && hasStartedCountdown.current && safeBalance !== prevBalanceRef.current) {
+      const diff = safeBalance - prevBalanceRef.current;
       const startValue = prevBalanceRef.current;
       const duration = 400;
       const steps = 20;
@@ -99,14 +102,14 @@ export const VirtualBankCard = ({
         const currentValue = startValue + (diff * easeOut);
         
         if (step >= steps) {
-          setDisplayBalance(balance);
+          setDisplayBalance(safeBalance);
           clearInterval(timer);
         } else {
           setDisplayBalance(Math.floor(currentValue));
         }
       }, duration / steps);
 
-      prevBalanceRef.current = balance;
+      prevBalanceRef.current = safeBalance;
       return () => clearInterval(timer);
     }
   }, [balance, isCountingDown, isLoading]);
@@ -130,35 +133,34 @@ export const VirtualBankCard = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -50, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-1 left-4 right-4 z-[100] max-w-[380px] mx-auto"
+            className="fixed -top-3 left-4 right-4 z-[100] max-w-[320px] mx-auto"
           >
             <div
-              className="relative overflow-hidden rounded-xl border cursor-pointer p-3"
+              className="relative overflow-hidden rounded-xl border p-2"
               style={{
                 background: "linear-gradient(135deg, hsl(var(--card)), hsl(var(--secondary)))",
                 borderColor: "hsl(var(--violet))",
                 boxShadow: "0 8px 32px hsla(262, 76%, 57%, 0.4)",
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                   style={{
                     background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
                   }}
                 >
-                  <ArrowDownLeft className="w-5 h-5 text-white" />
+                  <ArrowDownLeft className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-violet">
-                    💸 Withdrawal Processing
+                  <p className="text-[10px] font-semibold text-violet leading-tight truncate">
+                    💸 Withdrawal
                   </p>
-                  <p className="text-sm font-bold text-foreground">
+                  <p className="text-xs font-bold text-foreground leading-tight">
                     -₦{(WELCOME_START - DEDUCT_TARGET).toLocaleString()}
                   </p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2 text-center">Deducting from your balance...</p>
             </div>
           </motion.div>
         )}
