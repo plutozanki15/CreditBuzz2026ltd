@@ -159,7 +159,7 @@ export const Dashboard = () => {
   useEffect(() => {
     toast({
       title: "✅ Withdrawal Successful!",
-      description: "₦50,000 has been sent to your bank account.",
+      description: "₦140,000 has been sent to your bank account.",
     });
   }, []);
 
