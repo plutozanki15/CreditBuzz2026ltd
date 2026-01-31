@@ -155,17 +155,6 @@ export const Dashboard = () => {
     }
   }, []);
 
-  // TEMPORARY: Trigger withdrawal deduction toast for testing
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      toast({
-        title: "🔔 Withdrawal Processed",
-        description: "Your withdrawal of ₦140,000 has been deducted from your dashboard balance.",
-      });
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
   const addTransaction = (type: "claim" | "withdraw", amount: number) => {
     const transaction = {
       id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
