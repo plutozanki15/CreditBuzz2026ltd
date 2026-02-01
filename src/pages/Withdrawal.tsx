@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2, AlertCircle, ShoppingCart } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { WithdrawalProcessing } from "@/components/withdrawal/WithdrawalProcessing";
@@ -48,8 +48,10 @@ export const Withdrawal = () => {
   
   const [availableBalance, setAvailableBalance] = useState<number | null>(cachedBalance);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userZfcCode, setUserZfcCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [zfcError, setZfcError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     accountNumber: flowState?.formData?.accountNumber || "",
     accountName: flowState?.formData?.accountName || "",
@@ -70,7 +72,7 @@ export const Withdrawal = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("balance")
+        .select("balance, zfc_code")
         .eq("user_id", user.id)
         .single();
 
@@ -78,6 +80,7 @@ export const Withdrawal = () => {
         const bal = Number(profile.balance);
         setAvailableBalance(bal);
         localStorage.setItem(BALANCE_CACHE_KEY, String(bal));
+        setUserZfcCode(profile.zfc_code || null);
       }
       setIsLoading(false);
     };
@@ -133,6 +136,9 @@ export const Withdrawal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous ZFC error
+    setZfcError(null);
 
     // Validate all fields
     if (!formData.accountNumber || !formData.accountName || !formData.bank || !formData.amount || !formData.zfcCode) {
@@ -144,13 +150,11 @@ export const Withdrawal = () => {
       return;
     }
 
-    // Validate withdrawal code
-    if (formData.zfcCode !== VALID_WITHDRAWAL_CODE) {
-      toast({
-        title: "Invalid Withdrawal Code",
-        description: "The activation code you entered is incorrect. Please check and try again.",
-        variant: "destructive",
-      });
+    // Validate ZFC code against user's purchased code
+    const isValidZfcCode = userZfcCode && formData.zfcCode.toUpperCase() === userZfcCode.toUpperCase();
+    
+    if (!isValidZfcCode) {
+      setZfcError("Invalid ZFC code. Please purchase a valid ZFC code to continue.");
       return;
     }
 
@@ -467,12 +471,42 @@ export const Withdrawal = () => {
                     type="text"
                     placeholder="Enter code"
                     value={formData.zfcCode}
-                    onChange={(e) => setFormData({ ...formData, zfcCode: e.target.value.toUpperCase() })}
-                    className="w-full h-12 pl-9 pr-4 rounded-xl bg-secondary/60 border border-border/40 text-foreground placeholder:text-muted-foreground/50 focus:border-gold focus:ring-1 focus:ring-gold/30 focus:outline-none transition-all font-mono uppercase"
+                    onChange={(e) => {
+                      setFormData({ ...formData, zfcCode: e.target.value.toUpperCase() });
+                      setZfcError(null); // Clear error when user types
+                    }}
+                    className={`w-full h-12 pl-9 pr-4 rounded-xl bg-secondary/60 border text-foreground placeholder:text-muted-foreground/50 focus:outline-none transition-all font-mono uppercase ${
+                      zfcError 
+                        ? "border-red-500/60 focus:border-red-500 focus:ring-1 focus:ring-red-500/30" 
+                        : "border-border/40 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                    }`}
                   />
                 </div>
               </div>
             </div>
+            
+            {/* ZFC Code Error Message */}
+            {zfcError && (
+              <div
+                className="mt-3 p-3 rounded-xl flex flex-col gap-2 animate-fade-in"
+                style={{
+                  background: "hsla(0, 70%, 50%, 0.08)",
+                  border: "1px solid hsla(0, 70%, 50%, 0.2)",
+                }}
+              >
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-400 leading-relaxed">{zfcError}</p>
+                </div>
+                <Link
+                  to="/buy-zfc"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-teal hover:text-teal/80 transition-colors ml-6"
+                >
+                  <ShoppingCart className="w-3.5 h-3.5" />
+                  Buy ZFC Code
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Security Notice */}

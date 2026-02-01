@@ -182,6 +182,9 @@ export const Dashboard = () => {
     const currentBalance = localBalance !== null ? localBalance : (profile?.balance ?? 0);
     
     try {
+      // Start cooldown first (server-side persistence)
+      await startCooldown();
+      
       // Update balance directly in profiles table
       const { error } = await supabase
         .from('profiles')
@@ -203,7 +206,6 @@ export const Dashboard = () => {
       const newBalance = currentBalance + 10000;
       setLocalBalance(newBalance);
       addTransaction("claim", 10000);
-      startCooldown();
       
       toast({
         title: "₦10,000 Successfully Claimed!",

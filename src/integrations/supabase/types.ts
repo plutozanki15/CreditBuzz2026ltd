@@ -100,6 +100,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          next_claim_time: string | null
           referral_code: string | null
           referral_count: number
           referred_by: string | null
@@ -116,6 +117,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id?: string
+          next_claim_time?: string | null
           referral_code?: string | null
           referral_count?: number
           referred_by?: string | null
@@ -132,6 +134,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          next_claim_time?: string | null
           referral_code?: string | null
           referral_count?: number
           referred_by?: string | null
