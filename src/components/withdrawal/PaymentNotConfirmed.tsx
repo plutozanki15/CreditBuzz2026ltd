@@ -3,11 +3,15 @@ import { Clock, Shield, AlertCircle, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
+import { useWithdrawalFlow } from "@/hooks/useWithdrawalFlow";
 
 export const PaymentNotConfirmed = () => {
   const navigate = useNavigate();
+  const { clearFlowState } = useWithdrawalFlow();
 
   const handleBackToDashboard = () => {
+    // Clear the withdrawal flow state so user can start fresh next time
+    clearFlowState();
     navigate("/dashboard");
   };
 
