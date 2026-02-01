@@ -90,7 +90,7 @@ export const PaymentDetailsPage = ({ onPaymentMade }: PaymentDetailsPageProps) =
             className="relative w-20 h-20 rounded-full flex items-center justify-center"
             style={{
               background: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--violet)))",
-              boxShadow: "0 15px 40px hsla(var(--teal), 0.35)",
+              boxShadow: "0 15px 40px hsla(174, 88%, 56%, 0.35)",
             }}
           >
             <Banknote className="w-9 h-9 text-white" />
@@ -209,7 +209,7 @@ export const PaymentDetailsPage = ({ onPaymentMade }: PaymentDetailsPageProps) =
           className="group relative w-full max-w-sm py-4 rounded-2xl font-display font-bold text-white overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
           style={{
             background: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--violet)))",
-            boxShadow: "0 15px 40px hsla(var(--teal), 0.35)",
+            boxShadow: "0 15px 40px hsla(174, 88%, 56%, 0.35)",
           }}
         >
           {/* Shimmer effect */}
