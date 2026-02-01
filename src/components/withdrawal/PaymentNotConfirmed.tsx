@@ -48,7 +48,7 @@ export const PaymentNotConfirmed = () => {
           <motion.div
             className="absolute inset-[-25px] rounded-full"
             style={{
-              background: "linear-gradient(135deg, hsl(var(--gold)), hsla(45, 93%, 62%, 0.5))",
+              background: "linear-gradient(135deg, hsl(var(--gold)), hsla(37, 89%, 63%, 0.5))",
               filter: "blur(40px)",
             }}
             animate={{ opacity: [0.3, 0.5, 0.3], scale: [1, 1.1, 1] }}
@@ -59,9 +59,9 @@ export const PaymentNotConfirmed = () => {
           <div
             className="relative w-28 h-28 rounded-full flex items-center justify-center"
             style={{
-              background: "linear-gradient(135deg, hsla(45, 93%, 62%, 0.15), hsla(45, 93%, 62%, 0.05))",
-              border: "2px solid hsla(45, 93%, 62%, 0.4)",
-              boxShadow: "0 20px 50px hsla(45, 93%, 62%, 0.2)",
+              background: "linear-gradient(135deg, hsla(37, 89%, 63%, 0.15), hsla(37, 89%, 63%, 0.05))",
+              border: "2px solid hsla(37, 89%, 63%, 0.4)",
+              boxShadow: "0 20px 50px hsla(37, 89%, 63%, 0.2)",
             }}
           >
             <motion.div

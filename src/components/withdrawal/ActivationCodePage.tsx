@@ -78,7 +78,7 @@ export const ActivationCodePage = ({ activationCode, onProceed }: ActivationCode
             className="relative w-24 h-24 rounded-full flex items-center justify-center"
             style={{
               background: "linear-gradient(135deg, hsl(var(--gold)), hsl(var(--violet)))",
-              boxShadow: "0 20px 50px hsla(var(--gold), 0.4)",
+              boxShadow: "0 20px 50px hsla(37, 89%, 63%, 0.4)",
             }}
           >
             <Lock className="w-10 h-10 text-white" />
@@ -219,7 +219,7 @@ export const ActivationCodePage = ({ activationCode, onProceed }: ActivationCode
           className="group relative w-full max-w-sm py-4 rounded-2xl font-display font-bold text-white overflow-hidden transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           style={{
             background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
-            boxShadow: "0 15px 40px hsla(var(--violet), 0.4)",
+            boxShadow: "0 15px 40px hsla(262, 76%, 57%, 0.4)",
           }}
         >
           {/* Shimmer effect */}
