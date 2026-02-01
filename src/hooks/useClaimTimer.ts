@@ -1,22 +1,25 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const CLAIM_COOLDOWN_MS = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
-const STORAGE_KEY = "zenfi_claim_timestamp";
+const CLAIM_COOLDOWN_MS = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+const LOCAL_STORAGE_KEY = "zenfi_claim_timestamp";
 
 export interface ClaimTimerState {
   canClaim: boolean;
   remainingTime: string;
   remainingMs: number;
+  isLoading: boolean;
 }
 
 export const useClaimTimer = (): ClaimTimerState & { 
-  startCooldown: () => void;
+  startCooldown: () => Promise<void>;
   resetTimer: () => void;
 } => {
   const [state, setState] = useState<ClaimTimerState>({
-    canClaim: true,
+    canClaim: false, // Start false until we verify with server
     remainingTime: "00:00:00",
-    remainingMs: 0
+    remainingMs: 0,
+    isLoading: true,
   });
 
   const formatTime = (ms: number): string => {
@@ -30,67 +33,165 @@ export const useClaimTimer = (): ClaimTimerState & {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const checkTimer = useCallback(() => {
-    const storedTimestamp = localStorage.getItem(STORAGE_KEY);
+  // Fetch server-side timer and sync with local state
+  const syncWithServer = useCallback(async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setState(prev => ({ ...prev, canClaim: true, isLoading: false }));
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("next_claim_time")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile || !profile.next_claim_time) {
+        // No timer set - user can claim
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        setState({
+          canClaim: true,
+          remainingTime: "00:00:00",
+          remainingMs: 0,
+          isLoading: false,
+        });
+        return;
+      }
+
+      const nextClaimTime = new Date(profile.next_claim_time).getTime();
+      const now = Date.now();
+      const remaining = nextClaimTime - now;
+
+      if (remaining <= 0) {
+        // Timer expired - clear and allow claim
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+        setState({
+          canClaim: true,
+          remainingTime: "00:00:00",
+          remainingMs: 0,
+          isLoading: false,
+        });
+      } else {
+        // Timer still active - sync local storage
+        localStorage.setItem(LOCAL_STORAGE_KEY, String(nextClaimTime));
+        setState({
+          canClaim: false,
+          remainingTime: formatTime(remaining),
+          remainingMs: remaining,
+          isLoading: false,
+        });
+      }
+    } catch (error) {
+      console.error("Error syncing claim timer:", error);
+      // Fall back to local storage on error
+      checkLocalTimer();
+    }
+  }, []);
+
+  const checkLocalTimer = useCallback(() => {
+    const storedTimestamp = localStorage.getItem(LOCAL_STORAGE_KEY);
     
     if (!storedTimestamp) {
-      setState({
+      setState(prev => ({
+        ...prev,
         canClaim: true,
         remainingTime: "00:00:00",
-        remainingMs: 0
-      });
+        remainingMs: 0,
+        isLoading: false,
+      }));
       return;
     }
 
-    const claimTime = parseInt(storedTimestamp, 10);
+    const nextClaimTime = parseInt(storedTimestamp, 10);
     const now = Date.now();
-    const elapsed = now - claimTime;
-    const remaining = CLAIM_COOLDOWN_MS - elapsed;
+    const remaining = nextClaimTime - now;
 
     if (remaining <= 0) {
-      localStorage.removeItem(STORAGE_KEY);
-      setState({
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setState(prev => ({
+        ...prev,
         canClaim: true,
         remainingTime: "00:00:00",
-        remainingMs: 0
-      });
+        remainingMs: 0,
+        isLoading: false,
+      }));
     } else {
-      setState({
+      setState(prev => ({
+        ...prev,
         canClaim: false,
         remainingTime: formatTime(remaining),
-        remainingMs: remaining
-      });
+        remainingMs: remaining,
+        isLoading: false,
+      }));
     }
   }, []);
 
-  const startCooldown = useCallback(() => {
-    const now = Date.now();
-    localStorage.setItem(STORAGE_KEY, now.toString());
+  const startCooldown = useCallback(async () => {
+    const nextClaimTime = Date.now() + CLAIM_COOLDOWN_MS;
+    
+    // Update local storage immediately for instant UI feedback
+    localStorage.setItem(LOCAL_STORAGE_KEY, String(nextClaimTime));
     setState({
       canClaim: false,
       remainingTime: formatTime(CLAIM_COOLDOWN_MS),
-      remainingMs: CLAIM_COOLDOWN_MS
+      remainingMs: CLAIM_COOLDOWN_MS,
+      isLoading: false,
     });
+
+    // Persist to server for cross-device/session persistence
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ next_claim_time: new Date(nextClaimTime).toISOString() })
+          .eq("user_id", user.id);
+      }
+    } catch (error) {
+      console.error("Error saving claim timer to server:", error);
+    }
   }, []);
 
   const resetTimer = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
     setState({
       canClaim: true,
       remainingTime: "00:00:00",
-      remainingMs: 0
+      remainingMs: 0,
+      isLoading: false,
     });
   }, []);
 
+  // Initial sync with server
   useEffect(() => {
-    checkTimer();
-    const interval = setInterval(checkTimer, 1000);
+    syncWithServer();
+  }, [syncWithServer]);
+
+  // Countdown interval - only update display, don't re-fetch
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkLocalTimer();
+    }, 1000);
     return () => clearInterval(interval);
-  }, [checkTimer]);
+  }, [checkLocalTimer]);
+
+  // Re-sync when app becomes visible (user returns from background)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncWithServer();
+      }
+    };
+    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [syncWithServer]);
 
   return {
     ...state,
     startCooldown,
-    resetTimer
+    resetTimer,
   };
 };
