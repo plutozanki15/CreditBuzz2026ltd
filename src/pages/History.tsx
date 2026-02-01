@@ -24,8 +24,6 @@ interface Transaction {
   status: "success" | "pending" | "failed";
 }
 
-const LOCAL_CLAIMS_KEY = "zenfi_transactions";
-
 export const History = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
@@ -34,20 +32,31 @@ export const History = () => {
 
   useRouteHistory();
 
-  // Fetch withdrawals from database + local claims
+  // Fetch withdrawals and claims from database (user-specific)
   const fetchTransactions = async () => {
     if (!user) return;
 
     try {
       // Fetch withdrawals from database
-      const { data: withdrawals, error } = await supabase
+      const { data: withdrawals, error: withdrawalError } = await supabase
         .from("withdrawals")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching withdrawals:", error);
+      if (withdrawalError) {
+        console.error("Error fetching withdrawals:", withdrawalError);
+      }
+
+      // Fetch claims from database (user-specific)
+      const { data: claims, error: claimsError } = await supabase
+        .from("claims")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (claimsError) {
+        console.error("Error fetching claims:", claimsError);
       }
 
       // Convert withdrawals to transaction format
@@ -59,12 +68,14 @@ export const History = () => {
         status: w.status === "completed" ? "success" : w.status === "failed" ? "failed" : "pending",
       }));
 
-      // Get local claims (these are stored in localStorage)
-      const savedClaims = localStorage.getItem(LOCAL_CLAIMS_KEY);
-      const localClaims: Transaction[] = savedClaims ? JSON.parse(savedClaims) : [];
-      
-      // Filter to only claims (type = "claim")
-      const claimTxns = localClaims.filter((t) => t.type === "claim");
+      // Convert claims to transaction format
+      const claimTxns: Transaction[] = (claims || []).map((c: any) => ({
+        id: c.id,
+        type: "claim" as const,
+        amount: Number(c.amount),
+        date: c.created_at,
+        status: c.status === "success" ? "success" : c.status === "failed" ? "failed" : "pending",
+      }));
 
       // Combine and sort by date
       const allTransactions = [...withdrawalTxns, ...claimTxns].sort(

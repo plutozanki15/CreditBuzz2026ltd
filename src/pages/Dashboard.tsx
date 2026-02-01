@@ -36,7 +36,7 @@ import communityIcon from "@/assets/community-icon.png";
 
 const carouselImages = [carouselImage1, carouselImage2];
 
-const TRANSACTIONS_KEY = "zenfi_transactions";
+
 
 const actionButtons = [
   { icon: null, customIcon: zfcIcon, label: "Buy ZFC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
@@ -155,19 +155,18 @@ export const Dashboard = () => {
     }
   }, []);
 
-  const addTransaction = (type: "claim" | "withdraw", amount: number) => {
-    const transaction = {
-      id: `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      type,
-      amount,
-      date: new Date().toISOString(),
-      status: "success",
-    };
+  const addClaimToDatabase = async (amount: number) => {
+    if (!user?.id) return;
     
-    const existing = localStorage.getItem(TRANSACTIONS_KEY);
-    const transactions = existing ? JSON.parse(existing) : [];
-    transactions.unshift(transaction);
-    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+    try {
+      await supabase.from("claims").insert({
+        user_id: user.id,
+        amount,
+        status: "success",
+      });
+    } catch (error) {
+      console.error("Error saving claim to database:", error);
+    }
   };
 
   const handleOnboardingComplete = () => {
@@ -176,7 +175,7 @@ export const Dashboard = () => {
   };
 
   const handleClaim = async () => {
-    if (!canClaim || isClaiming || !profile?.user_id) return;
+    if (!canClaim || isClaiming || !profile?.user_id || !user?.id) return;
     
     setIsClaiming(true);
     const currentBalance = localBalance !== null ? localBalance : (profile?.balance ?? 0);
@@ -202,10 +201,12 @@ export const Dashboard = () => {
         return;
       }
       
-      // SUCCESS - Now update UI
+      // SUCCESS - Now update UI and save claim to database
       const newBalance = currentBalance + 10000;
       setLocalBalance(newBalance);
-      addTransaction("claim", 10000);
+      
+      // Save claim to database for history
+      await addClaimToDatabase(10000);
       
       toast({
         title: "₦10,000 Successfully Claimed!",

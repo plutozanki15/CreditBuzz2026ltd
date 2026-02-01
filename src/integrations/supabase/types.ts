@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      claims: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -94,6 +118,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          activation_code: string | null
           balance: number
           ban_reason: string | null
           created_at: string
@@ -111,6 +136,7 @@ export type Database = {
           zfc_code_purchased_at: string | null
         }
         Insert: {
+          activation_code?: string | null
           balance?: number
           ban_reason?: string | null
           created_at?: string
@@ -128,6 +154,7 @@ export type Database = {
           zfc_code_purchased_at?: string | null
         }
         Update: {
+          activation_code?: string | null
           balance?: number
           ban_reason?: string | null
           created_at?: string

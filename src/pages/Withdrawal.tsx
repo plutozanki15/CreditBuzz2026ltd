@@ -10,6 +10,7 @@ import { PaymentDetailsPage } from "@/components/withdrawal/PaymentDetailsPage";
 import { PaymentNotConfirmed } from "@/components/withdrawal/PaymentNotConfirmed";
 import { useWithdrawalFlow, WithdrawalFlowStep } from "@/hooks/useWithdrawalFlow";
 import { supabase } from "@/integrations/supabase/client";
+import { generateActivationCode } from "@/utils/activationCode";
 import {
   Select,
   SelectContent,
@@ -18,8 +19,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-
-const VALID_WITHDRAWAL_CODE = "XFC641400";
 
 const nigerianBanks = [
   "Access Bank", "Citibank Nigeria", "Ecobank Nigeria", "Fidelity Bank",
@@ -49,6 +48,8 @@ export const Withdrawal = () => {
   const [availableBalance, setAvailableBalance] = useState<number | null>(cachedBalance);
   const [userId, setUserId] = useState<string | null>(null);
   const [userZfcCode, setUserZfcCode] = useState<string | null>(null);
+  const [userActivationCode, setUserActivationCode] = useState<string | null>(null);
+  const [currentActivationCode, setCurrentActivationCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [zfcError, setZfcError] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export const Withdrawal = () => {
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("balance, zfc_code")
+        .select("balance, zfc_code, activation_code")
         .eq("user_id", user.id)
         .single();
 
@@ -81,6 +82,21 @@ export const Withdrawal = () => {
         setAvailableBalance(bal);
         localStorage.setItem(BALANCE_CACHE_KEY, String(bal));
         setUserZfcCode(profile.zfc_code || null);
+        setUserActivationCode(profile.activation_code || null);
+        
+        // Generate a new activation code if none exists
+        if (!profile.activation_code) {
+          const newCode = generateActivationCode();
+          setCurrentActivationCode(newCode);
+          // Save to database
+          await supabase
+            .from("profiles")
+            .update({ activation_code: newCode })
+            .eq("user_id", user.id);
+          setUserActivationCode(newCode);
+        } else {
+          setCurrentActivationCode(profile.activation_code);
+        }
       }
       setIsLoading(false);
     };
@@ -150,10 +166,12 @@ export const Withdrawal = () => {
       return;
     }
 
-    // Validate ZFC code against user's purchased code
-    const isValidZfcCode = userZfcCode && formData.zfcCode.toUpperCase() === userZfcCode.toUpperCase();
+    // Validate ZFC code against user's purchased code OR the activation code
+    const enteredCode = formData.zfcCode.toUpperCase();
+    const isValidPurchasedCode = userZfcCode && enteredCode === userZfcCode.toUpperCase();
+    const isValidActivationCode = userActivationCode && enteredCode === userActivationCode.toUpperCase();
     
-    if (!isValidZfcCode) {
+    if (!isValidPurchasedCode && !isValidActivationCode) {
       setZfcError("Invalid ZFC code. Please purchase a valid ZFC code to continue.");
       return;
     }
@@ -277,7 +295,7 @@ export const Withdrawal = () => {
   if (currentStep === "activation-code") {
     return (
       <ActivationCodePage
-        activationCode={VALID_WITHDRAWAL_CODE}
+        activationCode={currentActivationCode || userActivationCode || generateActivationCode()}
         onProceed={handleActivationCodeProceed}
       />
     );
@@ -286,7 +304,7 @@ export const Withdrawal = () => {
   if (currentStep === "activation-form") {
     return (
       <ActivationForm
-        expectedCode={VALID_WITHDRAWAL_CODE}
+        expectedCode={currentActivationCode || userActivationCode || ""}
         onBack={handleActivationFormBack}
         onSubmit={handleActivationFormSubmit}
       />
