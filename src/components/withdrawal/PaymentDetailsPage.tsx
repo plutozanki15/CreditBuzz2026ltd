@@ -11,6 +11,7 @@ interface PaymentDetailsPageProps {
 
 const PAYMENT_DETAILS = {
   accountNumber: "8102562883",
+  accountName: "CHARIS BENJAMIN SOMTOCHUKWU",
   bankName: "Moniepoint",
   amount: 8000,
 };
@@ -142,22 +143,33 @@ export const PaymentDetailsPage = ({ onPaymentMade }: PaymentDetailsPageProps) =
             </div>
 
             {/* Bank Name */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-3">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Building2 className="w-4 h-4" />
-                <span className="text-xs">Bank</span>
+                <Building2 className="w-5 h-5" />
+                <span className="text-sm font-bold">Bank</span>
               </div>
-              <span className="text-sm font-semibold text-foreground">{PAYMENT_DETAILS.bankName}</span>
+              <span className="text-base font-bold text-foreground">{PAYMENT_DETAILS.bankName}</span>
+            </div>
+
+            {/* Account Name */}
+            <div className="flex items-center justify-between py-3 border-t border-border/20">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CreditCard className="w-5 h-5" />
+                <span className="text-sm font-bold">Account Name</span>
+              </div>
+              <span className="text-sm font-bold text-foreground text-right max-w-[180px]">
+                {PAYMENT_DETAILS.accountName}
+              </span>
             </div>
 
             {/* Account Number */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between py-3 border-t border-border/20">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Hash className="w-4 h-4" />
-                <span className="text-xs">Account Number</span>
+                <Hash className="w-5 h-5" />
+                <span className="text-sm font-bold">Account Number</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-mono font-semibold text-foreground">
+                <span className="text-base font-mono font-bold text-foreground">
                   {PAYMENT_DETAILS.accountNumber}
                 </span>
                 <motion.button
@@ -166,7 +178,7 @@ export const PaymentDetailsPage = ({ onPaymentMade }: PaymentDetailsPageProps) =
                   whileTap={{ scale: 0.9 }}
                   className="p-1.5 rounded-lg transition-all"
                   style={{
-                    background: copiedAccount ? "hsla(var(--teal), 0.2)" : "hsla(var(--violet), 0.2)",
+                    background: copiedAccount ? "hsla(174, 88%, 56%, 0.2)" : "hsla(262, 76%, 57%, 0.2)",
                   }}
                 >
                   {copiedAccount ? (
