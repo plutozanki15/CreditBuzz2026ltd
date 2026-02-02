@@ -1,19 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Copy, Check, Lock, Shield, Sparkles, Wallet, ArrowRight } from "lucide-react";
+import { ArrowLeft, Copy, Check, Lock, Shield, Sparkles, Wallet, ArrowRight, Loader2 } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { toast } from "@/hooks/use-toast";
-
-const WITHDRAWAL_CODE = "XFC641400";
+import { supabase } from "@/integrations/supabase/client";
 
 export const WithdrawalCode = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [zfcCode, setZfcCode] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchZfcCode = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("zfc_code")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile?.zfc_code) {
+        setZfcCode(profile.zfc_code);
+      }
+      setIsLoading(false);
+    };
+
+    fetchZfcCode();
+  }, [navigate]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(WITHDRAWAL_CODE);
+    if (!zfcCode) return;
+    await navigator.clipboard.writeText(zfcCode);
     setCopied(true);
     toast({
       title: "Code copied successfully",
@@ -21,6 +46,50 @@ export const WithdrawalCode = () => {
     });
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-violet" />
+      </div>
+    );
+  }
+
+  if (!zfcCode) {
+    return (
+      <div className="min-h-screen bg-background">
+        <FloatingParticles />
+        <header className="relative z-10 px-4 py-4 flex items-center gap-4">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="p-2.5 rounded-xl bg-secondary/80 hover:bg-muted transition-all duration-200 hover:scale-105 active:scale-95"
+          >
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-lg font-display font-semibold tracking-tight">Withdrawal Code</h1>
+          </div>
+          <ZenfiLogo size="sm" />
+        </header>
+        <main className="relative z-10 px-4 pt-20 flex flex-col items-center text-center">
+          <Lock className="w-16 h-16 text-muted-foreground/50 mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2">No ZFC Code Found</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-xs">
+            You need to purchase a ZFC code to enable withdrawals.
+          </p>
+          <button
+            onClick={() => navigate("/buy-zfc")}
+            className="px-6 py-3 rounded-xl font-semibold text-white"
+            style={{
+              background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
+            }}
+          >
+            Buy ZFC Code
+          </button>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -108,7 +177,7 @@ export const WithdrawalCode = () => {
           transition={{ delay: 0.2 }}
           className="text-2xl font-bold text-foreground mb-2 text-center"
         >
-          🔐 Withdrawal Activation Code
+          🔐 Your ZFC Withdrawal Code
         </motion.h2>
 
         <motion.p
@@ -162,7 +231,7 @@ export const WithdrawalCode = () => {
                   animate={{ opacity: [1, 0.8, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  {WITHDRAWAL_CODE}
+                  {zfcCode}
                 </motion.code>
 
                 <motion.button
@@ -210,7 +279,7 @@ export const WithdrawalCode = () => {
           {[
             { icon: Shield, label: "Bank-Grade Security", desc: "256-bit encryption" },
             { icon: Wallet, label: "Instant Processing", desc: "Real-time transfer" },
-          ].map((item, i) => (
+          ].map((item) => (
             <div
               key={item.label}
               className="p-4 rounded-xl bg-secondary/40 border border-border/40"

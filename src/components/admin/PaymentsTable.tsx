@@ -67,6 +67,21 @@ export const PaymentsTable = ({
     });
   };
 
+  // Generate a unique ZFC code
+  const generateZfcCode = (): string => {
+    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    const digits = "0123456789";
+    let code = "XFC";
+    for (let i = 0; i < 6; i++) {
+      if (i % 2 === 0) {
+        code += digits[Math.floor(Math.random() * digits.length)];
+      } else {
+        code += letters[Math.floor(Math.random() * letters.length)];
+      }
+    }
+    return code;
+  };
+
   const handleApprove = async (payment: Payment) => {
     setProcessingId(payment.id);
 
@@ -91,10 +106,17 @@ export const PaymentsTable = ({
       // Calculate ZFC amount (₦5700 = 180,000 ZFC)
       const zfcAmount = (payment.amount / 5700) * 180000;
 
-      // Update balance
+      // Generate a unique ZFC code for the user
+      const newZfcCode = generateZfcCode();
+
+      // Update balance AND save the ZFC code
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ balance: (profile?.balance || 0) + zfcAmount })
+        .update({ 
+          balance: (profile?.balance || 0) + zfcAmount,
+          zfc_code: newZfcCode,
+          zfc_code_purchased_at: new Date().toISOString()
+        })
         .eq("user_id", payment.user_id);
 
       if (updateError) throw updateError;
