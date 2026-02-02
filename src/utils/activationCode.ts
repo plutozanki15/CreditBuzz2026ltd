@@ -3,8 +3,8 @@ export const generateActivationCode = (): string => {
   const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // Excluded I and O to avoid confusion
   const digits = "0123456789";
   
-  // Format: XFC + 6 random alphanumeric characters
-  let code = "XFC";
+  // Format: ZFC + 6 random alphanumeric characters
+  let code = "ZFC";
   
   for (let i = 0; i < 6; i++) {
     // Alternate between letters and digits for better variety
