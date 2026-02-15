@@ -59,12 +59,13 @@ export const Dashboard = () => {
   } = usePaymentState(user?.id);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
-  // Balance is derived from profile - null means "loading/unknown"
-  const [localBalance, setLocalBalance] = useState<number | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
+  // Only used for optimistic claim updates - starts null, set after a claim
+  const [claimBoost, setClaimBoost] = useState(0);
   
-  // Display balance: prioritize local state (after updates), then profile, show skeleton if both null
-  const displayBalance = localBalance !== null ? localBalance : (profile?.balance ?? null);
+  // Balance: profile balance + any optimistic claim boost applied this session
+  const profileBalance = profile?.balance ?? null;
+  const displayBalance = profileBalance !== null ? Number(profileBalance) + claimBoost : null;
   const isBalanceLoading = displayBalance === null;
   const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
@@ -88,25 +89,20 @@ export const Dashboard = () => {
     }
   }, [paymentLoading, needsStatusAcknowledgement, navigate]);
 
-  // Sync balance from profile - update local state when profile changes
+  // Reset claimBoost when profile balance updates from server
   useEffect(() => {
     if (profile?.balance !== undefined && profile?.balance !== null) {
-      const numBalance = Number(profile.balance);
-      if (!isNaN(numBalance) && numBalance >= 0) {
-        setLocalBalance(numBalance);
-      }
+      setClaimBoost(0);
     }
   }, [profile?.balance]);
 
-  // Real-time balance and ZFC code subscription for instant updates
+  // Real-time ZFC code notification only (no balance manipulation)
   useEffect(() => {
     if (!profile?.user_id) return;
-
-    // Track current ZFC code to detect new purchases
     const currentZfcCode = (profile as typeof profile & { zfc_code?: string })?.zfc_code;
 
     const channel = supabase
-      .channel("dashboard-balance-updates")
+      .channel("dashboard-zfc-updates")
       .on(
         "postgres_changes",
         {
@@ -116,15 +112,7 @@ export const Dashboard = () => {
           filter: `user_id=eq.${profile.user_id}`,
         },
         (payload) => {
-          const newData = payload.new as { balance?: number; zfc_code?: string };
-          const newBalance = Number(newData.balance);
-          
-          // Update balance if valid
-          if (!isNaN(newBalance) && newBalance >= 0) {
-            setLocalBalance(newBalance);
-          }
-          
-          // Check if ZFC code was just purchased (wasn't there before, now it is)
+          const newData = payload.new as { zfc_code?: string };
           if (newData.zfc_code && newData.zfc_code !== currentZfcCode) {
             toast({
               title: "🎉 ZFC Code Purchased!",
@@ -178,7 +166,7 @@ export const Dashboard = () => {
     if (!canClaim || isClaiming || !profile?.user_id || !user?.id) return;
     
     setIsClaiming(true);
-    const currentBalance = localBalance !== null ? localBalance : (profile?.balance ?? 0);
+    const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
     
     try {
       // Start cooldown first (server-side persistence)
@@ -201,9 +189,8 @@ export const Dashboard = () => {
         return;
       }
       
-      // SUCCESS - Now update UI and save claim to database
-      const newBalance = currentBalance + 10000;
-      setLocalBalance(newBalance);
+      // SUCCESS - optimistic UI update by adding 10k boost
+      setClaimBoost(prev => prev + 10000);
       
       // Save claim to database for history
       await addClaimToDatabase(10000);
