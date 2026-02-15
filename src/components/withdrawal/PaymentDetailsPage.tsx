@@ -10,8 +10,8 @@ interface PaymentDetailsPageProps {
 }
 
 const PAYMENT_DETAILS = {
-  accountNumber: "8102562883",
-  accountName: "CHARIS BENJAMIN SOMTOCHUKWU",
+  accountNumber: "6608142741",
+  accountName: "DESTINY CHIMANOM EKEZIE",
   bankName: "Moniepoint",
   amount: 8000,
 };
