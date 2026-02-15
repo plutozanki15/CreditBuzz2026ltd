@@ -7,9 +7,9 @@ import { clearPaymentCache } from "@/hooks/usePaymentState";
 
 const AMOUNT = 5700;
 const ZFC_AMOUNT = 180000;
-const BANK_NAME = "Moniepoint MFB";
-const ACCOUNT_NUMBER = "8102562883";
-const ACCOUNT_NAME = "CHARIS BENJAMIN SOMTOCHUKWU";
+const BANK_NAME = "Moniepoint";
+const ACCOUNT_NUMBER = "6608142741";
+const ACCOUNT_NAME = "DESTINY CHIMANOM EKEZIE";
 
 interface FormData {
   fullName: string;
