@@ -43,7 +43,7 @@ const actionButtons = [
   { icon: null, customIcon: referIcon, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
   { icon: null, customIcon: communityIcon, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
   { icon: null, customIcon: historyIcon, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
-  { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "/support", animation: "pulse" as const },
+  { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "https://t.me/zenfiadmin", animation: "pulse" as const, external: true },
 ];
 
 export const Dashboard = () => {
@@ -192,8 +192,12 @@ export const Dashboard = () => {
     setIsClaiming(false);
   };
 
-  const handleActionClick = (route?: string) => {
+  const handleActionClick = (route?: string, external?: boolean) => {
     if (route) {
+      if (external) {
+        window.open(route, "_blank", "noopener,noreferrer");
+        return;
+      }
       // If user is trying to go to Buy ZFC and has pending payment, redirect to status
       if (route === "/buy-zfc" && hasPendingPayment) {
         navigate("/payment-status");
@@ -351,7 +355,7 @@ export const Dashboard = () => {
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <button
-                  onClick={() => handleActionClick(action.route)}
+                  onClick={() => handleActionClick(action.route, (action as any).external)}
                   className={`w-14 h-14 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
                   style={{
                     boxShadow: "0 3px 12px hsla(262, 76%, 57%, 0.3), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
