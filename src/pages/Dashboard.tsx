@@ -247,7 +247,10 @@ export const Dashboard = () => {
       <FloatingParticles />
       
       {showOnboarding && (
-        <OnboardingModal onComplete={handleOnboardingComplete} />
+        <OnboardingModal 
+          onComplete={handleOnboardingComplete}
+          isNewAccount={!!profile?.created_at && (Date.now() - new Date(profile.created_at).getTime()) < 30 * 60 * 1000}
+        />
       )}
       
       <ProfilePanel isOpen={showProfilePanel} onClose={() => setShowProfilePanel(false)} />
