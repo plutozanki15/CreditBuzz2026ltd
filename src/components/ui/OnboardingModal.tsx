@@ -4,10 +4,11 @@ import { LuxuryButton } from "./LuxuryButton";
 
 interface OnboardingModalProps {
   onComplete: () => void;
+  isNewAccount?: boolean;
 }
 
-export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
-  // Step order: community FIRST, notifications SECOND, bonus THIRD
+export const OnboardingModal = ({ onComplete, isNewAccount = false }: OnboardingModalProps) => {
+  // If not a new account, skip the bonus step entirely
   const [step, setStep] = useState<"community" | "notifications" | "bonus">("community");
   const [communityJoined, setCommunityJoined] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
@@ -31,11 +32,19 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
     } catch {
       console.log("Notifications not supported");
     }
-    setStep("bonus");
+    if (isNewAccount) {
+      setStep("bonus");
+    } else {
+      onComplete();
+    }
   };
 
   const handleSkipNotifications = () => {
-    setStep("bonus");
+    if (isNewAccount) {
+      setStep("bonus");
+    } else {
+      onComplete();
+    }
   };
 
   const handleClaimBonus = () => {
@@ -225,21 +234,11 @@ export const OnboardingModal = ({ onComplete }: OnboardingModalProps) => {
 
           {/* Step indicators */}
           <div className="flex justify-center gap-2 mt-5">
-            <div
-              className={`w-2 h-2 rounded-full transition-colors ${
-                step === "community" ? "bg-violet" : "bg-muted"
-              }`}
-            />
-            <div
-              className={`w-2 h-2 rounded-full transition-colors ${
-                step === "notifications" ? "bg-violet" : "bg-muted"
-              }`}
-            />
-            <div
-              className={`w-2 h-2 rounded-full transition-colors ${
-                step === "bonus" ? "bg-gold" : "bg-muted"
-              }`}
-            />
+            <div className={`w-2 h-2 rounded-full transition-colors ${step === "community" ? "bg-violet" : "bg-muted"}`} />
+            <div className={`w-2 h-2 rounded-full transition-colors ${step === "notifications" ? "bg-violet" : "bg-muted"}`} />
+            {isNewAccount && (
+              <div className={`w-2 h-2 rounded-full transition-colors ${step === "bonus" ? "bg-gold" : "bg-muted"}`} />
+            )}
           </div>
         </div>
       </div>
