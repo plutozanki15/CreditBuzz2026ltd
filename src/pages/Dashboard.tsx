@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
@@ -90,9 +90,20 @@ export const Dashboard = () => {
   }, [paymentLoading, needsStatusAcknowledgement, navigate]);
 
   // Reset claimBoost when profile balance updates from server
+  // Only reset if server balance already includes the boost (i.e., server caught up)
+  const lastServerBalanceRef = useRef<number | null>(null);
   useEffect(() => {
     if (profile?.balance !== undefined && profile?.balance !== null) {
-      setClaimBoost(0);
+      const serverBalance = Number(profile.balance);
+      const prevServer = lastServerBalanceRef.current;
+      // If server balance went UP (meaning our update was persisted), safe to reset boost
+      if (prevServer !== null && serverBalance >= prevServer + claimBoost) {
+        setClaimBoost(0);
+      } else if (prevServer === null) {
+        // First load — no boost to worry about
+        setClaimBoost(0);
+      }
+      lastServerBalanceRef.current = serverBalance;
     }
   }, [profile?.balance]);
 
@@ -167,26 +178,45 @@ export const Dashboard = () => {
     
     setIsClaiming(true);
     const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
+    const newBalance = currentBalance + 10000;
     
     // INSTANT UI update - no waiting
     setClaimBoost(prev => prev + 10000);
+    
+    // Also update the localStorage cache immediately so it persists across refreshes
+    try {
+      const cached = localStorage.getItem("zenfi_profile_cache");
+      if (cached) {
+        const cachedProfile = JSON.parse(cached);
+        cachedProfile.balance = newBalance;
+        localStorage.setItem("zenfi_profile_cache", JSON.stringify(cachedProfile));
+      }
+    } catch (e) {
+      // Ignore cache errors
+    }
     
     toast({
       title: "₦10,000 Successfully Claimed!",
       description: "Your balance has been updated.",
     });
     
-    // Fire-and-forget server sync
+    // Fire-and-forget server sync with retry
     startCooldown().catch(console.error);
     
-    supabase
-      .from('profiles')
-      .update({ balance: currentBalance + 10000 })
-      .eq('user_id', profile.user_id)
-      .then(({ error }) => {
-        if (error) console.error("Balance sync error:", error);
-      });
+    const syncBalance = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ balance: newBalance })
+          .eq('user_id', profile.user_id);
+        
+        if (!error) return;
+        console.error(`Balance sync attempt ${i + 1} failed:`, error);
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+      }
+    };
     
+    syncBalance().catch(console.error);
     addClaimToDatabase(10000).catch(console.error);
 
     setIsClaiming(false);
