@@ -8,6 +8,7 @@ import { ActivationCodePage } from "@/components/withdrawal/ActivationCodePage";
 import { ActivationForm } from "@/components/withdrawal/ActivationForm";
 import { PaymentDetailsPage } from "@/components/withdrawal/PaymentDetailsPage";
 import { PaymentNotConfirmed } from "@/components/withdrawal/PaymentNotConfirmed";
+import { WeekendOnlyGate } from "@/components/withdrawal/WeekendOnlyGate";
 import { useWithdrawalFlow, WithdrawalFlowStep } from "@/hooks/useWithdrawalFlow";
 import { supabase } from "@/integrations/supabase/client";
 import { generateActivationCode } from "@/utils/activationCode";
@@ -280,6 +281,25 @@ export const Withdrawal = () => {
   };
 
   const isFormValid = formData.accountNumber && formData.accountName && formData.bank && formData.amount && formData.zfcCode;
+
+  // Weekend check: Friday 00:00 to Sunday 23:50
+  const isWithdrawalOpen = (() => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 5=Fri, 6=Sat
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+
+    if (day === 5 || day === 6) return true; // Friday & Saturday: all day
+    if (day === 0) {
+      // Sunday: open until 23:50
+      return hours < 23 || (hours === 23 && minutes <= 50);
+    }
+    return false; // Mon-Thu closed
+  })();
+
+  if (!isWithdrawalOpen && currentStep === "form") {
+    return <WeekendOnlyGate />;
+  }
 
   // Render based on current step
   if (currentStep === "processing") {
