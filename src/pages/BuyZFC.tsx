@@ -169,7 +169,7 @@ export const BuyZFC = () => {
             </button>
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-violet" />
-              <span className="text-base font-semibold text-foreground">Buy ZFC</span>
+              <span className="text-base font-semibold text-foreground">Buy CBC</span>
             </div>
             <div className="w-9" />
           </div>

@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { clearPaymentCache } from "@/hooks/usePaymentState";
 
 const AMOUNT = 5700;
-const ZFC_AMOUNT = 180000;
+const CBC_AMOUNT = 180000;
 const BANK_NAME = "Moniepoint";
 const ACCOUNT_NUMBER = "6608142741";
 const ACCOUNT_NAME = "DESTINY CHIMANOM EKEZIE";
@@ -176,7 +176,7 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
             <div className="flex items-center gap-1.5 mb-1">
               <Sparkles className="w-3.5 h-3.5 text-gold" />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
-                ZFC Purchase
+                CBC Purchase
               </span>
             </div>
             <div className="text-2xl font-bold text-foreground tracking-tight">
@@ -185,7 +185,7 @@ export const AccountDetails = ({ userId, formData, onPaymentConfirmed }: Account
             <div className="text-xs text-muted-foreground mt-1">
               You will receive{" "}
               <span className="text-teal font-semibold">
-                {ZFC_AMOUNT.toLocaleString()} ZFC
+                {CBC_AMOUNT.toLocaleString()} CBC
               </span>
             </div>
           </div>
