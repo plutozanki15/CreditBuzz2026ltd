@@ -28,7 +28,7 @@ export const Referral = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   
   const referralCode = "ZF7829401";
-  const referralLink = `https://zenfi2026.vercel.app/signup?ref=${referralCode}#/signup`;
+  const referralLink = `https://creditbuzz2026ltd.vercel.app/#/signup?ref=${referralCode}`;
   
   const stats = {
     totalReferrals: 0,
