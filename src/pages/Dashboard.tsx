@@ -16,25 +16,21 @@ import { useClaimTimer } from "@/hooks/useClaimTimer";
 import { useRouteHistory } from "@/hooks/useRouteHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { usePaymentState } from "@/hooks/usePaymentState";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import {
   Settings,
   Wallet,
   Gift,
-  ChevronRight,
   Timer,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import carouselImage1 from "@/assets/carousel-1.jpeg";
-import carouselImage2 from "@/assets/carousel-2.jpeg";
+import creditbuzzLogo from "@/assets/creditbuzz-logo.jpg";
 import zfcIcon from "@/assets/zfc-icon.png";
 import referIcon from "@/assets/refer-icon.png";
 import supportIcon from "@/assets/support-icon.png";
 import historyIcon from "@/assets/history-icon.png";
 import communityIcon from "@/assets/community-icon.png";
 
-const carouselImages = [carouselImage1, carouselImage2];
+const carouselImages = [creditbuzzLogo, creditbuzzLogo];
 
 
 
@@ -67,10 +63,7 @@ export const Dashboard = () => {
   const profileBalance = profile?.balance ?? null;
   const displayBalance = profileBalance !== null ? Number(profileBalance) + claimBoost : null;
   const isBalanceLoading = displayBalance === null;
-  const [currentSlide, setCurrentSlide] = useState(0);
   const { canClaim, remainingTime, startCooldown } = useClaimTimer();
-
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 4000 })]);
   
   // Track route for persistence
   useRouteHistory();
@@ -139,13 +132,6 @@ export const Dashboard = () => {
     };
   }, [profile?.user_id, profile]);
 
-  // Update carousel slide indicator
-  useEffect(() => {
-    if (!emblaApi) return;
-    const onSelect = () => setCurrentSlide(emblaApi.selectedScrollSnap());
-    emblaApi.on("select", onSelect);
-    return () => { emblaApi.off("select", onSelect); };
-  }, [emblaApi]);
 
   useEffect(() => {
     const onboardingComplete = localStorage.getItem("creditbuzz_onboarding_complete");
@@ -430,59 +416,45 @@ export const Dashboard = () => {
         >
           <div className="flex items-center justify-between mb-2 px-1">
             <h2 className="text-sm font-display font-semibold">Featured</h2>
-            <button className="flex items-center gap-0.5 text-[10px] text-teal hover:underline">
-              View all <ChevronRight className="w-3 h-3" />
-            </button>
           </div>
           
-          <div className="overflow-hidden rounded-2xl" ref={emblaRef}>
-            <div className="flex">
-              {carouselImages.map((image, index) => (
-                <div 
-                  key={index}
-                  className="flex-[0_0_100%] min-w-0 rounded-xl overflow-hidden relative h-32"
-                >
-                  <img 
-                    src={image} 
-                    alt={`Featured banner ${index + 1}`}
-                    className="w-full h-full object-cover object-center"
-                    style={{
-                      imageRendering: "auto",
-                      WebkitBackfaceVisibility: "hidden",
-                      backfaceVisibility: "hidden",
-                    }}
-                  />
-                  {/* Subtle gradient overlay for polish */}
-                  <div 
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                      background: "linear-gradient(180deg, transparent 60%, hsla(0, 0%, 0%, 0.3) 100%)",
-                    }}
-                  />
+          <div className="rounded-2xl overflow-hidden border border-violet/20 relative"
+            style={{
+              background: "linear-gradient(135deg, hsla(262, 76%, 57%, 0.08), hsla(174, 88%, 56%, 0.06))",
+            }}
+          >
+            {/* Glow orbs */}
+            <div className="absolute top-0 right-0 w-24 h-24 bg-violet/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-20 h-20 bg-teal/15 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="relative flex items-center gap-4 p-4">
+              <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden shadow-lg shadow-violet/20 border border-white/10">
+                <img 
+                  src={creditbuzzLogo} 
+                  alt="CreditBuzz"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] uppercase tracking-widest text-teal font-bold">Official</span>
+                  <span className="w-1 h-1 rounded-full bg-teal/60" />
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Platform</span>
                 </div>
-              ))}
+                <h3 className="font-display font-black text-base text-foreground leading-tight">CreditBuzz</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Secure · Fast · Rewarding</p>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <span className="text-[10px] text-violet font-semibold">www.CreditBuzz.online</span>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex justify-center gap-1.5 mt-2">
-            {carouselImages.map((_, index) => (
-              <button 
-                key={index}
-                onClick={() => emblaApi?.scrollTo(index)}
-                className={`h-1.5 rounded-full transition-all ${
-                  currentSlide === index 
-                    ? "bg-violet w-4" 
-                    : "bg-muted-foreground/30 w-1.5"
-                }`}
-              />
-            ))}
           </div>
         </div>
 
         {/* Secure Footer */}
         <div className="text-center pt-2 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
           <p className="text-[10px] text-muted-foreground/50">
-            🔒 Secure environment • Encrypted system • Powered by ZenFi
+            🔒 Secure environment • Encrypted system • Powered by CreditBuzz
           </p>
         </div>
       </main>

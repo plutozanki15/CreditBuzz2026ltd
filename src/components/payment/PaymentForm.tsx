@@ -89,8 +89,8 @@ export const PaymentForm = ({ onSubmit, defaultEmail = "", defaultName = "" }: P
             <div className="p-2 rounded-xl bg-teal/20">
               <TrendingUp className="w-5 h-5 text-teal" />
             </div>
-            <div>
-              <h3 className="font-bold text-foreground">ZFC Investment Package</h3>
+          <div>
+              <h3 className="font-bold text-foreground">CBC Investment Package</h3>
               <p className="text-xs text-muted-foreground">Limited time offer</p>
             </div>
           </div>
@@ -104,7 +104,7 @@ export const PaymentForm = ({ onSubmit, defaultEmail = "", defaultName = "" }: P
           </div>
           
           <p className="text-sm text-muted-foreground mt-2">
-            Get <span className="text-teal font-semibold">180,000 ZFC</span> credited instantly
+            Get <span className="text-teal font-semibold">180,000 CBC</span> credited instantly
           </p>
         </div>
       </motion.div>
