@@ -38,9 +38,9 @@ const carouselImages = [creditbuzzLogo];
 
 const actionButtons = [
   { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
-  { icon: null, customIcon: referIcon, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "bounce" as const },
+  { icon: null, customIcon: historyIcon, label: "Tasks", color: "from-gold to-magenta", route: "/history", animation: "bounce" as const },
   { icon: null, customIcon: communityIcon, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
-  { icon: null, customIcon: historyIcon, label: "History", color: "from-gold to-magenta", route: "/history", animation: "glow" as const },
+  { icon: null, customIcon: referIcon, label: "Refer & Earn", color: "from-magenta to-gold", route: "/referral", animation: "glow" as const },
   { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "https://t.me/zenfiadmin", animation: "pulse" as const, external: true },
 ];
 
