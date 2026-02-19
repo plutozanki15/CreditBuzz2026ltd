@@ -36,12 +36,14 @@ interface PaymentsTableProps {
   payments: Payment[];
   onPaymentUpdated: () => void;
   showArchived?: boolean;
+  filterStatus?: "approved" | "rejected" | "pending" | null;
 }
 
 export const PaymentsTable = ({
   payments,
   onPaymentUpdated,
   showArchived = false,
+  filterStatus = null,
 }: PaymentsTableProps) => {
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
   const [rejectPayment, setRejectPayment] = useState<Payment | null>(null);
@@ -67,7 +69,6 @@ export const PaymentsTable = ({
     });
   };
 
-  // Generate a unique ZFC code
   const generateZfcCode = (): string => {
     const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
     const digits = "0123456789";
@@ -86,7 +87,6 @@ export const PaymentsTable = ({
     setProcessingId(payment.id);
 
     try {
-      // Update payment status
       const { error: paymentError } = await supabase
         .from("payments")
         .update({ status: "approved" })
@@ -94,7 +94,6 @@ export const PaymentsTable = ({
 
       if (paymentError) throw paymentError;
 
-      // Get current balance
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("balance")
@@ -103,19 +102,15 @@ export const PaymentsTable = ({
 
       if (profileError) throw profileError;
 
-      // Calculate ZFC amount (₦5700 = 180,000 ZFC)
       const zfcAmount = (payment.amount / 5700) * 180000;
-
-      // Generate a unique ZFC code for the user
       const newZfcCode = generateZfcCode();
 
-      // Update balance AND save the ZFC code
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ 
+        .update({
           balance: (profile?.balance || 0) + zfcAmount,
           zfc_code: newZfcCode,
-          zfc_code_purchased_at: new Date().toISOString()
+          zfc_code_purchased_at: new Date().toISOString(),
         })
         .eq("user_id", payment.user_id);
 
@@ -161,6 +156,53 @@ export const PaymentsTable = ({
     } finally {
       setProcessingId(null);
       setRejectPayment(null);
+    }
+  };
+
+  const handleReApprove = async (payment: Payment) => {
+    setProcessingId(payment.id);
+    try {
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .update({ status: "approved" })
+        .eq("id", payment.id);
+
+      if (paymentError) throw paymentError;
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("balance")
+        .eq("user_id", payment.user_id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const zfcAmount = (payment.amount / 5700) * 180000;
+      const newZfcCode = generateZfcCode();
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({
+          balance: (profile?.balance || 0) + zfcAmount,
+          zfc_code: newZfcCode,
+          zfc_code_purchased_at: new Date().toISOString(),
+        })
+        .eq("user_id", payment.user_id);
+
+      if (updateError) throw updateError;
+
+      setSuccessMessage("Payment Re-Approved!");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+      onPaymentUpdated();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to re-approve payment",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -219,9 +261,11 @@ export const PaymentsTable = ({
     }
   };
 
-  const filteredPayments = payments.filter((p) =>
-    showArchived ? p.archived : !p.archived
-  );
+  const filteredPayments = payments.filter((p) => {
+    if (showArchived) return p.archived;
+    if (filterStatus) return p.status === filterStatus && !p.archived;
+    return !p.archived;
+  });
 
   return (
     <>
@@ -319,6 +363,22 @@ export const PaymentsTable = ({
                               <XCircle className="w-4 h-4" />
                             </button>
                           </>
+                        )}
+
+                        {/* Re-approve for rejected */}
+                        {payment.status === "rejected" && !payment.archived && (
+                          <button
+                            onClick={() => handleReApprove(payment)}
+                            disabled={isProcessing}
+                            className="p-2 rounded-lg bg-teal/10 hover:bg-teal/20 text-teal transition-all disabled:opacity-50"
+                            title="Re-approve"
+                          >
+                            {isProcessing ? (
+                              <div className="w-4 h-4 border-2 border-teal border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4" />
+                            )}
+                          </button>
                         )}
 
                         {/* Archive */}
