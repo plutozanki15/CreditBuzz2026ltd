@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
@@ -13,7 +14,13 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Star,
+  Coins,
+  Users,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 interface Transaction {
@@ -23,6 +30,84 @@ interface Transaction {
   date: string;
   status: "success" | "pending" | "failed";
 }
+
+const surveyTasks = [
+  {
+    id: 1,
+    title: "Join Site Survey",
+    description: "Complete a quick site survey & earn rewards",
+    link: "https://helpinghands.money",
+    reward: "+₦5,000",
+    badge: "HOT",
+    icon: Star,
+    iconBg: "linear-gradient(135deg, hsl(45, 100%, 51%), hsl(25, 100%, 55%))",
+    bgFrom: "hsla(45, 100%, 51%, 0.06)",
+    bgTo: "hsla(262, 76%, 57%, 0.04)",
+    borderColor: "hsla(45, 100%, 51%, 0.2)",
+    badgeBg: "hsla(45, 100%, 51%, 0.2)",
+    badgeColor: "hsl(45, 100%, 51%)",
+  },
+  {
+    id: 2,
+    title: "Referral Bonus Survey",
+    description: "Answer referral questions & get paid instantly",
+    link: "https://helpinghands.money",
+    reward: "+₦3,500",
+    badge: "NEW",
+    icon: Users,
+    iconBg: "linear-gradient(135deg, hsl(289, 100%, 65%), hsl(262, 76%, 57%))",
+    bgFrom: "hsla(289, 100%, 65%, 0.06)",
+    bgTo: "hsla(262, 76%, 57%, 0.04)",
+    borderColor: "hsla(289, 100%, 65%, 0.2)",
+    badgeBg: "hsla(289, 100%, 65%, 0.2)",
+    badgeColor: "hsl(289, 100%, 65%)",
+  },
+  {
+    id: 3,
+    title: "Earnings Growth Task",
+    description: "Help us improve & unlock extra earnings",
+    link: "https://helpinghands.money",
+    reward: "+₦4,000",
+    badge: "EARN",
+    icon: TrendingUp,
+    iconBg: "linear-gradient(135deg, hsl(174, 88%, 56%), hsl(174, 70%, 40%))",
+    bgFrom: "hsla(174, 88%, 56%, 0.06)",
+    bgTo: "hsla(262, 76%, 57%, 0.04)",
+    borderColor: "hsla(174, 88%, 56%, 0.2)",
+    badgeBg: "hsla(174, 88%, 56%, 0.2)",
+    badgeColor: "hsl(174, 88%, 56%)",
+  },
+  {
+    id: 4,
+    title: "Community Feedback",
+    description: "Share your experience and earn bonus credits",
+    link: "https://helpinghands.money",
+    reward: "+₦2,500",
+    badge: "EASY",
+    icon: Sparkles,
+    iconBg: "linear-gradient(135deg, hsl(262, 76%, 57%), hsl(174, 88%, 56%))",
+    bgFrom: "hsla(262, 76%, 57%, 0.06)",
+    bgTo: "hsla(174, 88%, 56%, 0.04)",
+    borderColor: "hsla(262, 76%, 57%, 0.2)",
+    badgeBg: "hsla(262, 76%, 57%, 0.2)",
+    badgeColor: "hsl(262, 76%, 57%)",
+  },
+  {
+    id: 5,
+    title: "Daily Reward Survey",
+    description: "Daily task — complete & collect your coins",
+    link: "https://helpinghands.money",
+    reward: "+₦6,000",
+    badge: "DAILY",
+    icon: Coins,
+    iconBg: "linear-gradient(135deg, hsl(35, 100%, 55%), hsl(45, 100%, 51%))",
+    bgFrom: "hsla(35, 100%, 55%, 0.06)",
+    bgTo: "hsla(45, 100%, 51%, 0.04)",
+    borderColor: "hsla(35, 100%, 55%, 0.2)",
+    badgeBg: "hsla(35, 100%, 55%, 0.2)",
+    badgeColor: "hsl(35, 100%, 55%)",
+  },
+];
 
 export const History = () => {
   const navigate = useNavigate();
@@ -334,6 +419,68 @@ export const History = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Earn More Tasks Section */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-display font-semibold">Earn More Tasks</h2>
+            <span className="text-[10px] text-gold font-semibold animate-pulse">🔥 Live</span>
+          </div>
+
+          {surveyTasks.map((task, index) => (
+            <motion.a
+              key={task.id}
+              href={task.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.12, type: "spring", stiffness: 120 }}
+              whileTap={{ scale: 0.97 }}
+              className="glass-card p-4 flex items-center gap-3 cursor-pointer relative overflow-hidden"
+              style={{
+                background: `linear-gradient(135deg, ${task.bgFrom}, ${task.bgTo})`,
+                border: `1px solid ${task.borderColor}`,
+              }}
+            >
+              {/* Icon */}
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: task.iconBg }}
+              >
+                <task.icon className="w-5 h-5 text-white" />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="font-semibold text-sm text-foreground truncate">{task.title}</p>
+                  <span
+                    className="px-1.5 py-0.5 rounded-full text-[9px] font-bold flex-shrink-0"
+                    style={{ background: task.badgeBg, color: task.badgeColor }}
+                  >
+                    {task.badge}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">{task.description}</p>
+              </div>
+
+              {/* Arrow + Reward */}
+              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                <span className="text-xs font-bold text-gold">{task.reward}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+              </div>
+
+              {/* Animated shimmer on active */}
+              <motion.div
+                className="absolute inset-0 rounded-xl pointer-events-none"
+                animate={{ opacity: [0, 0.06, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, delay: index * 0.4 }}
+                style={{ background: "linear-gradient(90deg, transparent, white, transparent)" }}
+              />
+            </motion.a>
+          ))}
         </div>
 
         {/* Security Footer */}
