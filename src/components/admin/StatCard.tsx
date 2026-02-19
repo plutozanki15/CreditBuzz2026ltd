@@ -8,6 +8,7 @@ interface StatCardProps {
   icon: LucideIcon;
   color: "violet" | "teal" | "gold" | "red";
   delay?: number;
+  onClick?: () => void;
 }
 
 const colorMap = {
@@ -37,7 +38,7 @@ const colorMap = {
   },
 };
 
-export const StatCard = ({ title, value, icon: Icon, color, delay = 0 }: StatCardProps) => {
+export const StatCard = ({ title, value, icon: Icon, color, delay = 0, onClick }: StatCardProps) => {
   const [displayValue, setDisplayValue] = useState(0);
   const colors = colorMap[color];
 
@@ -65,7 +66,8 @@ export const StatCard = ({ title, value, icon: Icon, color, delay = 0 }: StatCar
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay, duration: 0.4, ease: "easeOut" }}
-      className={`relative p-5 rounded-2xl ${colors.bg} border ${colors.border} backdrop-blur-xl shadow-lg ${colors.glow} overflow-hidden`}
+      onClick={onClick}
+      className={`relative p-5 rounded-2xl ${colors.bg} border ${colors.border} backdrop-blur-xl shadow-lg ${colors.glow} overflow-hidden ${onClick ? "cursor-pointer hover:scale-[1.03] active:scale-[0.97] transition-transform" : ""}`}
     >
       {/* Glow effect */}
       <div className={`absolute -top-10 -right-10 w-24 h-24 ${colors.bg} rounded-full blur-2xl opacity-50`} />
@@ -75,6 +77,9 @@ export const StatCard = ({ title, value, icon: Icon, color, delay = 0 }: StatCar
           <div className={`p-2.5 rounded-xl ${colors.bg} border ${colors.border}`}>
             <Icon className={`w-5 h-5 ${colors.text}`} />
           </div>
+          {onClick && (
+            <span className={`text-[9px] font-semibold ${colors.text} opacity-70`}>tap to view →</span>
+          )}
         </div>
         
         <motion.div
