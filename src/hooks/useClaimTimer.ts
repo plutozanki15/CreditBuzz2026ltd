@@ -15,12 +15,31 @@ export const useClaimTimer = (): ClaimTimerState & {
   startCooldown: () => Promise<void>;
   resetTimer: () => void;
 } => {
-  const [state, setState] = useState<ClaimTimerState>({
-    canClaim: false, // Start false until we verify with server
-    remainingTime: "00:00:00",
-    remainingMs: 0,
-    isLoading: true,
-  });
+  // Initialize immediately from localStorage so button is never wrongly blocked
+  const getInitialState = (): ClaimTimerState => {
+    const storedTimestamp = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!storedTimestamp) {
+      return { canClaim: true, remainingTime: "00:00:00", remainingMs: 0, isLoading: true };
+    }
+    const nextClaimTime = parseInt(storedTimestamp, 10);
+    const remaining = nextClaimTime - Date.now();
+    if (remaining <= 0) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      return { canClaim: true, remainingTime: "00:00:00", remainingMs: 0, isLoading: true };
+    }
+    return { canClaim: false, remainingTime: formatTime(remaining), remainingMs: remaining, isLoading: true };
+  };
+
+  const formatTimeStatic = (ms: number): string => {
+    if (ms <= 0) return "00:00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const [state, setState] = useState<ClaimTimerState>(getInitialState);
 
   const formatTime = (ms: number): string => {
     if (ms <= 0) return "00:00:00";
