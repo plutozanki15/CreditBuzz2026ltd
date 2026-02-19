@@ -16,10 +16,17 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const MAX_ENERGY = 100;
 const EARN_PER_TAP = 20;
-const ENERGY_REGEN_MS = 3000;
+const ENERGY_REGEN_MS = 60000; // 1 minute per energy unit
 const STORAGE_KEY = "tap_earn_state";
 
 interface TapParticle {
@@ -52,6 +59,7 @@ export const TapAndEarn = () => {
   const [particles, setParticles] = useState<TapParticle[]>([]);
   const [tapping, setTapping] = useState(false);
   const [tapCount, setTapCount] = useState(0);
+  const [showPrompt, setShowPrompt] = useState(false);
   const particleId = useRef(0);
   const syncTimeout = useRef<ReturnType<typeof setTimeout>>();
   const pendingSync = useRef(0);
@@ -84,7 +92,7 @@ export const TapAndEarn = () => {
 
   const handleTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (state.energy <= 0) {
-      toast({ title: "⚡ No energy!", description: "Wait for energy to recharge", variant: "destructive" });
+      setShowPrompt(true);
       return;
     }
 
@@ -395,6 +403,43 @@ export const TapAndEarn = () => {
           </div>
         </div>
       </motion.div>
+
+      {/* No Energy Prompt */}
+      <Dialog open={showPrompt} onOpenChange={setShowPrompt}>
+        <DialogContent className="glass-card border-violet/30 max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-display gradient-text">
+              <Zap className="w-5 h-5 text-gold" /> Energy Depleted!
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm pt-2">
+              You've used all your taps. Recharge by completing tasks or join our channel while you wait!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 mt-2">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                window.open("https://t.me/zenaboraofficial", "_blank", "noopener,noreferrer");
+                setShowPrompt(false);
+              }}
+              className="w-full py-3 rounded-xl font-display font-bold text-sm tracking-wide text-primary-foreground flex items-center justify-center gap-2"
+              style={{ background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))" }}
+            >
+              <Sparkles className="w-4 h-4" /> Join Our Channel
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setShowPrompt(false);
+                navigate("/dashboard");
+              }}
+              className="w-full py-3 rounded-xl font-display font-bold text-sm tracking-wide border border-violet/30 text-violet flex items-center justify-center gap-2 hover:bg-violet/10 transition-colors"
+            >
+              <Star className="w-4 h-4" /> Complete Tasks
+            </motion.button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
