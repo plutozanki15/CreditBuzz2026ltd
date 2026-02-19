@@ -163,16 +163,23 @@ export const Dashboard = () => {
   };
 
   const handleClaim = async () => {
-    if (!canClaim || isClaiming || !profile?.user_id || !user?.id) return;
-    
+    // Guard: must have a real user session
+    if (isClaiming) return;
+    if (!canClaim) return;
+
+    // Get user id from auth directly (profile may still be loading)
+    const userId = user?.id;
+    if (!userId) return;
+
     setIsClaiming(true);
+
     const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
     const newBalance = currentBalance + 10000;
-    
-    // INSTANT UI update - no waiting
+
+    // INSTANT UI update
     setClaimBoost(prev => prev + 10000);
-    
-    // Also update the localStorage cache immediately so it persists across refreshes
+
+    // Cache update
     try {
       const cached = localStorage.getItem("creditbuzz_profile_cache");
       if (cached) {
@@ -183,28 +190,28 @@ export const Dashboard = () => {
     } catch (e) {
       // Ignore cache errors
     }
-    
+
     toast({
       title: "₦10,000 Successfully Claimed!",
       description: "Your balance has been updated.",
     });
-    
-    // Fire-and-forget server sync with retry
+
+    // Start server-side cooldown (uses supabase.auth.getUser() internally)
     startCooldown().catch(console.error);
-    
+
     const syncBalance = async (retries = 3) => {
       for (let i = 0; i < retries; i++) {
         const { error } = await supabase
           .from('profiles')
           .update({ balance: newBalance })
-          .eq('user_id', profile.user_id);
-        
+          .eq('user_id', userId);
+
         if (!error) return;
         console.error(`Balance sync attempt ${i + 1} failed:`, error);
         if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
       }
     };
-    
+
     syncBalance().catch(console.error);
     addClaimToDatabase(10000).catch(console.error);
 
