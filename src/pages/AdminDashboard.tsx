@@ -427,19 +427,19 @@ export const AdminDashboard = () => {
                     <button
                       onClick={handleToggleWithdrawalMode}
                       disabled={isTogglingMode}
-                      className="relative w-14 h-8 rounded-full transition-all duration-400 focus:outline-none disabled:opacity-50"
+                      className="relative w-11 h-6 rounded-full transition-all duration-400 focus:outline-none disabled:opacity-50"
                       style={{
                         background: withdrawalMode === "daily"
                           ? "linear-gradient(135deg, hsl(174, 88%, 46%), hsl(174, 88%, 56%))"
                           : "linear-gradient(135deg, hsl(262, 56%, 37%), hsl(262, 76%, 57%))",
                         boxShadow: withdrawalMode === "daily"
-                          ? "0 4px 15px hsla(174, 88%, 56%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)"
-                          : "0 4px 15px hsla(262, 76%, 57%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)",
+                          ? "0 4px 12px hsla(174, 88%, 56%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)"
+                          : "0 4px 12px hsla(262, 76%, 57%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)",
                       }}
                     >
                       <motion.span
-                        className="absolute top-1.5 w-5 h-5 rounded-full bg-white shadow-lg"
-                        animate={{ x: withdrawalMode === "daily" ? 30 : 6 }}
+                        className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-lg"
+                        animate={{ x: withdrawalMode === "daily" ? 24 : 4 }}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
                     </button>
