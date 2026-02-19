@@ -35,7 +35,7 @@ import { toast } from "@/hooks/use-toast";
 import creditbuzzLogo from "@/assets/creditbuzz-logo.jpg";
 import carousel3 from "@/assets/carousel-3.jpeg";
 import carousel4 from "@/assets/carousel-4.jpeg";
-import zfcIcon from "@/assets/zfc-icon.png";
+import zfcIcon from "@/assets/cbc-icon.png";
 import referIcon from "@/assets/refer-icon.png";
 import supportIcon from "@/assets/support-icon.png";
 import historyIcon from "@/assets/history-icon.png";
