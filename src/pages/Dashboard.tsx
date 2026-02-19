@@ -24,6 +24,7 @@ import {
   Gift,
   Timer,
   ExternalLink,
+  ArrowLeft,
   Star,
   Coins,
   Users,
@@ -534,59 +535,65 @@ export const Dashboard = () => {
         </div>
       </main>
 
-      {/* ── TASKS SHEET ── */}
+      {/* ── TASKS PAGE ── */}
       {showTasksSheet && (
-        <div className="fixed inset-0 z-50 flex flex-col">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowTasksSheet(false)} />
-          <div
-            className="relative mt-auto w-full rounded-t-2xl overflow-hidden flex flex-col animate-fade-in-up"
-            style={{ maxHeight: "88vh", background: "hsl(var(--background))" }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-              <div>
-                <h2 className="text-base font-display font-bold">Earn More Tasks</h2>
-                <p className="text-[10px] text-muted-foreground">Complete tasks & earn rewards</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gold font-bold animate-pulse">🔥 Live</span>
-                <button onClick={() => setShowTasksSheet(false)} className="p-2 rounded-xl bg-secondary hover:bg-muted transition-colors">
-                  <span className="text-muted-foreground text-sm font-bold">✕</span>
-                </button>
-              </div>
+        <div className="fixed inset-0 z-50 flex flex-col bg-background animate-fade-in-up">
+          {/* Header */}
+          <header className="flex items-center gap-3 px-4 py-4 border-b border-border/40">
+            <button
+              onClick={() => setShowTasksSheet(false)}
+              className="p-2.5 rounded-xl bg-secondary/80 hover:bg-muted transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-lg font-display font-semibold tracking-tight">Earn More</h1>
+              <p className="text-[10px] text-muted-foreground">Complete tasks & earn rewards</p>
             </div>
-            {/* Tasks list */}
-            <div className="overflow-y-auto flex-1 px-4 py-3 space-y-2">
-              {surveyTasks.map((task, index) => (
-                <a
-                  key={task.id}
-                  href={task.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="glass-card p-3 flex items-center gap-3 cursor-pointer relative overflow-hidden hover:scale-[1.01] active:scale-[0.98] transition-all duration-200"
-                  style={{ background: `linear-gradient(135deg, ${task.bgFrom}, ${task.bgTo})`, border: `1px solid ${task.borderColor}`, display: "flex" }}
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: task.iconBg }}>
-                    <task.icon className="w-5 h-5 text-white" />
+            <span className="text-[10px] text-gold font-bold animate-pulse">🔥 Live</span>
+          </header>
+
+          {/* Tasks list */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div
+              className="p-4 rounded-2xl mb-2"
+              style={{ background: "hsla(45, 93%, 58%, 0.06)", border: "1px solid hsla(45, 93%, 58%, 0.15)" }}
+            >
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-gold font-semibold">💰 Earn rewards</span> by completing simple survey tasks. Tap any task to start.
+              </p>
+            </div>
+
+            {surveyTasks.map((task) => (
+              <a
+                key={task.id}
+                href={task.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block p-4 rounded-2xl relative overflow-hidden hover:scale-[1.01] active:scale-[0.98] transition-all duration-200"
+                style={{ background: `linear-gradient(135deg, ${task.bgFrom}, ${task.bgTo})`, border: `1px solid ${task.borderColor}` }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: task.iconBg }}>
+                    <task.icon className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="font-semibold text-sm text-foreground truncate">{task.title}</p>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <p className="font-display font-semibold text-sm text-foreground truncate">{task.title}</p>
                       <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold flex-shrink-0" style={{ background: task.badgeBg, color: task.badgeColor }}>{task.badge}</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground">{task.description}</p>
                   </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-sm font-bold text-gold">{task.reward}</span>
-                    <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    <span className="text-base font-display font-bold text-gold">{task.reward}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
-                </a>
-              ))}
-            </div>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       )}
-
       {/* ── HISTORY SHEET ── */}
       {showHistorySheet && (
         <div className="fixed inset-0 z-50 flex flex-col">
