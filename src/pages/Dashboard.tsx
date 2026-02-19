@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -106,7 +106,8 @@ export const Dashboard = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showProfilePanel, setShowProfilePanel] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [showTasksSheet, setShowTasksSheet] = useState(false);
+  const location = useLocation();
+  const [showTasksSheet, setShowTasksSheet] = useState(() => !!(location.state as any)?.openTasks);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<number[]>(() => {
     try {

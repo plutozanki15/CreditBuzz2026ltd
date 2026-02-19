@@ -431,7 +431,7 @@ export const TapAndEarn = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setShowPrompt(false);
-                navigate("/dashboard");
+                navigate("/dashboard", { state: { openTasks: true } });
               }}
               className="w-full py-3 rounded-xl font-display font-bold text-sm tracking-wide border border-violet/30 text-violet flex items-center justify-center gap-2 hover:bg-violet/10 transition-colors"
             >
