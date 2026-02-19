@@ -23,6 +23,12 @@ import {
   Wallet,
   Gift,
   Timer,
+  ExternalLink,
+  Star,
+  Coins,
+  Users,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import creditbuzzLogo from "@/assets/creditbuzz-logo.jpg";
@@ -35,6 +41,44 @@ import communityIcon from "@/assets/community-icon.png";
 const carouselImages = [creditbuzzLogo];
 
 
+
+const surveyTasks = [
+  {
+    id: 1, title: "Join Site Survey", description: "Complete a quick site survey & earn rewards",
+    link: "https://helpinghands.money", reward: "+₦5,000", badge: "HOT", icon: Star,
+    iconBg: "linear-gradient(135deg, hsl(45,100%,51%), hsl(25,100%,55%))",
+    bgFrom: "hsla(45,100%,51%,0.06)", bgTo: "hsla(262,76%,57%,0.04)",
+    borderColor: "hsla(45,100%,51%,0.2)", badgeBg: "hsla(45,100%,51%,0.2)", badgeColor: "hsl(45,100%,51%)",
+  },
+  {
+    id: 2, title: "Referral Bonus Survey", description: "Answer referral questions & get paid instantly",
+    link: "https://helpinghands.money", reward: "+₦3,500", badge: "NEW", icon: Users,
+    iconBg: "linear-gradient(135deg, hsl(289,100%,65%), hsl(262,76%,57%))",
+    bgFrom: "hsla(289,100%,65%,0.06)", bgTo: "hsla(262,76%,57%,0.04)",
+    borderColor: "hsla(289,100%,65%,0.2)", badgeBg: "hsla(289,100%,65%,0.2)", badgeColor: "hsl(289,100%,65%)",
+  },
+  {
+    id: 3, title: "Earnings Growth Task", description: "Help us improve & unlock extra earnings",
+    link: "https://helpinghands.money", reward: "+₦4,000", badge: "EARN", icon: TrendingUp,
+    iconBg: "linear-gradient(135deg, hsl(174,88%,56%), hsl(174,70%,40%))",
+    bgFrom: "hsla(174,88%,56%,0.06)", bgTo: "hsla(262,76%,57%,0.04)",
+    borderColor: "hsla(174,88%,56%,0.2)", badgeBg: "hsla(174,88%,56%,0.2)", badgeColor: "hsl(174,88%,56%)",
+  },
+  {
+    id: 4, title: "Community Feedback", description: "Share your experience and earn bonus credits",
+    link: "https://helpinghands.money", reward: "+₦2,500", badge: "EASY", icon: Sparkles,
+    iconBg: "linear-gradient(135deg, hsl(262,76%,57%), hsl(174,88%,56%))",
+    bgFrom: "hsla(262,76%,57%,0.06)", bgTo: "hsla(174,88%,56%,0.04)",
+    borderColor: "hsla(262,76%,57%,0.2)", badgeBg: "hsla(262,76%,57%,0.2)", badgeColor: "hsl(262,76%,57%)",
+  },
+  {
+    id: 5, title: "Daily Reward Survey", description: "Daily task — complete & collect your coins",
+    link: "https://helpinghands.money", reward: "+₦6,000", badge: "DAILY", icon: Coins,
+    iconBg: "linear-gradient(135deg, hsl(35,100%,55%), hsl(45,100%,51%))",
+    bgFrom: "hsla(35,100%,55%,0.06)", bgTo: "hsla(45,100%,51%,0.04)",
+    borderColor: "hsla(35,100%,55%,0.2)", badgeBg: "hsla(35,100%,55%,0.2)", badgeColor: "hsl(35,100%,55%)",
+  },
+];
 
 const actionButtons = [
   { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
@@ -408,16 +452,47 @@ export const Dashboard = () => {
           </div>
         </div>
 
-        {/* Info Card - Compact */}
-        <GlassCard 
-          className="text-center py-3 animate-fade-in-up"
-          style={{ animationDelay: "0.35s" }}
-        >
-          <h3 className="font-display font-semibold text-sm mb-1">Powered by Smart Infrastructure</h3>
-          <p className="text-xs text-muted-foreground">
-            Secured & encrypted • Optimized performance
-          </p>
-        </GlassCard>
+        {/* Earn More Tasks */}
+        <div className="space-y-2 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-sm font-display font-semibold">Earn More Tasks</h2>
+            <span className="text-[10px] text-gold font-semibold animate-pulse">🔥 Live</span>
+          </div>
+          <div className="space-y-2">
+            {surveyTasks.map((task, index) => (
+              <a
+                key={task.id}
+                href={task.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="glass-card p-3 flex items-center gap-3 cursor-pointer relative overflow-hidden hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 animate-fade-in-up"
+                style={{
+                  background: `linear-gradient(135deg, ${task.bgFrom}, ${task.bgTo})`,
+                  border: `1px solid ${task.borderColor}`,
+                  animationDelay: `${0.32 + index * 0.05}s`,
+                  display: "flex",
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: task.iconBg }}>
+                  <task.icon className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <p className="font-semibold text-xs text-foreground truncate">{task.title}</p>
+                    <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold flex-shrink-0" style={{ background: task.badgeBg, color: task.badgeColor }}>
+                      {task.badge}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground truncate">{task.description}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <span className="text-xs font-bold text-gold">{task.reward}</span>
+                  <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
 
         {/* Bottom Carousel - Auto-sliding */}
         <div 
