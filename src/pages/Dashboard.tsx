@@ -26,6 +26,7 @@ import {
   ExternalLink,
   ArrowLeft,
   Star,
+  Check,
   Coins,
   Users,
   Sparkles,
@@ -107,6 +108,12 @@ export const Dashboard = () => {
   const [isClaiming, setIsClaiming] = useState(false);
   const [showTasksSheet, setShowTasksSheet] = useState(false);
   const [showHistorySheet, setShowHistorySheet] = useState(false);
+  const [completedTasks, setCompletedTasks] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem("creditbuzz_completed_tasks");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [recentTransactions, setRecentTransactions] = useState<{id: string; amount: number; date: string; status: string; type: string}[]>([]);
   const [claimsLoading, setClaimsLoading] = useState(false);
   // Only used for optimistic claim updates - starts null, set after a claim
@@ -272,6 +279,48 @@ export const Dashboard = () => {
     addClaimToDatabase(10000).catch(console.error);
 
     setIsClaiming(false);
+  };
+
+  const handleTaskComplete = async (task: typeof surveyTasks[0]) => {
+    window.open(task.link, "_blank", "noopener,noreferrer");
+    if (completedTasks.includes(task.id)) return;
+    const userId = user?.id;
+    if (!userId) return;
+
+    const updatedCompleted = [...completedTasks, task.id];
+    setCompletedTasks(updatedCompleted);
+    localStorage.setItem("creditbuzz_completed_tasks", JSON.stringify(updatedCompleted));
+
+    const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
+    const newBalance = currentBalance + 5000;
+    setClaimBoost(prev => prev + 5000);
+
+    try {
+      const cached = localStorage.getItem("creditbuzz_profile_cache");
+      if (cached) {
+        const cachedProfile = JSON.parse(cached);
+        cachedProfile.balance = newBalance;
+        localStorage.setItem("creditbuzz_profile_cache", JSON.stringify(cachedProfile));
+      }
+    } catch (e) {}
+
+    toast({
+      title: "✅ Task Completed!",
+      description: "₦5,000 has been added to your balance.",
+    });
+
+    const syncBalance = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ balance: newBalance })
+          .eq('user_id', userId);
+        if (!error) return;
+        if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
+      }
+    };
+    syncBalance().catch(console.error);
+    addClaimToDatabase(5000).catch(console.error);
   };
 
   const fetchRecentTransactions = async () => {
@@ -564,33 +613,35 @@ export const Dashboard = () => {
               </p>
             </div>
 
-            {surveyTasks.map((task) => (
-              <a
+            {surveyTasks.map((task) => {
+              const isCompleted = completedTasks.includes(task.id);
+              return (
+              <button
                 key={task.id}
-                href={task.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-4 rounded-2xl relative overflow-hidden hover:scale-[1.01] active:scale-[0.98] transition-all duration-200"
+                onClick={() => handleTaskComplete(task)}
+                className={`block w-full text-left p-4 rounded-2xl relative overflow-hidden hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 ${isCompleted ? "opacity-60" : ""}`}
                 style={{ background: `linear-gradient(135deg, ${task.bgFrom}, ${task.bgTo})`, border: `1px solid ${task.borderColor}` }}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: task.iconBg }}>
-                    <task.icon className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: isCompleted ? "linear-gradient(135deg, hsl(142,71%,45%), hsl(142,60%,35%))" : task.iconBg }}>
+                    {isCompleted ? <Check className="w-6 h-6 text-white" /> : <task.icon className="w-6 h-6 text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-1">
                       <p className="font-display font-semibold text-sm text-foreground truncate">{task.title}</p>
-                      <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold flex-shrink-0" style={{ background: task.badgeBg, color: task.badgeColor }}>{task.badge}</span>
+                      <span className="px-1.5 py-0.5 rounded-full text-[8px] font-bold flex-shrink-0" style={{ background: isCompleted ? "hsla(142,71%,45%,0.2)" : task.badgeBg, color: isCompleted ? "hsl(142,71%,45%)" : task.badgeColor }}>{isCompleted ? "DONE" : task.badge}</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">{task.description}</p>
+                    <p className="text-[11px] text-muted-foreground">{isCompleted ? "Completed — ₦5,000 added" : task.description}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                    <span className="text-base font-display font-bold text-gold">{task.reward}</span>
-                    <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className={`text-base font-display font-bold ${isCompleted ? "text-teal" : "text-gold"}`}>{isCompleted ? "✓ Done" : task.reward}</span>
+                    {!isCompleted && <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />}
                   </div>
                 </div>
-              </a>
-            ))}
+              </button>
+              );
+            })}
+          
           </div>
         </div>
       )}
