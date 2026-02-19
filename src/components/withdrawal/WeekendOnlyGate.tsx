@@ -1,11 +1,41 @@
-import { Clock, Calendar, AlertTriangle, ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Clock, Calendar, AlertTriangle, ArrowLeft, Timer } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { useNavigate } from "react-router-dom";
 
+const useCountdownToFriday = () => {
+  const getTimeLeft = () => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun,1=Mon,...5=Fri,6=Sat
+    // Next Friday 00:00
+    let daysUntilFriday = (5 - day + 7) % 7;
+    if (daysUntilFriday === 0) daysUntilFriday = 7; // if it's Friday outside window, next week
+    const nextFriday = new Date(now);
+    nextFriday.setDate(now.getDate() + daysUntilFriday);
+    nextFriday.setHours(0, 0, 0, 0);
+    const diff = nextFriday.getTime() - now.getTime();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { days, hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTimeLeft(getTimeLeft()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return timeLeft;
+};
+
 export const WeekendOnlyGate = () => {
   const navigate = useNavigate();
-
+  const timeLeft = useCountdownToFriday();
   return (
     <div className="min-h-screen bg-background relative">
       <FloatingParticles />
@@ -89,6 +119,38 @@ export const WeekendOnlyGate = () => {
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>Closes</span>
               <span className="text-foreground font-medium">Sunday 11:50 PM</span>
+            </div>
+          </div>
+
+          {/* Countdown Timer */}
+          <div
+            className="p-4 rounded-xl space-y-3"
+            style={{ background: "hsla(262, 76%, 57%, 0.08)", border: "1px solid hsla(262, 76%, 57%, 0.2)" }}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <Timer className="w-4 h-4 text-violet" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-violet">Opens In</span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              {[
+                { val: timeLeft.days, label: "D" },
+                { val: timeLeft.hours, label: "H" },
+                { val: timeLeft.minutes, label: "M" },
+                { val: timeLeft.seconds, label: "S" },
+              ].map(({ val, label }, i) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <div
+                    className="w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                    style={{ background: "hsla(262, 76%, 57%, 0.15)", border: "1px solid hsla(262, 76%, 57%, 0.25)" }}
+                  >
+                    <span className="text-lg font-display font-bold text-foreground leading-none">
+                      {String(val).padStart(2, "0")}
+                    </span>
+                    <span className="text-[8px] font-semibold text-muted-foreground uppercase">{label}</span>
+                  </div>
+                  {i < 3 && <span className="text-violet font-bold text-lg">:</span>}
+                </div>
+              ))}
             </div>
           </div>
 
