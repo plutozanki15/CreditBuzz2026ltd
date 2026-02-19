@@ -469,7 +469,7 @@ export const Dashboard = () => {
                   }}
                 >
                   {action.customIcon ? (
-                    <img src={action.customIcon} alt={action.label} className="w-7 h-7 rounded-full object-cover" />
+                    <img src={action.customIcon} alt={action.label} className="w-full h-full rounded-xl object-cover" />
                   ) : action.icon && (
                     <AnimatedIcon 
                       icon={action.icon} 
