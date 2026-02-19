@@ -17,6 +17,8 @@ import {
   User,
   ShieldCheck,
   X,
+  CalendarDays,
+  Clock,
 } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { useAuth } from "@/hooks/useAuth";
@@ -339,30 +341,112 @@ export const AdminDashboard = () => {
                 onClick={() => handleStatCardClick("rejected-payments")} />
             </div>
 
-            {/* Withdrawal Mode Toggle */}
+            {/* Withdrawal Mode Control */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="p-5 rounded-2xl bg-secondary/30 border border-border/40"
+              transition={{ delay: 0.35, type: "spring", stiffness: 200, damping: 20 }}
+              className="relative overflow-hidden rounded-2xl border border-border/40"
+              style={{
+                background: withdrawalMode === "daily"
+                  ? "linear-gradient(135deg, hsla(174, 88%, 56%, 0.08), hsla(174, 88%, 56%, 0.03))"
+                  : "linear-gradient(135deg, hsla(262, 76%, 57%, 0.08), hsla(262, 76%, 57%, 0.03))",
+              }}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">Withdrawal Access</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {withdrawalMode === "weekly" ? "Weekend only (Fri–Sun)" : "Open every day"}
-                  </p>
-                </div>
+              {/* Decorative glow */}
+              <motion.div
+                className="absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl pointer-events-none"
+                animate={{
+                  background: withdrawalMode === "daily"
+                    ? "hsla(174, 88%, 56%, 0.15)"
+                    : "hsla(262, 76%, 57%, 0.15)",
+                }}
+                transition={{ duration: 0.5 }}
+              />
+
+              <div className="relative p-5 space-y-4">
+                {/* Section Header */}
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs font-semibold ${withdrawalMode === "weekly" ? "text-violet" : "text-muted-foreground"}`}>Weekly</span>
-                  <button
-                    onClick={handleToggleWithdrawalMode}
-                    disabled={isTogglingMode}
-                    className={`relative w-12 h-7 rounded-full transition-colors duration-300 ${withdrawalMode === "daily" ? "bg-teal" : "bg-secondary"}`}
+                  <motion.div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    animate={{
+                      background: withdrawalMode === "daily"
+                        ? "hsla(174, 88%, 56%, 0.2)"
+                        : "hsla(262, 76%, 57%, 0.2)",
+                    }}
+                    transition={{ duration: 0.4 }}
                   >
-                    <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${withdrawalMode === "daily" ? "translate-x-6" : "translate-x-1"}`} />
-                  </button>
-                  <span className={`text-xs font-semibold ${withdrawalMode === "daily" ? "text-teal" : "text-muted-foreground"}`}>Daily</span>
+                    <motion.div
+                      key={withdrawalMode}
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                    >
+                      {withdrawalMode === "daily" ? (
+                        <CalendarDays className="w-5 h-5 text-teal" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-violet" />
+                      )}
+                    </motion.div>
+                  </motion.div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground tracking-tight">Withdrawal Access</h3>
+                    <motion.p
+                      key={withdrawalMode}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-xs text-muted-foreground"
+                    >
+                      {withdrawalMode === "weekly" ? "Restricted to Fri — Sun only" : "Open to users every day"}
+                    </motion.p>
+                  </div>
+                </div>
+
+                {/* Toggle Row */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-background/50 border border-border/30">
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      className="w-2 h-2 rounded-full"
+                      animate={{
+                        backgroundColor: withdrawalMode === "daily" ? "hsl(174, 88%, 56%)" : "hsl(262, 76%, 57%)",
+                        boxShadow: withdrawalMode === "daily"
+                          ? "0 0 8px hsla(174, 88%, 56%, 0.6)"
+                          : "0 0 8px hsla(262, 76%, 57%, 0.6)",
+                      }}
+                      transition={{ duration: 0.4 }}
+                    />
+                    <span className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                      {withdrawalMode === "daily" ? "Daily Mode" : "Weekly Mode"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors duration-300 ${withdrawalMode === "weekly" ? "text-violet" : "text-muted-foreground/50"}`}>
+                      WKL
+                    </span>
+                    <button
+                      onClick={handleToggleWithdrawalMode}
+                      disabled={isTogglingMode}
+                      className="relative w-14 h-8 rounded-full transition-all duration-400 focus:outline-none disabled:opacity-50"
+                      style={{
+                        background: withdrawalMode === "daily"
+                          ? "linear-gradient(135deg, hsl(174, 88%, 46%), hsl(174, 88%, 56%))"
+                          : "linear-gradient(135deg, hsl(262, 56%, 37%), hsl(262, 76%, 57%))",
+                        boxShadow: withdrawalMode === "daily"
+                          ? "0 4px 15px hsla(174, 88%, 56%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)"
+                          : "0 4px 15px hsla(262, 76%, 57%, 0.4), inset 0 1px 1px hsla(0,0%,100%,0.2)",
+                      }}
+                    >
+                      <motion.span
+                        className="absolute top-1.5 w-5 h-5 rounded-full bg-white shadow-lg"
+                        animate={{ x: withdrawalMode === "daily" ? 30 : 6 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    </button>
+                    <span className={`text-[11px] font-bold uppercase tracking-widest transition-colors duration-300 ${withdrawalMode === "daily" ? "text-teal" : "text-muted-foreground/50"}`}>
+                      DLY
+                    </span>
+                  </div>
                 </div>
               </div>
             </motion.div>
