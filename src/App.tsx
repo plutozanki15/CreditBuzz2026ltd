@@ -15,7 +15,7 @@ import { Settings } from "./pages/Settings";
 import { Community } from "./pages/Community";
 import { Withdrawal } from "./pages/Withdrawal";
 import { WithdrawalCode } from "./pages/WithdrawalCode";
-import { Referral } from "./pages/Referral";
+import { TapAndEarn } from "./pages/TapAndEarn";
 import { BuyZFC } from "./pages/BuyZFC";
 import { PaymentsPending } from "./pages/PaymentsPending";
 import { PaymentStatus } from "./pages/PaymentStatus";
@@ -85,7 +85,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/withdrawal" element={<Withdrawal />} />
           <Route path="/withdrawal-code" element={<WithdrawalCode />} />
-          <Route path="/referral" element={<Referral />} />
+          <Route path="/referral" element={<TapAndEarn />} />
           <Route path="/buy-zfc" element={<BuyZFC />} />
           <Route path="/payments" element={<PaymentsPending />} />
           <Route path="/payment-status" element={<PaymentStatus />} />
