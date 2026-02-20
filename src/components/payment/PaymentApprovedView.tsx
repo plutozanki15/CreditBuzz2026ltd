@@ -141,7 +141,7 @@ export const PaymentApprovedView = ({ onContinue }: PaymentApprovedViewProps) =>
         transition={{ delay: 0.6 }}
         className="text-sm text-muted-foreground max-w-xs mb-4 leading-relaxed"
       >
-        Your ZFC has been successfully credited to your wallet. You're now eligible to make withdrawals.
+        Your CBC has been successfully credited to your wallet. You're now eligible to make withdrawals.
       </motion.p>
 
       {/* Amount Badge */}

@@ -30,7 +30,7 @@ import {
 export const Settings = () => {
   const navigate = useNavigate();
   const { signOut } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -284,8 +284,8 @@ export const Settings = () => {
           )}
         </GlassCard>
 
-        {/* Admin Panel - Only show for admins */}
-        {isAdmin && (
+        {/* Admin Panel - Only show for admins (no loading gate so it appears instantly) */}
+        {!roleLoading && isAdmin && (
           <motion.button
             onClick={() => navigate("/admin")}
             className="w-full animate-fade-in-up"

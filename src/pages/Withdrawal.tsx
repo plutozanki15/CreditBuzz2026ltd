@@ -182,7 +182,7 @@ export const Withdrawal = () => {
     const isValidActivationCode = userActivationCode && enteredCode === userActivationCode.toUpperCase();
     
     if (!isValidPurchasedCode && !isValidActivationCode) {
-      setZfcError("Invalid ZFC code. Please purchase a valid ZFC code to continue.");
+      setZfcError("Invalid CBC code. Please purchase a valid CBC code to continue.");
       return;
     }
 
@@ -509,9 +509,9 @@ export const Withdrawal = () => {
                 />
               </div>
 
-              {/* ZFC Code */}
+              {/* CBC Code */}
               <div className="space-y-1.5">
-                <label className="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium">ZFC Code</label>
+                <label className="text-[11px] uppercase tracking-wider text-muted-foreground/80 font-medium">CBC Code</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
                   <input
@@ -532,7 +532,7 @@ export const Withdrawal = () => {
               </div>
             </div>
             
-            {/* ZFC Code Error Message */}
+            {/* CBC Code Error Message */}
             {zfcError && (
               <div
                 className="mt-3 p-3 rounded-xl flex flex-col gap-2 animate-fade-in"
@@ -550,7 +550,7 @@ export const Withdrawal = () => {
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-teal hover:text-teal/80 transition-colors ml-6"
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
-                  Buy ZFC Code
+                  Buy CBC Code
                 </Link>
               </div>
             )}

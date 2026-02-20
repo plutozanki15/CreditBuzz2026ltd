@@ -73,9 +73,9 @@ export const WithdrawalCode = () => {
         </header>
         <main className="relative z-10 px-4 pt-20 flex flex-col items-center text-center">
           <Lock className="w-16 h-16 text-muted-foreground/50 mb-4" />
-          <h2 className="text-xl font-bold text-foreground mb-2">No ZFC Code Found</h2>
+          <h2 className="text-xl font-bold text-foreground mb-2">No CBC Code Found</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-xs">
-            You need to purchase a ZFC code to enable withdrawals.
+            You need to purchase a CBC code to enable withdrawals.
           </p>
           <button
             onClick={() => navigate("/buy-zfc")}
@@ -84,7 +84,7 @@ export const WithdrawalCode = () => {
               background: "linear-gradient(135deg, hsl(var(--violet)), hsl(var(--magenta)))",
             }}
           >
-            Buy ZFC Code
+            Buy CBC Code
           </button>
         </main>
       </div>
@@ -177,7 +177,7 @@ export const WithdrawalCode = () => {
           transition={{ delay: 0.2 }}
           className="text-2xl font-bold text-foreground mb-2 text-center"
         >
-          🔐 Your ZFC Withdrawal Code
+          🔐 Your CBC Withdrawal Code
         </motion.h2>
 
         <motion.p
