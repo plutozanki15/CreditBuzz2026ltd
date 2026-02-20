@@ -34,7 +34,7 @@ export const ActivationForm = ({ expectedCode, onBack, onSubmit }: ActivationFor
     fullName: "",
     bankName: "",
     accountNumber: "",
-    activationCode: "",
+    activationCode: expectedCode,
   });
 
   const isFormValid = formData.fullName && formData.bankName && formData.accountNumber.length === 10 && formData.activationCode;
@@ -235,7 +235,7 @@ export const ActivationForm = ({ expectedCode, onBack, onSubmit }: ActivationFor
           <div className="text-center pt-2">
             <p className="text-[10px] text-muted-foreground/50 flex items-center justify-center gap-1">
               <Lock className="w-3 h-3" />
-              Secured by ZenFi • 256-bit SSL Encryption
+              Secured by CreditBuzz • 256-bit SSL Encryption
             </p>
           </div>
         </form>
