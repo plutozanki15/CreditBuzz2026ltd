@@ -489,9 +489,9 @@ export const Dashboard = () => {
             <span className="text-[10px] text-muted-foreground">Fast & reliable</span>
           </div>
           
-          <div className="grid grid-cols-5 gap-1.5">
-            {actionButtons.map((action, index) => {
-              const isHiddenWeekend = (action as any).weekendOnly && !isWeekendNow();
+          <div className="grid grid-cols-4 gap-1.5">
+            {actionButtons.filter(action => !(action as any).weekendOnly || isWeekendNow()).map((action, index) => {
+              const isHiddenWeekend = false;
               return (
               <div
                 key={action.label}
