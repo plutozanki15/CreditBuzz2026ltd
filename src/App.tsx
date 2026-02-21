@@ -73,13 +73,37 @@ const RoutePersistence = () => {
 
 const AppVisibilityRefresh = () => {
   useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
+    let hidden = false;
+
+    const markHidden = () => {
+      if (document.visibilityState === "hidden") hidden = true;
+    };
+    const reload = () => {
+      if (hidden && document.visibilityState === "visible") {
+        hidden = false;
         window.location.reload();
       }
     };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
+    const onFocus = () => {
+      if (hidden) {
+        hidden = false;
+        window.location.reload();
+      }
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) window.location.reload();
+    };
+
+    document.addEventListener("visibilitychange", markHidden);
+    document.addEventListener("visibilitychange", reload);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      document.removeEventListener("visibilitychange", markHidden);
+      document.removeEventListener("visibilitychange", reload);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+    };
   }, []);
   return null;
 };
