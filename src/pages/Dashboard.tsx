@@ -244,7 +244,8 @@ export const Dashboard = () => {
     // Guard: must have a real user session and not already claiming
     if (isClaiming || !canClaim) return;
 
-    const userId = user?.id;
+    // Use user.id if available, otherwise fall back to cached profile's user_id
+    const userId = user?.id || profile?.user_id;
     if (!userId) return;
 
     // Lock immediately — prevents double-tap
