@@ -235,7 +235,19 @@ export const TapAndEarn = () => {
 
           {/* The orb */}
           <motion.button
-            onClick={state.energy > 0 ? handleTap : () => setShowPrompt(true)}
+            onClick={(e) => {
+              if (state.energy <= 0) {
+                setShowPrompt(true);
+              } else {
+                handleTap(e);
+              }
+            }}
+            onTouchEnd={(e) => {
+              if (state.energy <= 0) {
+                e.preventDefault();
+                setShowPrompt(true);
+              }
+            }}
             className={`relative w-52 h-52 rounded-full select-none outline-none border-none ${
               state.energy > 0 ? "cursor-pointer" : "cursor-not-allowed"
             }`}
