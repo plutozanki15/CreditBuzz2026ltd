@@ -28,7 +28,7 @@ const contactMethods = [
     icon: Send,
     label: "Telegram",
     value: "@lumexzz",
-    link: "https://t.me/lumexzz",
+    link: "https://t.me/creditbuzzadmin",
     color: "from-violet to-magenta",
     description: "Fast & secure messaging"
   },
