@@ -152,7 +152,7 @@ export const useClaimTimer = (): ClaimTimerState & {
   const startCooldown = useCallback(async () => {
     const nextClaimTime = Date.now() + CLAIM_COOLDOWN_MS;
     
-    // Update local storage immediately for instant UI feedback
+    // Update local storage AND state immediately — this is the source of truth for instant UI
     localStorage.setItem(LOCAL_STORAGE_KEY, String(nextClaimTime));
     setState({
       canClaim: false,

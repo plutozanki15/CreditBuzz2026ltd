@@ -239,16 +239,18 @@ export const Dashboard = () => {
     setShowOnboarding(false);
   };
 
-  const handleClaim = async () => {
-    // Guard: must have a real user session
-    if (isClaiming) return;
-    if (!canClaim) return;
+  const handleClaim = () => {
+    // Guard: must have a real user session and not already claiming
+    if (isClaiming || !canClaim) return;
 
-    // Get user id from auth directly (profile may still be loading)
     const userId = user?.id;
     if (!userId) return;
 
+    // Lock immediately — prevents double-tap
     setIsClaiming(true);
+
+    // Start cooldown FIRST so canClaim flips to false instantly
+    startCooldown().catch(console.error);
 
     const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
     const newBalance = currentBalance + 10000;
@@ -273,16 +275,13 @@ export const Dashboard = () => {
       description: "Your balance has been updated.",
     });
 
-    // Start server-side cooldown (uses supabase.auth.getUser() internally)
-    startCooldown().catch(console.error);
-
+    // Fire-and-forget server sync
     const syncBalance = async (retries = 3) => {
       for (let i = 0; i < retries; i++) {
         const { error } = await supabase
           .from('profiles')
           .update({ balance: newBalance })
           .eq('user_id', userId);
-
         if (!error) return;
         console.error(`Balance sync attempt ${i + 1} failed:`, error);
         if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
@@ -292,7 +291,8 @@ export const Dashboard = () => {
     syncBalance().catch(console.error);
     addClaimToDatabase(10000).catch(console.error);
 
-    setIsClaiming(false);
+    // Release claiming lock after a short debounce to prevent rapid double-taps
+    setTimeout(() => setIsClaiming(false), 500);
   };
 
   const handleTaskComplete = async (task: typeof surveyTasks[0]) => {
