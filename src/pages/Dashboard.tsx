@@ -252,8 +252,12 @@ export const Dashboard = () => {
     setIsClaiming(true);
 
     // Start cooldown FIRST so canClaim flips to false instantly
-    startCooldown().catch(console.error);
-
+    startCooldown()
+      .then(() => setTimeout(() => setIsClaiming(false), 300))
+      .catch((err) => {
+        console.error(err);
+        setTimeout(() => setIsClaiming(false), 300);
+      });
     const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
     const newBalance = currentBalance + 10000;
 
@@ -293,8 +297,6 @@ export const Dashboard = () => {
     syncBalance().catch(console.error);
     addClaimToDatabase(10000).catch(console.error);
 
-    // Release claiming lock after a short debounce to prevent rapid double-taps
-    setTimeout(() => setIsClaiming(false), 500);
   };
 
   const handleTaskComplete = async (task: typeof surveyTasks[0]) => {
