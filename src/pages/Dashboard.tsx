@@ -84,12 +84,12 @@ const surveyTasks = [
   },
 ];
 
-const actionButtons = [
-  { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const, weekendOnly: true },
+const allActionButtons = [
+  { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "https://t.me/creditbuzzadmin", animation: "pulse" as const, external: true },
   { icon: null, customIcon: historyIcon, label: "Tasks", color: "from-gold to-magenta", route: "tasks", animation: "bounce" as const },
   { icon: null, customIcon: communityIcon, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
   { icon: null, customIcon: referIcon, label: "Tap & Earn", color: "from-magenta to-gold", route: "/referral", animation: "glow" as const },
-  { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "https://t.me/creditbuzzadmin", animation: "pulse" as const, external: true },
+  { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const, weekendOnly: true },
 ];
 
 // Helper: check if it's currently a weekend (Fri 00:00 - Sun 23:50)
@@ -489,8 +489,8 @@ export const Dashboard = () => {
             <span className="text-[10px] text-muted-foreground">Fast & reliable</span>
           </div>
           
-          <div className="grid grid-cols-4 gap-1.5">
-            {actionButtons.filter(action => !(action as any).weekendOnly || isWeekendNow()).map((action, index) => {
+          <div className={`grid gap-1.5 ${isWeekendNow() ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            {allActionButtons.filter(action => !(action as any).weekendOnly || isWeekendNow()).map((action, index) => {
               const isHiddenWeekend = false;
               return (
               <div
