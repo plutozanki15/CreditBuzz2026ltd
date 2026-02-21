@@ -71,12 +71,26 @@ const RoutePersistence = () => {
   return null;
 };
 
+const AppVisibilityRefresh = () => {
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        window.location.reload();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <HashRouter>
+        <AppVisibilityRefresh />
         <RoutePersistence />
         <PaymentStatusGate />
         <Routes>

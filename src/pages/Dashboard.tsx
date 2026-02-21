@@ -143,16 +143,6 @@ export const Dashboard = () => {
   // Track route for persistence
   useRouteHistory();
 
-  // Auto-refresh dashboard when user returns from background/minimized
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        window.location.reload();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
 
   // Redirect to payment status when payment is approved/rejected in real-time
   useEffect(() => {
