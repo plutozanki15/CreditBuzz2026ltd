@@ -49,18 +49,23 @@ const RoutePersistence = () => {
   const navigate = useNavigate();
   const { user, isLoading } = useAuth();
 
-  // On cold start/re-entry, ONLY redirect to /buy-zfc if user was on Account Details step.
-  // This allows users to return after leaving to pay and continue submitting their receipt.
-  useEffect(() => {
-    if (isLoading) return;
-    if (!user) return;
-    // Only intercept when landing on root routes
-    if (location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/dashboard") return;
+    // On cold start/re-entry, ONLY redirect to /buy-zfc if user was on Account Details step AND it's weekend.
+    // This allows users to return after leaving to pay and continue submitting their receipt.
+    useEffect(() => {
+      if (isLoading) return;
+      if (!user) return;
+      // Only intercept when landing on root routes
+      if (location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/dashboard") return;
 
-    // Check if user was in the middle of the Buy ZFC flow (on Account Details step)
-    if (hasPendingBuyZFCDetails()) {
-      navigate("/buy-zfc", { replace: true });
-    }
+      // Check if it's weekend (Fri 00:00 - Sun 23:50)
+      const now = new Date();
+      const day = now.getDay();
+      const isWeekend = day === 5 || day === 6 || (day === 0 && (now.getHours() < 23 || (now.getHours() === 23 && now.getMinutes() <= 50)));
+
+      // Check if user was in the middle of the Buy ZFC flow (on Account Details step)
+      if (isWeekend && hasPendingBuyZFCDetails()) {
+        navigate("/buy-zfc", { replace: true });
+      }
   }, [isLoading, user, location.pathname, navigate]);
 
   return null;
