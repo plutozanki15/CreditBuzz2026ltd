@@ -285,43 +285,15 @@ export const Dashboard = () => {
   const handleTaskComplete = async (task: typeof surveyTasks[0]) => {
     window.open(task.link, "_blank", "noopener,noreferrer");
     if (completedTasks.includes(task.id)) return;
-    const userId = user?.id;
-    if (!userId) return;
 
     const updatedCompleted = [...completedTasks, task.id];
     setCompletedTasks(updatedCompleted);
     localStorage.setItem("creditbuzz_completed_tasks", JSON.stringify(updatedCompleted));
 
-    const currentBalance = Number(profile?.balance ?? 0) + claimBoost;
-    const newBalance = currentBalance + 5000;
-    setClaimBoost(prev => prev + 5000);
-
-    try {
-      const cached = localStorage.getItem("creditbuzz_profile_cache");
-      if (cached) {
-        const cachedProfile = JSON.parse(cached);
-        cachedProfile.balance = newBalance;
-        localStorage.setItem("creditbuzz_profile_cache", JSON.stringify(cachedProfile));
-      }
-    } catch (e) {}
-
     toast({
       title: "✅ Task Completed!",
-      description: "₦5,000 has been added to your balance.",
+      description: "Task has been marked as done.",
     });
-
-    const syncBalance = async (retries = 3) => {
-      for (let i = 0; i < retries; i++) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ balance: newBalance })
-          .eq('user_id', userId);
-        if (!error) return;
-        if (i < retries - 1) await new Promise(r => setTimeout(r, 1000 * (i + 1)));
-      }
-    };
-    syncBalance().catch(console.error);
-    addClaimToDatabase(5000).catch(console.error);
   };
 
   const fetchRecentTransactions = async () => {

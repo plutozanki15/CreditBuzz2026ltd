@@ -235,8 +235,11 @@ export const TapAndEarn = () => {
 
           {/* The orb */}
           <motion.button
-            onClick={handleTap}
-            className="relative w-52 h-52 rounded-full cursor-pointer select-none outline-none border-none"
+            onClick={state.energy > 0 ? handleTap : () => setShowPrompt(true)}
+            disabled={state.energy <= 0}
+            className={`relative w-52 h-52 rounded-full select-none outline-none border-none ${
+              state.energy > 0 ? "cursor-pointer" : "cursor-not-allowed"
+            }`}
             style={{
               background: state.energy > 0
                 ? "radial-gradient(circle at 38% 32%, hsla(289, 100%, 80%, 0.9), hsl(var(--violet)) 45%, hsla(262, 76%, 35%, 0.95) 100%)"
@@ -244,8 +247,9 @@ export const TapAndEarn = () => {
               boxShadow: state.energy > 0
                 ? "inset 0 -10px 25px hsla(262, 50%, 20%, 0.6), inset 0 5px 20px hsla(289, 100%, 75%, 0.3)"
                 : "inset 0 -8px 20px hsla(0, 0%, 10%, 0.5)",
+              opacity: state.energy > 0 ? 1 : 0.5,
             }}
-            whileTap={{ scale: 0.9 }}
+            whileTap={state.energy > 0 ? { scale: 0.9 } : {}}
             animate={{ scale: tapping ? 0.9 : 1 }}
             transition={{ type: "spring", stiffness: 500, damping: 15 }}
           >

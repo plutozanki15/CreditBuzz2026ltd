@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const CLAIM_COOLDOWN_MS = 7 * 60 * 60 * 1000; // 7 hours in milliseconds
+const CLAIM_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 const LOCAL_STORAGE_KEY = "zenfi_claim_timestamp";
 
 export interface ClaimTimerState {
