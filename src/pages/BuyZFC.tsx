@@ -63,6 +63,16 @@ export const BuyZFC = () => {
   const navigate = useNavigate();
   const { user, profile, isLoading } = useAuth();
   const { hasPendingPayment, latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
+
+  // Redirect to dashboard if not weekend
+  useEffect(() => {
+    const now = new Date();
+    const day = now.getDay();
+    const isWeekend = day === 5 || day === 6 || (day === 0 && (now.getHours() < 23 || (now.getHours() === 23 && now.getMinutes() <= 50)));
+    if (!isWeekend) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
   
   // Restore state from localStorage immediately - no waiting
   const [currentStep, setCurrentStep] = useState<FlowStep>(() => {
