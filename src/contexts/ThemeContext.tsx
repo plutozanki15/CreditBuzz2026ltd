@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("zenfi_theme");
+    const saved = localStorage.getItem("creditbuzz_theme_ctx");
     return (saved as Theme) || "dark";
   });
 
@@ -30,7 +30,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       root.classList.remove("light");
     }
     
-    localStorage.setItem("zenfi_theme", theme);
+    localStorage.setItem("creditbuzz_theme_ctx", theme);
   }, [theme]);
 
   const toggleTheme = () => {

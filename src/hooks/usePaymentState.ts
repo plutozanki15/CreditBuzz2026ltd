@@ -24,10 +24,10 @@ interface PaymentState {
 }
 
 // Key for tracking acknowledged payments
-const ACKNOWLEDGED_KEY = "zenfi_acknowledged_payment";
+const ACKNOWLEDGED_KEY = "creditbuzz_acknowledged_payment";
 
 // Cache latest payment so UI can render instantly on app resume/cold start
-const LATEST_PAYMENT_CACHE_KEY = "zenfi_latest_payment_cache_v1";
+const LATEST_PAYMENT_CACHE_KEY = "creditbuzz_latest_payment_cache_v1";
 
 const readCachedLatestPayment = (userId: string | undefined): Payment | null => {
   if (!userId) return null;

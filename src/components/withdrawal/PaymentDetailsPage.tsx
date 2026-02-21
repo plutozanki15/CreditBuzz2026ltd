@@ -261,7 +261,7 @@ export const PaymentDetailsPage = ({ onPaymentMade }: PaymentDetailsPageProps) =
         >
           <Shield className="w-3.5 h-3.5" />
           <span className="text-[10px] uppercase tracking-widest font-medium">
-            Secured by ZenFi • 256-bit SSL
+            Secured by CreditBuzz • 256-bit SSL
           </span>
         </motion.div>
       </main>

@@ -179,7 +179,7 @@ export const PaymentRejectedView = ({ reason, onTryAgain }: PaymentRejectedViewP
 
         {/* Contact Support */}
         <motion.button
-          onClick={() => window.open("https://t.me/creditbuzzadmin", "_blank", "noopener,noreferrer")}
+          onClick={() => window.open("https://t.me/creditbuzz", "_blank", "noopener,noreferrer")}
           className="w-full py-3.5 rounded-2xl font-semibold text-foreground transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
           style={{
             background: "hsla(var(--secondary), 0.5)",

@@ -27,7 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
-const BUY_ZFC_STATE_KEY = "zenfi_buy_zfc_state";
+const BUY_ZFC_STATE_KEY = "creditbuzz_buy_cbc_state";
 
 const hasPendingBuyZFCDetails = (): boolean => {
   try {

@@ -14,7 +14,7 @@ export const OnboardingModal = ({ onComplete, isNewAccount = false }: Onboarding
   const [isClaiming, setIsClaiming] = useState(false);
 
   const handleJoinCommunity = () => {
-    window.open("https://whatsapp.com/channel/0029VbBuf3I23n3iPMYZnx2f", "_blank");
+    window.open("https://t.me/creditbuzz", "_blank");
     setCommunityJoined(true);
   };
 

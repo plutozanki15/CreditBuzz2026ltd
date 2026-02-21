@@ -28,7 +28,7 @@ export interface WithdrawalFlowState {
   timestamp: number;
 }
 
-const WITHDRAWAL_FLOW_KEY = "zenfi_withdrawal_flow";
+const WITHDRAWAL_FLOW_KEY = "creditbuzz_withdrawal_flow";
 const FLOW_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export const useWithdrawalFlow = () => {

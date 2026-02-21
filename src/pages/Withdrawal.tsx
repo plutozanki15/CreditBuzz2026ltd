@@ -32,7 +32,7 @@ const nigerianBanks = [
 ].sort();
 
 // Cache key for last known balance
-const BALANCE_CACHE_KEY = "zenfi_withdrawal_balance";
+const BALANCE_CACHE_KEY = "creditbuzz_withdrawal_balance";
 
 export const Withdrawal = () => {
   const navigate = useNavigate();
@@ -601,7 +601,7 @@ export const Withdrawal = () => {
           <div className="text-center pt-2 animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
             <p className="text-[10px] text-muted-foreground/50 flex items-center justify-center gap-1">
               <Lock className="w-3 h-3" />
-              Secured by ZenFi • 256-bit SSL Encryption
+              Secured by CreditBuzz • 256-bit SSL Encryption
             </p>
           </div>
         </form>

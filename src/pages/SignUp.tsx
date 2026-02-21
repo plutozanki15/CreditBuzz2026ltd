@@ -62,7 +62,7 @@ export const SignUp = () => {
     
     toast({
       title: "Account Created!",
-      description: "Welcome to ZenFi",
+      description: "Welcome to CreditBuzz",
     });
     navigate("/dashboard");
     setLoading(false);

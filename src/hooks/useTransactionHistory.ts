@@ -8,7 +8,7 @@ export interface Transaction {
   status: "success" | "pending" | "failed";
 }
 
-const STORAGE_KEY = "zenfi_transactions";
+const STORAGE_KEY = "creditbuzz_transactions";
 
 export const useTransactionHistory = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);

@@ -43,7 +43,7 @@ export const Community = () => {
   useRouteHistory();
 
   const handleJoinCommunity = () => {
-    window.open("https://whatsapp.com/channel/0029VbBuf3I23n3iPMYZnx2f", "_blank");
+    window.open("https://t.me/creditbuzz", "_blank");
   };
 
   return (
@@ -74,10 +74,10 @@ export const Community = () => {
             <Users className="w-8 h-8 text-violet" />
           </div>
           <h1 className="text-2xl font-display font-bold mb-2">
-            Join the ZenFi Community
+            Join the CreditBuzz Community
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-            Stay connected with verified ZenFi users, get official updates, rewards alerts, security notices, and community support.
+            Stay connected with verified CreditBuzz users, get official updates, rewards alerts, security notices, and community support.
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export const Community = () => {
         {/* Security Footer */}
         <div className="text-center pt-2 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
           <p className="text-[10px] text-muted-foreground/50">
-            🔒 Official ZenFi channel • Verified & secure
+            🔒 Official CreditBuzz channel • Verified & secure
           </p>
         </div>
       </main>

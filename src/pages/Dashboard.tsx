@@ -85,12 +85,25 @@ const surveyTasks = [
 ];
 
 const actionButtons = [
-  { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const },
+  { icon: null, customIcon: zfcIcon, label: "Buy CBC", color: "from-violet to-magenta", route: "/buy-zfc", animation: "pulse" as const, weekendOnly: true },
   { icon: null, customIcon: historyIcon, label: "Tasks", color: "from-gold to-magenta", route: "tasks", animation: "bounce" as const },
   { icon: null, customIcon: communityIcon, label: "Community", color: "from-teal to-violet", route: "/community", animation: "float" as const },
   { icon: null, customIcon: referIcon, label: "Tap & Earn", color: "from-magenta to-gold", route: "/referral", animation: "glow" as const },
   { icon: null, customIcon: supportIcon, label: "Support", color: "from-violet to-teal", route: "https://t.me/creditbuzzadmin", animation: "pulse" as const, external: true },
 ];
+
+// Helper: check if it's currently a weekend (Fri 00:00 - Sun 23:50)
+const isWeekendNow = () => {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun, 5=Fri, 6=Sat
+  if (day === 5 || day === 6) return true;
+  if (day === 0) {
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    return hours < 23 || (hours === 23 && minutes <= 50);
+  }
+  return false;
+};
 
 export const Dashboard = () => {
   const navigate = useNavigate();
@@ -162,13 +175,13 @@ export const Dashboard = () => {
     }
   }, [profile?.balance]);
 
-  // Real-time ZFC code notification only (no balance manipulation)
+  // Real-time CBC code notification only (no balance manipulation)
   useEffect(() => {
     if (!profile?.user_id) return;
     const currentZfcCode = (profile as typeof profile & { zfc_code?: string })?.zfc_code;
 
     const channel = supabase
-      .channel("dashboard-zfc-updates")
+      .channel("dashboard-cbc-updates")
       .on(
         "postgres_changes",
         {
@@ -477,15 +490,26 @@ export const Dashboard = () => {
           </div>
           
           <div className="grid grid-cols-5 gap-1.5">
-            {actionButtons.map((action, index) => (
+            {actionButtons.map((action, index) => {
+              const isHiddenWeekend = (action as any).weekendOnly && !isWeekendNow();
+              return (
               <div
                 key={action.label}
                 className="flex flex-col items-center gap-1 animate-fade-in-up"
                 style={{ animationDelay: `${0.25 + index * 0.03}s` }}
               >
                 <button
-                  onClick={() => handleActionClick(action.route, (action as any).external)}
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color}`}
+                  onClick={() => {
+                    if (isHiddenWeekend) {
+                      toast({
+                        title: "⏳ Available on Weekends",
+                        description: "CBC purchase opens on Friday. Make sure to buy your CBC code by Friday 11:57 AM!",
+                      });
+                      return;
+                    }
+                    handleActionClick(action.route, (action as any).external);
+                  }}
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center hover:scale-[1.08] active:scale-[0.92] transition-all duration-200 group bg-gradient-to-br ${action.color} ${isHiddenWeekend ? "opacity-40 grayscale" : ""}`}
                   style={{
                     boxShadow: "0 3px 12px hsla(262, 76%, 57%, 0.3), inset 0 1px 0 hsla(0, 0%, 100%, 0.1)",
                   }}
@@ -504,7 +528,8 @@ export const Dashboard = () => {
                   {action.label}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

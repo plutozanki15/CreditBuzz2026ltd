@@ -423,7 +423,7 @@ export const TapAndEarn = () => {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                window.open("https://t.me/zenaboraofficial", "_blank", "noopener,noreferrer");
+                window.open("https://t.me/creditbuzz", "_blank", "noopener,noreferrer");
                 setShowPrompt(false);
               }}
               className="w-full py-3 rounded-xl font-display font-bold text-sm tracking-wide text-primary-foreground flex items-center justify-center gap-2"
