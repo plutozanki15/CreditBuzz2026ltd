@@ -107,7 +107,7 @@ const isWeekendNow = () => {
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, profile, isBanned, isLoading: authLoading } = useAuth();
+  const { user, profile, isBanned, isLoading: authLoading, refreshProfile } = useAuth();
   const { 
     hasPendingPayment, 
     latestPayment, 
@@ -214,6 +214,21 @@ export const Dashboard = () => {
       setShowOnboarding(true);
     }
   }, []);
+
+  // Auto-refresh profile & claim timer when user returns from background
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refreshProfile();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+    };
+  }, [refreshProfile]);
 
   // Fetch recent transactions for history sheet on mount
   useEffect(() => {
