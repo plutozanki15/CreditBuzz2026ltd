@@ -77,17 +77,29 @@ export const useClaimTimer = (): ClaimTimerState & {
           .eq("user_id", user.id)
           .single();
 
+        // If a local cooldown was started AFTER this sync began, don't overwrite it
+        const localTarget = targetRef.current;
+
         if (!profile?.next_claim_time) {
-          targetRef.current = null;
-          localStorage.removeItem(LOCAL_STORAGE_KEY);
+          // Only clear if no local cooldown is active
+          if (!localTarget || localTarget <= Date.now()) {
+            targetRef.current = null;
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+          }
         } else {
           const serverTarget = new Date(profile.next_claim_time).getTime();
           if (serverTarget > Date.now()) {
-            targetRef.current = serverTarget;
-            localStorage.setItem(LOCAL_STORAGE_KEY, String(serverTarget));
+            // Use whichever is further in the future (local claim may be newer)
+            if (!localTarget || serverTarget > localTarget) {
+              targetRef.current = serverTarget;
+              localStorage.setItem(LOCAL_STORAGE_KEY, String(serverTarget));
+            }
           } else {
-            targetRef.current = null;
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            // Server says expired — only clear if local also expired
+            if (!localTarget || localTarget <= Date.now()) {
+              targetRef.current = null;
+              localStorage.removeItem(LOCAL_STORAGE_KEY);
+            }
           }
         }
         setState(computeState());
