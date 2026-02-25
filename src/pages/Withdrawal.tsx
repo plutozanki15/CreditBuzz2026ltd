@@ -138,6 +138,21 @@ export const Withdrawal = () => {
         .subscribe();
     };
 
+    // Listen for withdrawal mode changes in real-time
+    const modeChannel = supabase
+      .channel("withdrawal-mode")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "app_settings" },
+        (payload) => {
+          const row = payload.new as { key: string; value: string };
+          if (row.key === "withdrawal_mode") {
+            setWithdrawalMode(row.value as "weekly" | "daily");
+          }
+        }
+      )
+      .subscribe();
+
     let channel: ReturnType<typeof supabase.channel> | null = null;
     setupRealtimeSubscription().then((ch) => { channel = ch; });
 
@@ -145,6 +160,7 @@ export const Withdrawal = () => {
       if (channel) {
         supabase.removeChannel(channel);
       }
+      supabase.removeChannel(modeChannel);
     };
   }, [navigate]);
 
@@ -547,7 +563,11 @@ export const Withdrawal = () => {
                 </div>
                 <Link
                   to="/buy-zfc"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-teal hover:text-teal/80 transition-colors ml-6"
+                  className="inline-flex items-center justify-center gap-2 w-full mt-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                  style={{
+                    background: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--violet)))",
+                    boxShadow: "0 4px 15px hsla(174, 88%, 56%, 0.3)",
+                  }}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
                   Buy CBC Code
