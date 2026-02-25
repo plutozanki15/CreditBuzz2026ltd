@@ -212,7 +212,7 @@ export const Withdrawal = () => {
       // Clear flow state and navigate to Buy CBC page after a brief delay
       setTimeout(() => {
         clearFlowState();
-        navigate("/buy-zfc");
+        navigate("/buy-zfc", { state: { fromWithdrawal: true } });
       }, 1500);
       return;
     }
