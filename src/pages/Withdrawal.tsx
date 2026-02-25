@@ -53,7 +53,13 @@ export const Withdrawal = () => {
   const [currentActivationCode, setCurrentActivationCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [withdrawalMode, setWithdrawalMode] = useState<"weekly" | "daily">("weekly");
+  const [withdrawalMode, setWithdrawalMode] = useState<"weekly" | "daily">(() => {
+    try {
+      const cached = localStorage.getItem("creditbuzz_withdrawal_mode");
+      if (cached === "daily" || cached === "weekly") return cached;
+    } catch {}
+    return "weekly";
+  });
   const [zfcError, setZfcError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     accountNumber: flowState?.formData?.accountNumber || "",
@@ -106,7 +112,10 @@ export const Withdrawal = () => {
         .select("value")
         .eq("key", "withdrawal_mode")
         .single();
-      if (setting) setWithdrawalMode(setting.value as "weekly" | "daily");
+      if (setting) {
+        setWithdrawalMode(setting.value as "weekly" | "daily");
+        localStorage.setItem("creditbuzz_withdrawal_mode", setting.value);
+      }
 
       setIsLoading(false);
     };
@@ -148,6 +157,7 @@ export const Withdrawal = () => {
           const row = payload.new as { key: string; value: string };
           if (row.key === "withdrawal_mode") {
             setWithdrawalMode(row.value as "weekly" | "daily");
+            localStorage.setItem("creditbuzz_withdrawal_mode", row.value);
           }
         }
       )
