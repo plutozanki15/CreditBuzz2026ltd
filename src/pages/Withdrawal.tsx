@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2, AlertCircle, ShoppingCart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Building2, User, Hash, Wallet, Lock, Shield, CheckCircle, Loader2, AlertCircle, ShoppingCart, ArrowRight } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { PaymentForm } from "@/components/payment/PaymentForm";
+import { ProcessingAnimation } from "@/components/payment/ProcessingAnimation";
+import { PaymentNoticeModal } from "@/components/payment/PaymentNoticeModal";
+import { AccountDetails } from "@/components/payment/AccountDetails";
+import { useAuth } from "@/hooks/useAuth";
+import { usePaymentState } from "@/hooks/usePaymentState";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
 import { ZenfiLogo } from "@/components/ui/ZenfiLogo";
 import { WithdrawalProcessing } from "@/components/withdrawal/WithdrawalProcessing";
@@ -60,6 +67,13 @@ export const Withdrawal = () => {
     } catch {}
     return "weekly";
   });
+  
+  // Inline Buy CBC flow state
+  const [showBuyCbcFlow, setShowBuyCbcFlow] = useState(false);
+  const [buyCbcStep, setBuyCbcStep] = useState<"form" | "processing" | "notice" | "details">("form");
+  const [buyCbcFormData, setBuyCbcFormData] = useState<{ fullName: string; phone: string; email: string } | null>(null);
+  const { user, profile } = useAuth();
+  const { hasPendingPayment } = usePaymentState(user?.id);
   const [zfcError, setZfcError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     accountNumber: flowState?.formData?.accountNumber || "",
@@ -571,8 +585,13 @@ export const Withdrawal = () => {
                   <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
                   <p className="text-xs text-red-400 leading-relaxed">{zfcError}</p>
                 </div>
-                <Link
-                  to="/buy-zfc"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBuyCbcFlow(true);
+                    setBuyCbcStep("form");
+                    setBuyCbcFormData(null);
+                  }}
                   className="inline-flex items-center justify-center gap-2 w-full mt-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                   style={{
                     background: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--violet)))",
@@ -581,10 +600,71 @@ export const Withdrawal = () => {
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
                   Buy CBC Code
-                </Link>
+                </button>
               </div>
             )}
           </div>
+
+          {/* Inline Buy CBC Flow */}
+          {showBuyCbcFlow && (
+            <div
+              className="p-4 rounded-2xl space-y-4 animate-fade-in-up"
+              style={{
+                background: "hsla(240, 7%, 8%, 0.7)",
+                border: "1px solid hsla(174, 88%, 56%, 0.2)",
+                backdropFilter: "blur(12px)",
+              }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-teal" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Buy CBC Code</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowBuyCbcFlow(false)}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ✕ Close
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {buyCbcStep === "processing" && (
+                  <ProcessingAnimation onComplete={() => setBuyCbcStep("notice")} />
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence>
+                {buyCbcStep === "notice" && (
+                  <PaymentNoticeModal onProceed={() => setBuyCbcStep("details")} />
+                )}
+              </AnimatePresence>
+
+              {buyCbcStep === "form" && (
+                <PaymentForm
+                  onSubmit={(data) => {
+                    if (hasPendingPayment) return;
+                    setBuyCbcFormData(data);
+                    setBuyCbcStep("processing");
+                  }}
+                  defaultEmail={profile?.email || ""}
+                  defaultName={profile?.full_name || ""}
+                />
+              )}
+
+              {buyCbcStep === "details" && buyCbcFormData && user?.id && (
+                <AccountDetails
+                  userId={user.id}
+                  formData={buyCbcFormData}
+                  onPaymentConfirmed={(paymentId) => {
+                    setShowBuyCbcFlow(false);
+                    navigate("/payment-status", { state: { paymentId } });
+                  }}
+                />
+              )}
+            </div>
+          )}
 
           {/* Security Notice */}
           <div
