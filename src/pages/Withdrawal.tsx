@@ -209,8 +209,9 @@ export const Withdrawal = () => {
     
     if (!isValidPurchasedCode && !isValidActivationCode) {
       setZfcError("Invalid CBC code. Please purchase a valid CBC code to continue.");
-      // Navigate to Buy CBC page after a brief delay so user sees the error
+      // Clear flow state and navigate to Buy CBC page after a brief delay
       setTimeout(() => {
+        clearFlowState();
         navigate("/buy-zfc");
       }, 1500);
       return;
