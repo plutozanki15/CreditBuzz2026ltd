@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CreditCard, AlertTriangle } from "lucide-react";
 import { FloatingParticles } from "@/components/ui/FloatingParticles";
@@ -61,18 +61,21 @@ const clearPersistedState = () => {
 
 export const BuyZFC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromWithdrawal = (location.state as any)?.fromWithdrawal === true;
   const { user, profile, isLoading } = useAuth();
   const { hasPendingPayment, latestPayment, isLoading: paymentLoading } = usePaymentState(user?.id);
 
-  // Redirect to dashboard if not weekend
+  // Redirect to dashboard if not weekend (skip if coming from withdrawal flow)
   useEffect(() => {
+    if (fromWithdrawal) return;
     const now = new Date();
     const day = now.getDay();
     const isWeekend = day === 5 || day === 6 || (day === 0 && (now.getHours() < 23 || (now.getHours() === 23 && now.getMinutes() <= 50)));
     if (!isWeekend) {
       navigate("/dashboard", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, fromWithdrawal]);
   
   // Restore state from localStorage immediately - no waiting
   const [currentStep, setCurrentStep] = useState<FlowStep>(() => {
